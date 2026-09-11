@@ -810,7 +810,6 @@ temp_data = {}
 user_cooldowns = {}
 pending_withdrawals = {}
 
-
 tg_session = requests.Session()
 
 def _strip_premium(text):
@@ -874,7 +873,6 @@ def send_document(chat_id, filename, text_content):
     data = {'chat_id': chat_id}
     try: requests.post(url, data=data, files=files)
     except: pass
-
 
 all_known_users = set()
 
@@ -1076,7 +1074,6 @@ def mask_smart(num):
 def mask_number(num):
     return mask_smart(num)
 
-
 def format_otp_display(num, app_full_name, lang, masked=True):
     clean = str(num).lstrip('+').replace(" ", "")
     flag_html, iso, dial_code = get_country_from_num(num)
@@ -1181,7 +1178,6 @@ def build_numbers_header(country, service=None):
         f'<tg-emoji emoji-id="{PHONE_ICON}">📱</tg-emoji>\n\n'
     )
     return render_body_text(header)
-
 
 SERVICE_SMS_KEYWORDS = {
     "whatsapp": ["whatsapp", "wa", "wap", "w/a", "whatsapp business", "wa.me", "wa code", "wh"],
@@ -1886,19 +1882,19 @@ def get_cancel_kb():
 def main_menu(user_id):
     kb = [
         [
-            {"text": "GET NUMBER", "icon_custom_emoji_id": "5337132498965010628", "style": "primary"},
-            {"text": "Search Number", "icon_custom_emoji_id": "5463352748751753567", "style": "primary"}
+            {"text": "GET NUMBER", "icon_custom_emoji_id": "5262606754725771771", "style": "danger"},
+            {"text": "SEARCH NUMBER", "icon_custom_emoji_id": "5463352748751753567", "style": "success"}
         ],
         [
-            {"text": "TRAFFIC", "icon_custom_emoji_id": "5352877703043258544", "style": "success"},
+            {"text": "TRAFFIC", "icon_custom_emoji_id": "5429651785352501917", "style": "success"},
             {"text": "2FA ONLINE", "icon_custom_emoji_id": "5267421176841398765", "style": "primary"}
         ],
         [
-            {"text": "Refer", "icon_custom_emoji_id": "5420396762189831222", "style": "success"},
-            {"text": "WITHDRAWAL", "icon_custom_emoji_id": "5352585194295564660", "style": "danger"}
+            {"text": "REFER", "icon_custom_emoji_id": "5332724926216428039", "style": "primary"},
+            {"text": "BALANCE", "icon_custom_emoji_id": "5215420556089776398", "style": "danger"}
         ],
         [
-            {"text": "SUPPORT", "icon_custom_emoji_id": "5420145051336485498", "style": "primary"}
+            {"text": "SUPPORT", "icon_custom_emoji_id": "5420145051336485498", "style": "success"}
         ]
     ]
     if is_admin(user_id):
@@ -2284,7 +2280,7 @@ def handle_message(msg):
         send_force_join_msg(chat_id)
         return
 
-    MAIN_MENU_CMDS = ["GET NUMBER", "Search Number", "TRAFFIC", "Refer", "WITHDRAWAL", "SUPPORT", "Admin Panel", "2FA ONLINE"]
+    MAIN_MENU_CMDS = ["GET NUMBER", "SEARCH NUMBER", "TRAFFIC", "REFER", "BALANCE", "SUPPORT", "Admin Panel", "2FA ONLINE"]
     is_main_cmd = False
     if text in MAIN_MENU_CMDS or text.startswith("/start"):
         if chat_id in user_states: del user_states[chat_id]
@@ -3197,17 +3193,15 @@ def handle_message(msg):
         if kb:
             res_welcome = send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
         else:
-            res_welcome = send_message(chat_id, txt)
+            res_welcome = send_message(chat_id, txt, reply_markup=main_menu(chat_id))
         if not res_welcome or not res_welcome.get("ok"):
             plain_txt = "👋 WELCOME TO 𝐒𝐓𝐎𝐑𝐌 𝐗 𝐎𝐍𝐄 🤔\n\n📩 RECEIVE OTP'S AND START EARNING MONEY 🤑"
-            send_message(chat_id, plain_txt)
-        time.sleep(0.5)
-        send_message(chat_id, render_body_text("⚙️ <b>Navigation Menu:</b>"), reply_markup=main_menu(chat_id))
+            send_message(chat_id, plain_txt, reply_markup=main_menu(chat_id))
 
     elif text == "TRAFFIC":
         txt, markup = build_traffic_ui()
         send_message(chat_id, txt, reply_markup=markup)
-    elif text == "Refer":
+    elif text == "REFER":
         u_data = get_user(chat_id)
         ref_link = f"https://t.me/{BOT_USERNAME}?start={chat_id}"
         c_msg = bot_settings["custom_messages"].get("refer", {})
@@ -3216,7 +3210,7 @@ def handle_message(msg):
         kb = [[{"text": "COPY LINK", "icon_custom_emoji_id": "5192739271886282680", "copy_text": {"text": ref_link}, "style": "success"}]]
         kb.append([{"text": "CLOSE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
-    elif text == "WITHDRAWAL":
+    elif text == "BALANCE":
         if not bot_settings["withdraw_on"]:
             send_message(chat_id, render_body_text(f"{PEM['no']} <b>Withdrawals disabled.</b>")); return
         u_data = get_user(chat_id); bal = u_data.get('balance', 0.0)
@@ -3252,7 +3246,7 @@ def handle_message(msg):
                 kb.append([{"text": f"{s}", "icon_custom_emoji_id": emoji_id, "callback_data": f"g_s|{s}", "style": "primary"}])
             kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
             send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
-    elif text == "Search Number":
+    elif text == "SEARCH NUMBER":
         user_states[chat_id] = "wait_for_search"
         c_msg = bot_settings["custom_messages"].get("search_number", {})
         txt = render_body_text(c_msg.get("text", f"{PEM['num']} <b>Search</b>"))
