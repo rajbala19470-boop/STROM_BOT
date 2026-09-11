@@ -87,7 +87,7 @@ GLOBAL_BODY_EMOJIS = {
 }
 
 # ==========================================
-# [NEW] air.py Style Constants
+# air.py Style Constants
 # ==========================================
 BROADCAST_HEADER_PRE = "6271473763439612077"
 BROADCAST_HEADER_SUF = "5118734498590098251"
@@ -457,17 +457,7 @@ panel_sessions = {}
 user_active_sessions = {}
 
 # ==========================================
-# [NEW] COUNTRY_CODE_MAP for Auto-Detection
-# ==========================================
-COUNTRIES_DATA = {}
-try:
-    if os.path.exists("countries.json"):
-        with open("countries.json", "r", encoding='utf-8') as f:
-            COUNTRIES_DATA = json.load(f)
-except: pass
-
-# ==========================================
-# [NEW] Auto-Load flag.txt & service.txt
+# Auto-Load flag.txt & service.txt (same folder as bot code)
 # ==========================================
 FLAG_TXT_FILE = "flag.txt"
 SERVICE_TXT_FILE = "service.txt"
@@ -554,9 +544,16 @@ def load_service_txt():
         print(f"❌ Error loading {path}: {e}")
     return loaded
 
-# ⏸️ PART 1 END
+COUNTRIES_DATA = {}
+try:
+    if os.path.exists("countries.json"):
+        with open("countries.json", "r", encoding='utf-8') as f:
+            COUNTRIES_DATA = json.load(f)
+except: pass
+
+
 # ==========================================
-# Captcha Panel Data Fetcher (UNTOUCHED)
+# Captcha Panel Data Fetcher
 # ==========================================
 def fetch_cpt_panel_cdrs(p, session, check_url):
     res = session.get(check_url, timeout=15)
@@ -640,6 +637,7 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
 # ==========================================
 def load_db():
     global bot_settings, number_batches, used_numbers_list, total_uploaded_stats, total_assigned_stats, recent_traffic
+    global stex_assigned_numbers, voltx_assigned_numbers
     if db:
         try:
             doc = db.collection('settings').document('bot_config').get()
@@ -683,7 +681,6 @@ def load_db():
         except Exception as e:
             print(f"❌ Error loading local DB: {e}")
 
-    # ── Auto-load flag.txt & service.txt ──
     try:
         flag_data = load_flag_txt()
         if flag_data:
@@ -944,7 +941,7 @@ def mask_number(num):
 
 
 # ==========================================
-# [NEW] Group OTP — air.py style
+# Group OTP Formatter
 # ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
     clean = str(num).lstrip('+').replace(" ", "")
@@ -976,7 +973,7 @@ def format_otp_display(num, app_full_name, lang, masked=True):
 
 
 # ==========================================
-# [NEW] DM OTP — air.py style
+# DM OTP Formatter
 # ==========================================
 def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balance, reward, lang):
     app = get_premium_app(service_name)
@@ -1005,7 +1002,7 @@ def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balanc
 
 
 # ==========================================
-# [NEW] Upload Broadcast Builder — air.py style
+# Upload Broadcast Formatter
 # ==========================================
 def build_stock_broadcast_new(country_display, service_name, count, per_otp,
                                flag_html=None, app_emoji_html=None):
@@ -1044,7 +1041,7 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
 
 
 # ==========================================
-# [NEW] Numbers Display Header — air.py style
+# Numbers Display Header
 # ==========================================
 def build_numbers_header(country, service=None):
     HEADER_EMOJI_1 = "6282641460093260838"
@@ -1417,7 +1414,7 @@ def parse_panel_response(response_text, p_config=None):
 
 
 # ==========================================
-# Captcha Auto Login (UNTOUCHED)
+# Captcha Auto Login
 # ==========================================
 def attempt_auto_login(p, idx):
     login_url = p.get("login_url", "").strip()
@@ -1495,9 +1492,9 @@ def attempt_auto_login(p, idx):
         p["login_status"] = f"❌ Error: {str(e)[:20]}"
     return False
 
-# ⏸️ PART 2 CONTINUES IN NEXT MESSAGE
+# ⏸️ PART 1 END
 # ==========================================
-# Panel Monitor — Captcha UNTOUCHED + CURL support
+# Panel Monitor — Captcha + CURL support
 # ==========================================
 def panel_monitor_thread():
     global processed_otps, recent_traffic, panel_sessions
@@ -1637,12 +1634,10 @@ def panel_monitor_thread():
                             owners = list(set(owners))
                             for owner_id in owners:
                                 meta = assigned_number_meta.get(clean_api_num, {})
-                                # Priority 1: payout stored at assign time
                                 if "payout" in meta:
                                     try: reward = float(meta["payout"])
                                     except: reward = float(bot_settings.get("otp_reward", 0.0))
                                 else:
-                                    # Priority 2: lookup by country+service
                                     owner_country = meta.get("country", "")
                                     owner_service = meta.get("service", "")
                                     if not owner_country:
@@ -1875,7 +1870,6 @@ def admin_settings_keyboard():
     kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "primary"}])
     return {"inline_keyboard": kb}
 
-# [UPDATED] OTP Group — Channel Link FIRST
 def otp_groups_list_keyboard():
     ch_link = bot_settings.get("main_channel_link", "")
     ch_display = ch_link if ch_link else "Not Set"
@@ -1965,7 +1959,6 @@ def typed_panels_list_keyboard(p_type):
     kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_panels", "style": "primary"}])
     return {"inline_keyboard": kb}
 
-# [NEW] Panel Config with CURL field
 def panel_config_keyboard(idx):
     p = bot_settings["panels"][idx]
 
@@ -2075,17 +2068,7 @@ def expire_previous_number(chat_id):
             pass
         del user_active_sessions[chat_id]
 
-def generate_emoji_txt(mode):
-    lines = []
-    if mode == "flags":
-        for code, d in bot_settings.get("premium_flags", {}).items():
-            lines.append(f"{d.get('name', code)} ({code}) ({d.get('iso','XX')}) {{ \"emoji\": \"{d.get('char','')}\", \"id\": \"{d.get('id','')}\" }}")
-    else:
-        for k, d in bot_settings.get("premium_apps", {}).items():
-            lines.append(f"{d.get('name', k)} {{ \"emoji\": \"{d.get('char','')}\", \"id\": \"{d.get('id','')}\" }}")
-    return "\n".join(lines).encode('utf-8') if lines else None
-
-# ⏸️ PART 2B END
+# ⏸️ PART 2 END
 # ==========================================
 # Message Handler
 # ==========================================
@@ -2456,7 +2439,7 @@ def handle_message(msg):
             return
 
         # ==========================================
-        # [UPDATED] Upload Number — Auto-detect + Payout ask
+        # Upload Number — Auto-detect + Payout ask
         # ==========================================
         elif state == "wait_for_txt" and "document" in msg:
             doc = msg["document"]
@@ -2474,7 +2457,6 @@ def handle_message(msg):
                 nn = n if n.startswith('+') else '+' + n
                 clean_list.append(nn)
 
-            # Auto-detect country from first number
             detected_country = ""
             detected_iso = ""
             if clean_list:
@@ -2656,50 +2638,6 @@ def handle_message(msg):
 
             threading.Thread(target=sb, args=(broadcast_txt, broadcast_kb), daemon=True).start()
 
-            del user_states[chat_id]
-            del temp_data[chat_id]
-            return
-
-        # ==========================================
-        # Emoji Management
-        # ==========================================
-        elif state == "wait_for_emoji_extract":
-            entities = msg.get("entities", [])
-            custom_emoji_id = None
-            emoji_text = ""
-            for ent in entities:
-                if ent.get("type") == "custom_emoji":
-                    custom_emoji_id = ent.get("custom_emoji_id")
-                    offset = ent.get("offset", 0)
-                    length = ent.get("length", 0)
-                    b_text = msg.get("text", "").encode('utf-16-le')
-                    emoji_text = b_text[offset*2:(offset+length)*2].decode('utf-16-le')
-                    break
-            if custom_emoji_id:
-                temp_data[chat_id] = {"id": custom_emoji_id, "char": emoji_text}
-                user_states[chat_id] = "wait_for_emoji_details"
-                send_message(chat_id, render_body_text(f"{PEM['ok']} Emoji ID পাওয়া গেছে: <code>{custom_emoji_id}</code>\n\n📌 এখন সেভ করার জন্য টাইপ এবং নাম লিখুন।\n\n<b>ফরমেট:</b>\n`FLAG | 880 | BD | Bangladesh`\nঅথবা\n`APP | WhatsApp`"), reply_markup=get_cancel_kb())
-            else:
-                send_message(chat_id, render_body_text(f"{PEM['no']} কোনো Premium Emoji পাওয়া যায়নি! দয়া করে Custom Emoji সেন্ড করুন।"), reply_markup=get_cancel_kb())
-            return
-
-        elif state == "wait_for_emoji_details" and text:
-            parts = [p.strip() for p in text.split("|")]
-            mode = parts[0].upper()
-            eid = temp_data[chat_id]["id"]
-            char = temp_data[chat_id]["char"]
-            if mode == "FLAG" and len(parts) == 4:
-                code, iso, name = parts[1], parts[2], parts[3]
-                bot_settings["premium_flags"][code] = {"char": char, "iso": iso.upper(), "name": name, "id": eid}
-                save_db()
-                send_message(chat_id, render_body_text(f"{PEM['ok']} Flag Emoji সেভ হয়েছে!\nCode: {code} | Name: {name}"), reply_markup=None)
-            elif mode == "APP" and len(parts) == 2:
-                name = parts[1]
-                bot_settings["premium_apps"][name.upper()] = {"char": char, "id": eid, "name": name.title()}
-                save_db()
-                send_message(chat_id, render_body_text(f"{PEM['ok']} App Emoji সেভ হয়েছে!\nName: {name}"), reply_markup=None)
-            else:
-                send_message(chat_id, render_body_text(f"{PEM['no']} ফরম্যাট ভুল!\n\nসঠিক ফরম্যাট:\n`FLAG | 880 | BD | Bangladesh`\n`APP | WhatsApp`"))
             del user_states[chat_id]
             del temp_data[chat_id]
             return
