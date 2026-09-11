@@ -126,6 +126,14 @@ def lang_full(lang_code):
     code = str(lang_code).strip().upper().replace("#", "")
     return LANG_FULL_NAMES.get(code, code.title() if code else "English")
 
+def fmt_payout(val):
+    try:
+        s = f"{float(val):.10f}".rstrip('0').rstrip('.')
+        if '.' not in s: s += ".00"
+        return s
+    except:
+        return "0.00"
+
 assigned_number_meta = {}
 _last_upload_bcast = {}
 _upload_in_progress = {}
@@ -372,13 +380,13 @@ COUNTRY_DB = {
 }
 
 DEFAULT_CUSTOM_MESSAGES = {
-    "start": {"text": "👋<blockquote><b>WELCOME TO OUR 𝐒𝐓𝐎𝐑𝐌 𝐗 𝐎𝐍𝐄</b></blockquote> 🤔\n📩 <b>RECEIVE OTP'S AND START EARNING MONEY</b> 🤑", "buttons": []},
+    "start": {"text": "<blockquote>👋<b>WELCOME TO OUR 𝐒𝐓𝐎𝐑𝐌 𝐗 𝐎𝐍𝐄</b> 🤔</blockquote>\n📩 <b>RECEIVE OTP'S AND START EARNING MONEY</b> 🤑", "buttons": []},
     "get_number": {"text": f"{PEM['pin']} Select a service:", "buttons": []},
     "select_country": {"text": f"📌 Select a country for {{service}}:", "buttons": []}, 
     "search_number": {"text": "╔═══════════╗\n     🔍 <b>SEARCH NUMBER</b>\n╚═══════════╝\n✅ Enter 3 to 9 digits  \nto search for a number.\n━━━━━━━━━━━━━\n📝 Example:\n➥ 880\n➥ 9227373\n━━━━━━━━━━━━━\n🔍 Fast Number Lookup System", "buttons": []},
     "traffic": {"text": f"{PEM['graph']} <b>Traffic Overview</b>\n\n{PEM['ok']} Available Numbers: {{avail}}\n{PEM['rocket']} Assigned Numbers: {{assigned}}", "buttons": []},
     "refer": {"text": f"➖➖➖➖➖➖➖\n« {PEM['gift']} REFER & EARN »\n➖➖➖➖➖➖➖\n{PEM['link']} YOUR LINK:\n<code>{{ref_link}}</code>\n➖➖➖➖➖➖➖\n{PEM['user']} TOTAL REFERS: <b>{{total_ref}}</b>\n➖➖➖➖➖➖➖\n{PEM['money']} PER REFER: <b>{{ref_reward}} TK</b>\n➖➖➖➖➖➖➖", "buttons": []},
-    "withdrawal": {"text": "➖➖➖➖➖➖➖\n《 😒 WITHDRAWAL 》\n➖➖➖➖➖➖➖\n🙈 User Id : {user_id}\n➖➖➖➖➖➖➖\n👋 Total Otp: {total_otp}\n➖➖➖➖➖➖➖\n🫂 Total Reffer :{total_ref}\n➖➖➖➖➖➖➖\n📅 BALANCE: ${bal}\n➖➖➖➖➖➖➖\n🔐 MINIMUM: ${min_w}\n➖➖➖➖➖➖➖\nSELECT METHOD:", "buttons": []},
+    "withdrawal": {"text": "➖➖➖➖➖➖➖\n《 🙈 <b>USER ID</b> : <code>{user_id}</code> 》\n➖➖➖➖➖➖➖\n👋 <b>Total Otp:</b> <code>{total_otp}</code>\n➖➖➖➖➖➖➖\n🫂 <b>Reffer :</b><code>{total_ref}</code>\n➖➖➖➖➖➖➖\n📅 <b>BALANCE:</b> <code>${bal}</code>\n➖➖➖➖➖➖➖\n🔐 <b>MINIMUM:</b> <code>${min_w}</code>\n➖➖➖➖➖➖➖\n<blockquote><b>SELECT METHOD <tg-emoji emoji-id=\"5197474438970363734\">📱</tg-emoji></b></blockquote>", "buttons": []},
     "support": {"text": f"{PEM['msg']} Contact us for any help:", "buttons": []}
 }
 
@@ -506,6 +514,7 @@ def load_flag_txt():
                 f.write("Pakistan (92) (PK) { \"emoji\": \"PK\", \"id\": \"5913705895375672082\" }\n")
                 f.write("United Kingdom (44) (GB) { \"emoji\": \"GB\", \"id\": \"5913443365499703513\" }\n")
                 f.write("Madagascar (261) (MG) { \"emoji\": \"MG\", \"id\": \"5780471598932337683\" }\n")
+                f.write("Kyrgyzstan (996) (KG) { \"emoji\": \"KG\", \"id\": \"5780471598932337683\" }\n")
             print(f"{path} created with defaults")
         except Exception as e:
             print(f"Could not create {path}: {e}")
@@ -862,6 +871,7 @@ def register_user_local(uid):
 def broadcast_copymessage(from_chat_id, msg_id):
     success = 0
     failed = 0
+    last_err = ""
     users = list(all_known_users)
     b_session = requests.Session()
     url = f"{BASE_URL}/copyMessage"
@@ -870,11 +880,14 @@ def broadcast_copymessage(from_chat_id, msg_id):
         try:
             res = b_session.post(url, json=payload, timeout=5).json()
             if res.get("ok"): success += 1
-            else: failed += 1
-        except:
+            else:
+                failed += 1
+                last_err = str(res.get("description", "?"))[:80]
+        except Exception as e:
             failed += 1
+            last_err = str(e)[:80]
         time.sleep(0.035)
-    send_message(from_chat_id, render_body_text(f"Broadcast Completed!\nSuccess: {success}\nFailed: {failed}\nTotal Sent: {len(users)}"))
+    send_message(from_chat_id, render_body_text(f"Broadcast Completed!\nSuccess: {success}\nFailed: {failed}\nTotal Sent: {len(users)}\nLast Error: {last_err}"))
 
 
 def render_body_text(text):
@@ -1073,7 +1086,7 @@ def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balanc
     snu = service_name.upper()
     clean_number = str(raw_number).lstrip('+')
     flag_html, iso, _ = get_country_from_num(raw_number)
-    reward_str = f"{reward:.10f}".rstrip('0').rstrip('.')
+    reward_str = fmt_payout(reward)
     amount_display = f"${reward_str}"
     otp = extract_otp_code(msg_text) or "N/A"
     taka_tag = ""
@@ -1105,12 +1118,7 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
     MP = f'<tg-emoji emoji-id="{BROADCAST_MONEY_PRE}">💰</tg-emoji>'
     MS = f'<tg-emoji emoji-id="{BROADCAST_MONEY_SUF}">💰</tg-emoji>'
 
-    try:
-        p_str = f"{float(per_otp):.10f}".rstrip('0').rstrip('.')
-        if '.' not in p_str: p_str += ".00"
-        payout_str = f"${p_str}"
-    except:
-        payout_str = "$0.00"
+    payout_str = f"${fmt_payout(per_otp)}"
 
     text = (
         f"{HP} <b>New Stock Added</b> {HS}\n\n"
@@ -2710,13 +2718,14 @@ Banned: {data.get('banned', False)}
                 f"Country: <b>{country_name.upper()}</b>\n"
                 f"Flag: {flag_html}\n"
                 f"Service: <b>{service.upper()}</b>\n"
-                f"Payout: <b>${payout_val:.6f}/OTP</b>\n"
+                f"Payout: <b>${fmt_payout(payout_val)}/OTP</b>\n"
                 f"Count: <b>{len(raw_numbers)}</b>"
             ))
 
             def sb(txt, kb):
                 b_session = requests.Session()
                 sent_ok = 0; sent_fail = 0
+                last_err = ""
                 sent_to = set()
                 for u_id in list(all_known_users):
                     if u_id in sent_to: continue
@@ -2725,14 +2734,24 @@ Banned: {data.get('banned', False)}
                         rr = b_session.post(f"{BASE_URL}/sendMessage",
                                             json={"chat_id": u_id, "text": txt, "parse_mode": "HTML", "reply_markup": kb},
                                             timeout=8)
-                        if rr.status_code == 200 and rr.json().get("ok"):
+                        j = rr.json()
+                        if j.get("ok"):
                             sent_ok += 1
                         else:
-                            sent_fail += 1
-                    except: sent_fail += 1
+                            rr2 = b_session.post(f"{BASE_URL}/sendMessage",
+                                                json={"chat_id": u_id, "text": txt, "parse_mode": "HTML"},
+                                                timeout=8)
+                            if rr2.json().get("ok"):
+                                sent_ok += 1
+                            else:
+                                sent_fail += 1
+                                last_err = str(j.get("description", "?"))[:100]
+                    except Exception as e:
+                        sent_fail += 1
+                        last_err = str(e)[:100]
                     time.sleep(0.05)
                 try:
-                    send_message(chat_id, f"Broadcast complete: OK {sent_ok} / FAIL {sent_fail}")
+                    send_message(chat_id, f"Broadcast: OK {sent_ok} / FAIL {sent_fail}\nLast: {last_err}")
                 except: pass
 
             threading.Thread(target=sb, args=(broadcast_txt, broadcast_kb), daemon=True).start()
@@ -3163,8 +3182,8 @@ Banned: {data.get('banned', False)}
                         if "id" in flag_data: emoji_id = flag_data["id"]
                         break
                 kb.append([{"text": f"{display_num}", "icon_custom_emoji_id": emoji_id, "copy_text": {"text": display_num}, "style": "primary"}])
-            vtx_ext = "_vtx" if 'is_voltx_used' in locals() and is_voltx_used else ""
-            kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_s_{query}{vtx_ext}", "style": "danger"},
+            vtx_field = "vtx" if 'is_voltx_used' in locals() and is_voltx_used else ""
+            kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_s|{query}||{vtx_field}", "style": "danger"},
                        {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
             c_btns = bot_settings["custom_messages"].get("search_number", {}).get("buttons", [])
             for c_b in c_btns:
@@ -3394,7 +3413,7 @@ Banned: {data.get('banned', False)}
                         if "id" in app_data:
                             emoji_id = app_data["id"]
                             break
-                kb.append([{"text": f"{s}", "icon_custom_emoji_id": emoji_id, "callback_data": f"g_s_{s}", "style": "primary"}])
+                kb.append([{"text": f"{s}", "icon_custom_emoji_id": emoji_id, "callback_data": f"g_s|{s}", "style": "primary"}])
             for b in c_msg.get("buttons", []):
                 b_copy = b.copy()
                 if "style" not in b_copy: b_copy["style"] = "primary"
@@ -3442,7 +3461,7 @@ def handle_callback(call):
     chat_type = call["message"]["chat"].get("type", "private")
     data = call.get("data", "")
 
-    if not data.startswith("test_p_conn_") and not data.startswith("c_n_") and not data.startswith("g_c_") and not data.startswith("g_bs|"):
+    if not data.startswith("test_p_conn_") and not data.startswith("c_n") and not data.startswith("g_c|") and not data.startswith("g_bs|"):
         try: threading.Thread(target=answer_callback, args=(call["id"],)).start()
         except: pass
 
@@ -3574,9 +3593,9 @@ def handle_callback(call):
             elif vd: target = random.choice(vd); is_vtx = True
             if target:
                 user_cooldowns[chat_id] = 0
-                vf = "_vtx" if is_vtx else ""
+                vf = "vtx" if is_vtx else ""
                 new_call = dict(call)
-                new_call["data"] = f"c_n_s_{target}_{service}{vf}"
+                new_call["data"] = f"c_n_s|{target}|{service}|{vf}"
                 if "_edit_in_place" in call:
                     new_call["_edit_in_place"] = call["_edit_in_place"]
                 handle_callback(new_call)
@@ -4561,10 +4580,10 @@ def handle_callback(call):
     # ==========================================
     # Service -> Country list
     # ==========================================
-    elif data.startswith("g_s_"):
+    elif data.startswith("g_s|"):
         user_states.pop(chat_id, None)
         temp_data.pop(chat_id, None)
-        service = data.split("g_s_")[1]
+        service = data.split("g_s|", 1)[1]
         local_cnts = set([b["country"] for b in number_batches.values() if b["service"] == service and b["numbers"]])
         stex_cnts = set(bot_settings.get("stex_services", {}).get(service, {}).keys())
         voltx_cnts = set(bot_settings.get("voltx_services", {}).get(service, {}).keys())
@@ -4614,10 +4633,10 @@ def handle_callback(call):
             if key in pr:
                 try: payout_val = float(pr[key])
                 except: pass
-            payout_str = f"${payout_val:.6f}".rstrip('0').rstrip('.') if payout_val else "$0.00"
+            payout_str = f"${fmt_payout(payout_val)}"
 
             btn_label = f"{country_display_name} | {live_count} | {payout_str}/OTP"
-            btn_obj = {"text": btn_label, "callback_data": f"g_c_{service}_{c}", "style": "success"}
+            btn_obj = {"text": btn_label, "callback_data": f"g_c|{service}|{c}", "style": "success"}
             if emoji_id: btn_obj["icon_custom_emoji_id"] = emoji_id
             kb.append([btn_obj])
 
@@ -4629,7 +4648,7 @@ def handle_callback(call):
         kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "close_msg", "style": "danger"}])
         edit_message(chat_id, msg_id, txt, reply_markup={"inline_keyboard": kb})
 
-    elif data.startswith("g_c_") or data.startswith("c_n_"):
+    elif data.startswith("g_c|") or data.startswith("c_n"):
         now = time.time()
         if now - user_cooldowns.get(chat_id, 0) < bot_settings["cooldown"]:
             answer_callback(call["id"], f"Please wait {int(bot_settings['cooldown'] - (now - user_cooldowns.get(chat_id, 0)))}s.", show_alert=True)
@@ -4637,12 +4656,11 @@ def handle_callback(call):
         user_cooldowns[chat_id] = now
         expire_previous_number(chat_id)
 
-        if data.startswith("c_n_s_"):
-            is_voltx_req = data.endswith("_vtx")
-            clean_data = data[:-4] if is_voltx_req else data
-            parts_s = clean_data.split("_", 4)
-            query = parts_s[3] if len(parts_s) > 3 else ""
-            service_from_cb = parts_s[4] if len(parts_s) > 4 else None
+        if data.startswith("c_n_s|"):
+            parts_s = data.split("|")
+            query = parts_s[1] if len(parts_s) > 1 else ""
+            service_from_cb = parts_s[2] if len(parts_s) > 2 and parts_s[2] else None
+            is_voltx_req = len(parts_s) > 3 and parts_s[3] == "vtx"
             allowed_countries = bot_settings.get("search_countries", [])
             voltx_allowed = bot_settings.get("voltx_search_countries", [])
             is_stex_allowed = any(query.startswith(c) for c in allowed_countries) if allowed_countries else False
@@ -4741,9 +4759,9 @@ def handle_callback(call):
                     if iso == flag_data.get("iso"):
                         if "id" in flag_data: emoji_id = flag_data["id"]; break
                 kb.append([{"text": f"{display_num}", "icon_custom_emoji_id": emoji_id, "copy_text": {"text": display_num}, "style": "primary"}])
-            vtx_ext = "_vtx" if is_voltx_req else ""
-            srv_ext = f"_{service_from_cb}" if service_from_cb else ""
-            kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_s_{query}{srv_ext}{vtx_ext}", "style": "danger"},
+            vtx_field = "vtx" if is_voltx_req else ""
+            srv_field = service_from_cb or ""
+            kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_s|{query}|{srv_field}|{vtx_field}", "style": "danger"},
                        {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
             c_btns = bot_settings["custom_messages"].get("search_number", {}).get("buttons", [])
             for c_b in c_btns:
@@ -4773,9 +4791,9 @@ def handle_callback(call):
             user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
             return
 
-        parts = data.split("_")
-        service = parts[2]
-        country = parts[3]
+        parts = data.split("|")
+        service = parts[1]
+        country = parts[2]
         available_indices = []
         for b_id, b_data in number_batches.items():
             if b_data["service"] == service and b_data["country"] == country:
@@ -4794,12 +4812,12 @@ def handle_callback(call):
                 is_voltx = True
             if target_range:
                 user_cooldowns[chat_id] = 0
-                vtx_flag = "_vtx" if is_voltx else ""
-                handle_callback({"message": call["message"], "data": f"c_n_s_{target_range}_{service}{vtx_flag}", "id": call["id"]})
+                vtx_flag = "vtx" if is_voltx else ""
+                handle_callback({"message": call["message"], "data": f"c_n_s|{target_range}|{service}|{vtx_flag}", "id": call["id"]})
                 return
             else:
                 answer_callback(call["id"], "Number out of stock or range missing!", show_alert=True)
-                if data.startswith("c_n_"): delete_message(chat_id, msg_id)
+                if data.startswith("c_n"): delete_message(chat_id, msg_id)
                 return
         random.shuffle(available_indices)
         fetched_nums = []
@@ -4827,7 +4845,7 @@ def handle_callback(call):
         save_db()
         if not fetched_nums:
             answer_callback(call["id"], "You have already taken all numbers or stock is empty!", show_alert=True)
-            if data.startswith("c_n_"): delete_message(chat_id, msg_id)
+            if data.startswith("c_n"): delete_message(chat_id, msg_id)
             return
         app_full_name, _ = get_service_info_html(service)
         emoji_id = "5337302974806922068"
@@ -4848,7 +4866,7 @@ def handle_callback(call):
                     if "id" in flag_data: emoji_id = flag_data["id"]
                     break
             kb.append([{"text": f"{display_num}", "icon_custom_emoji_id": emoji_id, "copy_text": {"text": display_num}, "style": "primary"}])
-        kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_{service}_{country}", "style": "danger"},
+        kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n|{service}|{country}", "style": "danger"},
                    {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
         c_btns = bot_settings["custom_messages"].get("get_number", {}).get("buttons", [])
         for c_b in c_btns:
@@ -5095,7 +5113,6 @@ def main():
     if res.get("ok"): BOT_USERNAME = res["result"]["username"]
     print(f"Bot is starting... @{BOT_USERNAME}")
 
-    # Clear webhook to prevent getUpdates conflict
     api_call("deleteWebhook", {"drop_pending_updates": True})
     print("Webhook cleared")
 
