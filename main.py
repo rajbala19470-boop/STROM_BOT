@@ -401,23 +401,41 @@ firebase_credentials_json = r"""
 }
 """
 
-try:
-    cred_dict = json.loads(firebase_credentials_json)
-    cred = credentials.Certificate(cred_dict)
-    firebase_admin.initialize_app(cred)
-    _test_db = firestore.client()
+# ==========================================
+# Firebase Init (HARD 10s TIMEOUT - NO HANG)
+# ==========================================
+db = None
+
+def _init_firebase_with_timeout():
+    global db
     try:
-        _test_db.collection('_startup_check_').document('ping').get(timeout=8.0)
-        db = _test_db
-        print("Firebase Connected & VERIFIED! (Full Sync Enabled)")
-    except Exception as _te:
-        print(f"Firebase auth FAILED: {type(_te).__name__}: {str(_te)[:120]}")
-        print("Firebase DISABLED - bot will run in LOCAL-ONLY mode.")
-        print("(Balance, users, referrals will use local bot_data.json)")
+        cred_dict = json.loads(firebase_credentials_json)
+        cred = credentials.Certificate(cred_dict)
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+        _db = firestore.client()
+        try:
+            _db.collection('_startup_ping_').document('x').get(timeout=6.0)
+            db = _db
+            print("Firebase Connected & VERIFIED! (Full Sync Enabled)")
+        except Exception as _te:
+            print(f"Firebase auth FAILED: {type(_te).__name__}: {str(_te)[:100]}")
+            print("Firebase DISABLED - running in LOCAL-ONLY mode.")
+            print("(Balance, users, referrals will use local bot_data.json)")
+            db = None
+    except Exception as e:
+        print(f"Firebase Init Error: {e}")
         db = None
-except Exception as e:
-    print(f"Firebase Init Error: {e}")
+
+_fb_t = threading.Thread(target=_init_firebase_with_timeout, daemon=True)
+_fb_t.start()
+_fb_t.join(timeout=10.0)
+if _fb_t.is_alive():
+    print("Firebase init TIMEOUT (10s) - switching to LOCAL-ONLY mode.")
+    print("Bot will continue normally with local DB.")
     db = None
+else:
+    print("Firebase init completed.")
 
 bot_settings = {
     "admins": [OWNER_ID],
@@ -487,6 +505,7 @@ def load_flag_txt():
                 f.write("India (91) (IN) { \"emoji\": \"IN\", \"id\": \"5913754823643107921\" }\n")
                 f.write("Pakistan (92) (PK) { \"emoji\": \"PK\", \"id\": \"5913705895375672082\" }\n")
                 f.write("United Kingdom (44) (GB) { \"emoji\": \"GB\", \"id\": \"5913443365499703513\" }\n")
+                f.write("Madagascar (261) (MG) { \"emoji\": \"MG\", \"id\": \"5780471598932337683\" }\n")
             print(f"{path} created with defaults")
         except Exception as e:
             print(f"Could not create {path}: {e}")
@@ -744,7 +763,8 @@ def _sync_fs():
 
 def save_db():
     save_local_db()
-    threading.Thread(target=_sync_fs, daemon=True).start()
+    if db:
+        threading.Thread(target=_sync_fs, daemon=True).start()
 
 
 def _bg_load_db():
@@ -817,10 +837,12 @@ def sync_users_list():
             with open("users_list.json", "r") as f:
                 all_known_users = set(json.load(f))
         if not all_known_users and db:
-            for doc in db.collection('users').select([]).stream():
-                all_known_users.add(doc.id)
-            with open("users_list.json", "w") as f:
-                json.dump(list(all_known_users), f)
+            try:
+                for doc in db.collection('users').select([]).stream():
+                    all_known_users.add(doc.id)
+                with open("users_list.json", "w") as f:
+                    json.dump(list(all_known_users), f)
+            except: pass
     except: pass
 
 threading.Thread(target=sync_users_list, daemon=True).start()
@@ -907,7 +929,6 @@ def get_flag_info_html(num_or_iso):
     s = str(num_or_iso).strip()
     s_up = s.upper()
 
-    # 1. ISO code (2 letters)
     if len(s) == 2:
         for code, data in bot_settings.get("premium_flags", {}).items():
             if data.get("iso", "").upper() == s_up:
@@ -917,7 +938,6 @@ def get_flag_info_html(num_or_iso):
                 return char
         return "🌍"
 
-    # 2. Name match in premium_flags
     for code, data in bot_settings.get("premium_flags", {}).items():
         if data.get("name", "").upper() == s_up:
             eid = data.get("id")
@@ -925,7 +945,6 @@ def get_flag_info_html(num_or_iso):
             if eid: return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
             return char
 
-    # 3. Lookup stored ISO from number_batches (admin's custom name support)
     resolved_iso = ""
     try:
         for b in number_batches.values():
@@ -936,13 +955,11 @@ def get_flag_info_html(num_or_iso):
                     break
     except: pass
 
-    # 4. Try COUNTRIES_DATA
     if not resolved_iso:
         for cname, cinfo in COUNTRIES_DATA.items():
             if cname.upper() == s_up:
                 resolved_iso = cinfo.get("iso", "").upper()
                 break
-    # 5. Try COUNTRY_DB
     if not resolved_iso:
         for ccode, cinfo in COUNTRY_DB.items():
             if cinfo["name"].upper() == s_up:
@@ -958,7 +975,6 @@ def get_flag_info_html(num_or_iso):
                 return char
         return get_flag_emoji(resolved_iso)
 
-    # 6. Last resort: try as a phone number
     char, _, eid = get_flag_info_from_num(s)
     if eid:
         return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
@@ -1544,8 +1560,6 @@ def attempt_auto_login(p, idx):
     except Exception as e:
         p["login_status"] = f"Error: {str(e)[:20]}"
     return False
-
-#BOT DEV BY RAKESH
 # ==========================================
 # Panel Monitor — Captcha + CURL support
 # ==========================================
@@ -1661,10 +1675,10 @@ def panel_monitor_thread():
 
                             for fw in bot_settings["fw_groups"]:
                                 kb = [[{"text": f"{otp}", "icon_custom_emoji_id": COPY_EMOJI, "copy_text": {"text": otp}, "style": "success"}]]
+                                kb.append([{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI, "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}])
                                 ch_link = bot_settings.get("main_channel_link", "")
                                 if ch_link:
                                     kb.append([{"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI, "url": ch_link, "style": "primary"}])
-                                kb.append([{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI, "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}])
                                 for btn in fw.get("buttons", []):
                                     b_obj = {"text": btn["text"], "url": btn["url"], "style": "primary"}
                                     if "icon_custom_emoji_id" in btn: b_obj["icon_custom_emoji_id"] = btn["icon_custom_emoji_id"]
@@ -1712,7 +1726,7 @@ def panel_monitor_thread():
                                 if reward > 0:
                                     update_balance(owner_id, reward)
                                     if db:
-                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)})
+                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)}, timeout=5.0)
                                         except: pass
 
                                 new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
@@ -1771,9 +1785,9 @@ def add_referral(inviter_id, new_user_id):
         ref_msg = (
             f"{PEM['gift']} <b>New Referral !</b>\n"
             f"------------------\n"
-            f"🔥 <b>You Received {reward} TK</b>\n"
+            f"<b>You Received {reward} TK</b>\n"
             f"------------------\n"
-            f"{PEM['user']} <b>From User ID:</b> <code>{new_user_id}</code>"
+            f"<b>From User ID:</b> <code>{new_user_id}</code>"
         )
         send_message(inviter_id, render_body_text(ref_msg))
         return
@@ -1787,9 +1801,9 @@ def add_referral(inviter_id, new_user_id):
             ref_msg = (
                 f"{PEM['gift']} <b>New Referral !</b>\n"
                 f"------------------\n"
-                f"🔥 <b>You Received {reward} TK</b>\n"
+                f"<b>You Received {reward} TK</b>\n"
                 f"------------------\n"
-                f"{PEM['user']} <b>From User ID:</b> <code>{new_user_id}</code>"
+                f"<b>From User ID:</b> <code>{new_user_id}</code>"
             )
             send_message(inviter_id, render_body_text(ref_msg))
     except: pass
@@ -2501,10 +2515,10 @@ Banned: {data.get('banned', False)}
             msg_text = render_body_text(format_otp_display(num, app_full_name, lang, masked=True))
             for fw in bot_settings["fw_groups"]:
                 kb = [[{"text": f"{otp}", "icon_custom_emoji_id": COPY_EMOJI, "copy_text": {"text": otp}, "style": "success"}]]
+                kb.append([{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI, "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}])
                 ch_link = bot_settings.get("main_channel_link", "")
                 if ch_link:
                     kb.append([{"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI, "url": ch_link, "style": "primary"}])
-                kb.append([{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI, "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}])
                 for btn in fw.get("buttons", []):
                     b_obj = {"text": btn["text"], "url": btn["url"], "style": "primary"}
                     if "icon_custom_emoji_id" in btn: b_obj["icon_custom_emoji_id"] = btn["icon_custom_emoji_id"]
