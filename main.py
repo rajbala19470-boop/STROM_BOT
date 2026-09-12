@@ -19,7 +19,7 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 # ==========================================
-# Configuration (Token & Owner ID)
+# Configuration
 # ==========================================
 TOKEN = "8979274305:AAFZW02islSVKhvBQTjwYUFHozbacE1xmhc"
 BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
@@ -131,7 +131,6 @@ CHANNEL_EMOJI = "6204010762206189094"
 EMOJI_BOT_BUTTON = "5339267587337370029"
 NUMBER_BTN_EMOJI = "5339267587337370029"
 
-# New emojis requested by user
 WITHDRAW_SELECT_EMOJI = "6217469007868465305"
 ROCK_EMOJI = "6267152480878990865"
 
@@ -428,55 +427,34 @@ DEFAULT_CUSTOM_MESSAGES = {
 }
 
 # ==========================================
-# Firebase Setup
+# 🔥 Firebase Setup — FIXED (Simple Sync Init)
+# Same approach as working main.py — no thread, no ping, no timeout
 # ==========================================
 firebase_credentials_json = r"""
 {
   "type": "service_account",
-  "project_id": "good-boy-cac01",
-  "private_key_id": "4c2475b848c995d79503f420862cd6f0cefee505",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDjuCd673MJLhpy\nNZAp+wqa61XpoE1xQItawE5rzYtlbrNvBXrha+qY7fsT2TdC0qPcsO/63LBvvPV9\nyWVfW9pYc5KclNGe3I4myUX/HZgVbO2mktWwovaap+kEQmTuKjdYeQ2Or+TpF76s\nWNd0DcxDzV1Y/SQKXnRGsIdH7F9G+h7fWURAnaQjD6sZH1U4E08QoVAt1L46UB4P\nOKXBJF9QLzq5vKx4cxAD6fEsExC8WYGzplYiYrnJt0i1Tnp5idftBUYmi7i4HiUx\nW847zkRWu/D/J025DbbYjqnYYU9qBRjEh2ULjUTYSA0ppS563H6tK/hQZAHYyyuv\niSq77XJZAgMBAAECggEAS4NjUDB8SLSJn4rkkg9F/oaAuFbop2Acdg0kVDpWed3i\nUbQTAhKbunfcVUIoQZgBL6tbASjSt1MFY194Js2aU8+LdDIjaxc/alw/QnCpYJ19\nF0pE42y+8x0wN7Her12/ea620LTCZ4twts1FMR5sOKWuyVY0b93PmCtsyOx40dt6\nPOitW5WMeXlZpY0eiQ33FmQaNeIhf2csA8AUKojVw4YRYx5ydFLq3IBdW/LE4IjD\nELZEJLDQ9u3g+/XxA4V5L0iEi6dZklg4Gk3Z0OeGWvapgQV1IR8lFdKiVITs/4AV\n7hPw9w44dyVVgbbUStgmlwo6AUE/cfhlgIkMLK82gwKBgQD8SFDeITXn6GtE/WxG\ntXp+tooW/7os2vNzudmAMe9gaT2xuecWcE+ggdBSXUpR5KshbSVca/kT6v6fkAGU\ntJ1ckEHDKDLr0UGGS9bkl5KO4j+FTW30ZadixWpAp9u0RbYilqU0XpOxQdi8oQK5\nEifAE+/OXSx1Cy7yizkJhaeucwKBgQDnEy3OyYPyWyTmqPmP+kQL1y6OusQJT9om\nAKDQI2r3Xuiqih9v9nz7W0KV5I6mjKY/OmJ0ysk1QpWtJZJ62imakD/7l0tZ8UWD\nP+SMvSAZq4gnTj7tgBaYhsAeHcuTnBIRXtjRp9e7xnlv9gue8RpEiUOYpKNjy7u3\nXeunOcc9AwKBgCSdul8DIvfN3APfZF++51CM3e4In9Ty0nLxfogEt2Ge5L1u5gNz\nuZrqPHo34BmSvuPTG6EWashhSyONmy0iKdTNez4AD6P6czAywbXb6gGjBOUsH9Fh\nD7JeRNWth03a8FyE0OWQ9I69p9943xRNdkeCnUOuck1qmh3J5zVimLvRAoGBAMv3\n0PJ8TH0MWQlF1Gxzk8cD3TPdxhcWJlBvM4QmD1BltWh73X4eDHpvNtpK0mRPOJwN\nNEU1jt/1c1tQE/lfQ2QMun2hMcElyJ8vMdXNR12BXQCc/8zyyH9ASqsKz9zu4b/1\ngdumlTZJ3n2mqOFWn0IqC8HcaeE4P+1++Pk2dhjzAoGABu7mfhtal5WYxpa9u8Lv\nZUjlWcn+6B9ePWs0DNwbPPUD+Q/22kk9ZjW+JnZzPNqfEuqZ0KAX8CreukDhLHa9\n44ZAMF7GW/cemJNckK+4WCS2FhrHY6sqemPLLeK8cVjJycSz3i5UD+q2EDUNmXYN\nRIBb4t9Yn1KjYNHdvKmX88k=\n-----END PRIVATE KEY-----\n",
-  "client_email": "firebase-adminsdk-fbsvc@good-boy-cac01.iam.gserviceaccount.com",
-  "client_id": "105200390950507571801",
+  "project_id": "sadikul-b2b8a",
+  "private_key_id": "61818af700e11e61fe83475a189b4aa6d0573f39",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDCECvcx+DNBgdf\nVbS11ws1k8nYhFyRyLx6R9YUyxi1gXpAsixQFvCvtnEPfC0Znt3GYzOzLnZnhvSu\nPw5oMePnZAOn0bF1v3lQK/rnpsh1vlKCP4QSRCorJxhtIfWKFv7p10hZmaktoMZP\n6cfXyn95+It5/vsw1IsK3P7keLtSDn3dwbvWcm8LKQcDCh+1ra9zMf7+vw/ClAgF\nL8eaMb8J+f5MuLWVfZad8X1CvekVLESbUgZ6nkFVfcSXPW/5FpWq9uJvQ+V9dTBY\nTNnlpuSSf+kfTd0janymvMKo23KeG2bDgl2kfvPCmOhly2gd5adaIuUC2MdjBzt4\nt/MAQyKRAgMBAAECggEAQOkp0rpkng9TLfc778rTLAOX8z0qvXSYXopiuCfKxwNd\nAgDWw584uH1cyeIuL7Cs26vY4ik7X5uLgjEDP6TYZ1BTzLFeG1WFXWSokw19ZazY\nakqWgYmdVTvJds9yEtNoRo1E3PuB1Ao/6wD2YF6STxjshkzcdlPRgjuzYnZjqakq\n8LU+dbTpVELbEbO8oaji+oBhDuMzaGOgvbxPNCX4AdFTLWpXw3kII85w2RirLKA9\n4li4LqAqp4dgyPMITn3Xsf4+m9wLBgn6jUTCbAmOHvyC5YI7IMqdYuxSnjaECOfv\n63DKW0xpg1OHqTLfL5c0COWXe/r8jBH8/JBeTNJqZQKBgQD89ycOVUMS/Cpcc6je\nNOQqghCwi2yL7jksshlGQzWA/YJe5qw5ASHykYcix5HhBrOjL1FimyVYxezkKe2I\nUjlQ+pmBUT+20m5hpHuslqd0WE2tt8Dfaq6t7JvPymyMRkFWO+qtQ89QWT/CheQA\nMYlJ+bdyRyjW8gIEw3/IRPPn5wKBgQDEZCHRK7UKad+HLhQd5yovT+U0EOr+vJnQ\nG/FAjg7kC+od46qJ5Rqn1YtEVTMm7jX8/AwaH5UDzFPmjeWPLr1WcR2k06on2NQv\n0PZmOyIe/5lLXlXHxIIjVH7w5pJIOcrNldHxVNLZwPJYEjUzyTRe9rZNNzz4zW+p\nJhYFatNyxwKBgHO4LCmmX1Sj/kzkq+9airXXYgMhBLrOc2E658z4mdU0Ixt+snIx\nTnJEmGkUmmsyQaL41mYhSuhdQoztkTe3RXkB6o75uAfOI6iPMfQ1xsy2SHKbiKOr\njdUKVAyuMRHKYcEtD6HLT18WNNCrpy1fe8pXbc/dNZV+h+Xd+OqIgHspAoGAHt8W\nqcjTFqX560gFBYZXDUTj5MFcD1saWqppzBoIoTR2QuiM4ExRWlypHb6+4bnEZtZA\nGMMqK4StE6rukQlp3fK+FDDpqIXfJP0WHo/hFzpaoIxds59iTad0pO25xPzAsnyA\nmg0Zb/1ymwGRt2hDgUIK+ixau0mf6dkA0S0vu/UCgYEAkKleZE662o/JtBUEbOJT\nr/fNAZfSJkgGtOsfIlSE14mPRCO34SripRJ1X72j+1NslPdqKKZyzxpov6lj4V/Z\ntsfnnKZKJNl3xyWVPdBlP30XQ4xZRHN2aeteYIeAHMzAVm8TI4Xk6Ru0DLffi503\niKs4FV2iBPYKwCOJn5+S2zk=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@sadikul-b2b8a.iam.gserviceaccount.com",
+  "client_id": "115361300368288169762",
   "auth_uri": "https://accounts.google.com/o/oauth2/auth",
   "token_uri": "https://oauth2.googleapis.com/token",
   "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40good-boy-cac01.iam.gserviceaccount.com",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40sadikul-b2b8a.iam.gserviceaccount.com",
   "universe_domain": "googleapis.com"
 }
 """
 
-db = None
-
-def _init_firebase_with_timeout():
-    global db
-    try:
-        cred_dict = json.loads(firebase_credentials_json)
-        cred = credentials.Certificate(cred_dict)
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred)
-        _db = firestore.client()
-        try:
-            _db.collection('_startup_ping_').document('x').get(timeout=6.0)
-            db = _db
-            print("✅ Firebase Connected & VERIFIED! (Full Sync Enabled)")
-        except Exception as _te:
-            print(f"⚠️ Firebase auth FAILED: {type(_te).__name__}: {str(_te)[:100]}")
-            print("⚠️ Firebase DISABLED - running in LOCAL-ONLY mode.")
-            db = None
-    except Exception as e:
-        print(f"❌ Firebase Init Error: {e}")
-        print("⚠️ Running in LOCAL-ONLY mode.")
-        db = None
-
-_fb_t = threading.Thread(target=_init_firebase_with_timeout, daemon=True)
-_fb_t.start()
-_fb_t.join(timeout=20.0)
-if _fb_t.is_alive():
-    print("⏱ Firebase init TIMEOUT (20s) - switching to LOCAL-ONLY mode.")
+try:
+    cred_dict = json.loads(firebase_credentials_json)
+    cred = credentials.Certificate(cred_dict)
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    print("✅ Firebase Connected! (Full Sync Enabled)")
+except Exception as e:
+    print(f"❌ Firebase Error: {e}")
     db = None
-else:
-    print("🔍 Firebase init completed.")
 
 bot_settings = {
     "admins": [OWNER_ID],
@@ -721,17 +699,17 @@ def load_db():
     print("Loading DB...")
     if db:
         try:
-            print("   -> Fetching Firestore config (8s timeout)...")
-            doc = db.collection('settings').document('bot_config').get(timeout=8.0)
+            print("   -> Fetching Firestore config...")
+            doc = db.collection('settings').document('bot_config').get()
             if doc.exists:
                 fs_data = doc.to_dict()
                 for k in FS_KEYS:
                     if k in fs_data: bot_settings[k] = fs_data[k]
-                print("Config Loaded from Firestore!")
+                print("✅ Config Loaded from Firestore!")
             else:
                 fs_data = {k: bot_settings[k] for k in FS_KEYS}
-                db.collection('settings').document('bot_config').set(fs_data, timeout=8.0)
-                print("Firestore Config Initialized!")
+                db.collection('settings').document('bot_config').set(fs_data)
+                print("✅ Firestore Config Initialized!")
         except Exception as e:
             print(f"Firestore load skipped ({type(e).__name__}): {str(e)[:100]}")
             print("   -> Continuing with local DB only.")
@@ -759,7 +737,7 @@ def load_db():
                 stex_assigned_numbers = data.get("stex_assigned_numbers", {})
                 voltx_assigned_numbers = data.get("voltx_assigned_numbers", {})
                 assigned_number_meta.update(data.get("assigned_number_meta", {}))
-            print("Local Stock/UI DB Loaded Successfully!")
+            print("✅ Local Stock/UI DB Loaded Successfully!")
         except Exception as e:
             print(f"Error loading local DB: {e}")
 
@@ -803,7 +781,7 @@ def _sync_fs():
     if not db: return
     fs_data = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
     try:
-        db.collection('settings').document('bot_config').set(fs_data, timeout=8.0)
+        db.collection('settings').document('bot_config').set(fs_data)
     except Exception as e:
         print(f"Firestore sync failed: {e}")
 
@@ -817,7 +795,7 @@ def save_db():
 def _bg_load_db():
     try:
         load_db()
-        print("load_db() completed in background.")
+        print("✅ load_db() completed in background.")
     except Exception as e:
         print(f"load_db() crashed: {e}")
 
@@ -1116,9 +1094,26 @@ def mask_smart(num):
 def mask_number(num):
     return mask_smart(num)
 
-
-# ==========================================
-# User Cache / Balance / OTP Credit (FIXED)
+def extract_otp_code(text):
+    clean_text = re.sub(r'[\u200B-\u200D\uFEFF]', '', str(text))
+    multi_part = re.search(r'(\d{3}[-\s]+\d{3})|(\d{2}[-\s]+\d{2}[-\s]+\d{2})', clean_text)
+    if multi_part:
+        return multi_part.group(0).replace(" ", "")
+    otp_keywords = ['code', 'is', 'otp', 'pin', 'verification', 'auth', 'কোড', 'رمز', 'your code']
+    keywords_pattern = '|'.join(otp_keywords)
+    keyword_match = re.search(rf'(?:{keywords_pattern})\s*(?:is|:|-|=)?\s*([a-z0-9]{{4,10}})', clean_text, re.I)
+    if keyword_match and keyword_match.group(1).isdigit():
+        return keyword_match.group(1)
+    keyword_match_rev = re.search(rf'([a-z0-9]{{4,10}})\s*(?:is your|is the|কোড)', clean_text, re.I)
+    if keyword_match_rev and keyword_match_rev.group(1).isdigit():
+        return keyword_match_rev.group(1)
+    g_match = re.search(r'G-(\d{6})', clean_text, re.IGNORECASE)
+    if g_match: return g_match.group(1)
+    digit_matches = re.findall(r'(?<!\d)\d{4,8}(?!\d)', clean_text)
+    if digit_matches: return digit_matches[0]
+    return None
+    # ==========================================
+# User Cache / Balance / OTP Credit
 # ==========================================
 user_cache = {}
 
@@ -1130,7 +1125,7 @@ def get_user(user_id):
         return new_user
     try:
         doc_ref = db.collection('users').document(str(user_id))
-        doc = doc_ref.get(timeout=5.0)
+        doc = doc_ref.get()
         if doc.exists:
             data = doc.to_dict()
             if "total_otps" not in data: data["total_otps"] = 0
@@ -1140,7 +1135,7 @@ def get_user(user_id):
             return data
         else:
             new_user = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
-            doc_ref.set(new_user, timeout=5.0)
+            doc_ref.set(new_user)
             user_cache[user_id] = new_user
             return new_user
     except Exception as e:
@@ -1158,13 +1153,13 @@ def update_balance(user_id, amount):
     if not db: return
     try:
         doc_ref = db.collection('users').document(str(user_id))
-        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True, timeout=5.0)
+        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True)
     except: pass
 
 
 def credit_otp_to_user(owner_id, reward, app_full_name=""):
     """
-    FIXED: Atomically credit balance AND increment OTP count in cache + DB.
+    Atomically credit balance AND increment OTP count in cache + DB.
     Called on every OTP delivered to a user's DM.
     """
     try:
@@ -1185,7 +1180,7 @@ def credit_otp_to_user(owner_id, reward, app_full_name=""):
                 "user_id": owner_id,
                 "balance": firestore.Increment(reward),
                 "total_otps": firestore.Increment(1)
-            }, merge=True, timeout=5.0)
+            }, merge=True)
         except Exception as e:
             print(f"credit_otp_to_user DB error for {owner_id}: {e}")
 
@@ -1206,12 +1201,12 @@ def add_referral(inviter_id, new_user_id):
         send_message(inviter_id, render_body_text(ref_msg))
         return
     try:
-        doc = db.collection('users').document(str(new_user_id)).get(timeout=5.0)
+        doc = db.collection('users').document(str(new_user_id)).get()
         if not doc.exists:
             get_user(new_user_id)
             reward = bot_settings.get("refer_reward", 0.2)
             update_balance(inviter_id, reward)
-            db.collection('users').document(str(inviter_id)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
+            db.collection('users').document(str(inviter_id)).update({"total_refers": firestore.Increment(1)})
             ref_msg = (
                 f"{PEM['gift']} <b>New Referral !</b>\n"
                 f"------------------\n"
@@ -1223,262 +1218,10 @@ def add_referral(inviter_id, new_user_id):
     except: pass
 
 
-def extract_otp_code(text):
-    clean_text = re.sub(r'[\u200B-\u200D\uFEFF]', '', str(text))
-    multi_part = re.search(r'(\d{3}[-\s]+\d{3})|(\d{2}[-\s]+\d{2}[-\s]+\d{2})', clean_text)
-    if multi_part:
-        return multi_part.group(0).replace(" ", "")
-    otp_keywords = ['code', 'is', 'otp', 'pin', 'verification', 'auth', 'কোড', 'رمز', 'your code']
-    keywords_pattern = '|'.join(otp_keywords)
-    keyword_match = re.search(rf'(?:{keywords_pattern})\s*(?:is|:|-|=)?\s*([a-z0-9]{{4,10}})', clean_text, re.I)
-    if keyword_match and keyword_match.group(1).isdigit():
-        return keyword_match.group(1)
-    keyword_match_rev = re.search(rf'([a-z0-9]{{4,10}})\s*(?:is your|is the|কোড)', clean_text, re.I)
-    if keyword_match_rev and keyword_match_rev.group(1).isdigit():
-        return keyword_match_rev.group(1)
-    g_match = re.search(r'G-(\d{6})', clean_text, re.IGNORECASE)
-    if g_match: return g_match.group(1)
-    digit_matches = re.findall(r'(?<!\d)\d{4,8}(?!\d)', clean_text)
-    if digit_matches: return digit_matches[0]
-    return None
-
-
-def _extract_by_paths(data, p_config):
-    number_path = p_config.get("number_path", "").strip()
-    message_path = p_config.get("message_path", "").strip()
-    service_path = p_config.get("service_path", "").strip()
-    otp_list_path = p_config.get("otp_list_path", "").strip()
-    if not (number_path or message_path or service_path):
-        return None
-    root = data
-    if otp_list_path:
-        try:
-            dr = get_by_path(data, otp_list_path)
-            if dr is not None: root = dr
-        except: pass
-    items = root if isinstance(root, list) else [root]
-    results = []
-    for it in items:
-        if not isinstance(it, (dict, list)): continue
-        num_raw = get_by_path(it, number_path) if number_path else None
-        msg_raw = get_by_path(it, message_path) if message_path else None
-        svc_raw = get_by_path(it, service_path) if service_path else None
-        if num_raw is None: continue
-        clean_num = re.sub(r'\D', '', str(num_raw))
-        if not (5 <= len(clean_num) <= 18): continue
-        msg_str = str(msg_raw) if msg_raw is not None else ""
-        if len(msg_str) < 4: continue
-        otp = extract_otp_code(msg_str)
-        if not otp:
-            otp = "N/A"
-        svc_str = str(svc_raw).strip() if svc_raw is not None else ""
-        results.append({"number": clean_num, "message": msg_str, "otp": otp, "service_name": svc_str})
-    return results if results else None
-
-
-def parse_panel_response(response_text, p_config=None):
-    results = []
-    p_type = p_config.get("type", "API Panel") if p_config else "API Panel"
-    if p_type == "Auto Captcha Panel":
-        try:
-            soup = BeautifulSoup(response_text, 'html.parser')
-            tables = soup.find_all('table')
-            n_col_name = p_config.get("num_col_name", "number").lower() if p_config else "number"
-            m_col_name = p_config.get("msg_col_name", "message").lower() if p_config else "message"
-            s_col_name = p_config.get("service_col_name", "service").lower() if p_config else "service"
-            n_idx = int(p_config.get("num_col_idx", 1)) - 1 if p_config and p_config.get("num_col_idx") else 1
-            m_idx = int(p_config.get("msg_col_idx", 2)) - 1 if p_config and p_config.get("msg_col_idx") else 2
-            s_idx = int(p_config.get("service_col_idx", 3)) - 1 if p_config and p_config.get("service_col_idx") else 3
-            for table in tables:
-                rows = table.find_all('tr')
-                if not rows: continue
-                final_n_idx = n_idx; final_m_idx = m_idx; final_s_idx = s_idx
-                header_cells = rows[0].find_all(['th', 'td'])
-                for i, cell in enumerate(header_cells):
-                    c_text = cell.get_text(strip=True).lower()
-                    if n_col_name in c_text: final_n_idx = i
-                    if m_col_name in c_text: final_m_idx = i
-                    if s_col_name in c_text: final_s_idx = i
-                for row in rows:
-                    cols = row.find_all(['td', 'th'])
-                    if all(c.name == 'th' for c in cols): continue
-                    if len(cols) > max(final_n_idx, final_m_idx):
-                        num_text = cols[final_n_idx].get_text(separator=" ", strip=True)
-                        msg_text = cols[final_m_idx].get_text(separator=" ", strip=True)
-                        svc_text = cols[final_s_idx].get_text(separator=" ", strip=True) if len(cols) > final_s_idx else ""
-                        clean_num = re.sub(r'\D', '', num_text)
-                        if clean_num and 5 <= len(clean_num) <= 18:
-                            otp = extract_otp_code(msg_text)
-                            if not otp:
-                                otp = "N/A"
-                            if len(msg_text) > 4:
-                                results.append({"number": clean_num, "message": msg_text, "otp": otp, "service_name": svc_text.strip()})
-        except: pass
-        return results
-
-    try:
-        data = json.loads(response_text)
-    except:
-        return results
-
-    if p_config:
-        try:
-            path_results = _extract_by_paths(data, p_config)
-            if path_results:
-                return path_results
-        except: pass
-
-    temp_results = []
-    def process_item(item):
-        pot_nums_list = []; pot_msg = None; pot_svc = ""
-        values = []
-        if isinstance(item, dict):
-            lower_keys = {str(k).lower(): v for k, v in item.items()}
-            for k in ["number", "num", "phone", "msisdn", "sender"]:
-                if k in lower_keys:
-                    clean_val = re.sub(r'\D', '', str(lower_keys[k]))
-                    if 5 <= len(clean_val) <= 18 and clean_val not in pot_nums_list:
-                        pot_nums_list.append(clean_val)
-            for k in ["service", "app", "application", "type", "site"]:
-                if k in lower_keys:
-                    pot_svc = str(lower_keys[k]).strip()
-                    break
-            for k in ["message", "msg", "sms", "content", "text"]:
-                if k in lower_keys:
-                    val = str(lower_keys[k])
-                    if len(val) > 4:
-                        pot_msg = val
-                        break
-            values = list(item.values())
-        elif isinstance(item, list):
-            values = item
-        for v in values:
-            if isinstance(v, (dict, list)) or v is None: continue
-            v_str = str(v).strip()
-            clean_v = re.sub(r'\D', '', v_str)
-            if 7 <= len(clean_v) <= 18 and not re.search(r'[a-zA-Z]', v_str):
-                if not re.search(r'\d{4}[-/]\d{2}[-/]\d{2}', v_str) and not re.search(r'\d{2}:\d{2}:\d{2}', v_str) and "." not in v_str:
-                    if clean_v not in pot_nums_list: pot_nums_list.append(clean_v)
-            if len(v_str) > 4 and not v_str.isdigit():
-                if extract_otp_code(v_str):
-                    if pot_msg is None or len(v_str) > len(pot_msg): pot_msg = v_str
-        pot_num = None
-        if pot_nums_list:
-            matched_user_num = None
-            for n in pot_nums_list:
-                if n in stex_assigned_numbers or any(n in str(key) for key in stex_assigned_numbers.keys()):
-                    matched_user_num = n; break
-            if matched_user_num: pot_num = matched_user_num
-            elif len(pot_nums_list) >= 2: pot_num = pot_nums_list[1]
-            else: pot_num = pot_nums_list[0]
-        if pot_num and pot_msg:
-            otp = extract_otp_code(pot_msg)
-            if not otp:
-                otp = "N/A"
-            temp_results.append({"number": pot_num, "message": pot_msg, "otp": otp, "service_name": pot_svc})
-    def traverse_json(node):
-        if isinstance(node, list):
-            if len(node) > 0 and not isinstance(node[0], (dict, list)):
-                process_item(node)
-            for child in node:
-                if isinstance(child, (dict, list)): traverse_json(child)
-        elif isinstance(node, dict):
-            process_item(node)
-            for val in node.values():
-                if isinstance(val, (dict, list)): traverse_json(val)
-    traverse_json(data)
-    seen = set()
-    for r in temp_results:
-        uid = f"{r['number']}_{r['otp']}"
-        if uid not in seen:
-            seen.add(uid); results.append(r)
-    return results
-
-
-def attempt_auto_login(p, idx):
-    login_url = p.get("login_url", "").strip()
-    if not login_url.startswith("http"):
-        login_url = "http://" + login_url
-    if not login_url.lower().endswith('/login') and not login_url.lower().endswith('.php'):
-        login_url = f"{login_url.rstrip('/')}/login"
-    session = requests.Session()
-    session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-    })
-    try:
-        res = session.get(login_url, timeout=15)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        all_text = res.text
-        captcha_match = re.search(r'(\d+\s*[\+\-\*]\s*\d+)\s*[=\?:]', all_text)
-        if not captcha_match:
-            captcha_match = re.search(r'what is\s*(\d+\s*[\+\-\*]\s*\d+)', all_text, re.I)
-        if not captcha_match:
-            elements = soup.find_all(["label", "div", "span", "p", "strong"])
-            for el in elements:
-                txt = el.get_text(separator=" ", strip=True)
-                if any(op in txt for op in ["+", "-", "*"]):
-                    m = re.search(r'(\d+\s*[\+\-\*]\s*\d+)', txt)
-                    if m:
-                        captcha_match = m
-                        break
-        captcha_text = captcha_match.group(1) if captcha_match else "0 + 0"
-        answer = "0"
-        m2 = re.search(r'(\d+)\s*([\+\-\*])\s*(\d+)', captcha_text)
-        if m2:
-            a, op, b = int(m2.group(1)), m2.group(2), int(m2.group(3))
-            if op == '+': answer = str(a + b)
-            elif op == '-': answer = str(a - b)
-            elif op == '*': answer = str(a * b)
-        form = soup.find("form")
-        if not form:
-            p["login_status"] = "No login form found"
-            return False
-        action = form.get("action")
-        post_url = urljoin(login_url, action) if action else login_url
-        form_data = {}
-        for hidden in form.find_all("input", type="hidden"):
-            name = hidden.get("name")
-            if name: form_data[name] = hidden.get("value") or ""
-        user_input = form.find("input", {"name": re.compile(r"user|email|id", re.I)}) or \
-                     form.find("input", {"type": "text", "placeholder": re.compile(r"user|email", re.I)}) or \
-                     form.find("input", {"type": "text"})
-        pass_input = form.find("input", {"name": re.compile(r"pass", re.I)}) or \
-                     form.find("input", {"type": "password"})
-        captcha_input = form.find("input", {"placeholder": re.compile(r"answer|ans|code|verification|value|captcha", re.I)}) or \
-                        form.find("input", {"name": re.compile(r"ans|captcha|ver|code", re.I)})
-        user_field = user_input.get("name") if user_input else "username"
-        pass_field = pass_input.get("name") if pass_input else "password"
-        captcha_field = captcha_input.get("name") if captcha_input else "answer"
-        form_data[user_field] = p.get("username", "")
-        form_data[pass_field] = p.get("password", "")
-        if captcha_field:
-            form_data[captcha_field] = answer
-        login_req = session.post(post_url, data=form_data, allow_redirects=True, timeout=15)
-        msg_link = p.get("msg_link", "").strip()
-        if not msg_link.startswith("http") and msg_link != "":
-            msg_link = "http://" + msg_link
-        check_url = msg_link if msg_link else f"{login_url.split('/login')[0]}/client/SMSCDRStats"
-        check_res = session.get(check_url, timeout=10)
-        if 'logout' in login_req.text.lower() or 'logout' in check_res.text.lower() or 'sms reports' in check_res.text.lower() or 'dashboard' in check_res.text.lower() or 'cdrs' in check_res.text.lower():
-            panel_sessions[idx] = session
-            p["login_status"] = "Active & Fetching"
-            return True
-        else:
-            p["login_status"] = f"Login Failed (Math: {captcha_text} = {answer})"
-            return False
-    except Exception as e:
-        p["login_status"] = f"Error: {str(e)[:20]}"
-    return False
-    # ==========================================
-# Payout Lookup — FIXED (multi-fallback)
+# ==========================================
+# Payout Lookup — Multi-fallback
 # ==========================================
 def get_payout_for_number(clean_api_num, service_hint=""):
-    """
-    FIXED: Robustly resolve payout for a number.
-    Priority: stored assignment payout > exact country|service >
-              ISO match > country-name match > country-only > global default.
-    """
     reward = float(bot_settings.get("otp_reward", 0.0))
     meta = assigned_number_meta.get(clean_api_num, {})
 
@@ -1557,7 +1300,6 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                         detected_name = cinfo["name"]
                         break
 
-            # Try ISO match
             for k, v in pr.items():
                 try:
                     kc, ks = k.split("|", 1)
@@ -1567,7 +1309,6 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                         return float(v)
                 except:
                     continue
-            # Try name match
             if detected_name:
                 for k, v in pr.items():
                     try:
@@ -1624,13 +1365,9 @@ def get_wmethod_display_list():
 
 
 # ==========================================
-# OTP Display Formatter — FIXED (new format)
+# OTP Display Formatter (group format)
 # ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
-    """
-    Format: 🇲🇷MR |📱 | +2222🔹548 |✉️English
-    Uses premium emojis for flag, service, hidden marker, message icon.
-    """
     clean = str(num).lstrip('+').replace(" ", "")
     flag_html, iso, dial_code = get_country_from_num(num)
 
@@ -1729,13 +1466,26 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
     return text, kb
 
 
+# ==========================================
+# 🎯 build_numbers_header — FIXED FORMAT
+# ==========================================
+# Old format:
+#   ⚙️ THIS IS YOUR📱BANGLADESH🇧🇩 NUMBERS📱
+#   💰0.004/OTP🪨 📵
+#
+# NEW format (as requested):
+#                  💰{country_payout}/OTP📵
+#
+#   ⚙️THIS IS YOUR📱{country_name}{country_flag_emoji}NUMBERS📱
+# ==========================================
 def build_numbers_header(country, service=None):
-    HEADER_EMOJI_1 = "6282641460093260838"
-    HEADER_EMOJI_2 = "6267315814190290529"
-    PHONE_ICON     = "5197474438970363734"
-    NOPHONE_ICON   = "6266787022111773140"
+    HEADER_EMOJI_1 = "6282641460093260838"   # ⚙️
+    HEADER_EMOJI_2 = "6267315814190290529"   # 📱
+    PHONE_ICON     = "5197474438970363734"   # 📱
+    NOPHONE_ICON   = "6266787022111773140"   # 📵
     flag_html = get_flag_info_html(country)
 
+    # Payout resolution
     payout_val = float(bot_settings.get("otp_reward", 0.0))
     pr = bot_settings.get("otp_pair_rates", {})
     if service:
@@ -1752,15 +1502,17 @@ def build_numbers_header(country, service=None):
 
     payout_str = fmt_payout(payout_val)
 
+    money_icon = f'<tg-emoji emoji-id="{TAKA_EMOJI}">💰</tg-emoji>'
+    no_phone_icon = f'<tg-emoji emoji-id="{NOPHONE_ICON}">📵</tg-emoji>'
+    gear_icon = f'<tg-emoji emoji-id="{HEADER_EMOJI_1}">⚙️</tg-emoji>'
+    phone_icon_2 = f'<tg-emoji emoji-id="{HEADER_EMOJI_2}">📱</tg-emoji>'
+    phone_icon_end = f'<tg-emoji emoji-id="{PHONE_ICON}">📱</tg-emoji>'
+
     header = (
-        f'<tg-emoji emoji-id="{HEADER_EMOJI_1}">⚙️</tg-emoji> <b>THIS IS YOUR</b>'
-        f'<tg-emoji emoji-id="{HEADER_EMOJI_2}">📱</tg-emoji>'
-        f'<b>{html.escape(str(country).upper())}</b>'
-        f'{flag_html} <b>NUMBERS</b>'
-        f'<tg-emoji emoji-id="{PHONE_ICON}">📱</tg-emoji>\n'
-        f'<b><tg-emoji emoji-id="{TAKA_EMOJI}">💰</tg-emoji>{payout_str}/OTP'
-        f'<tg-emoji emoji-id="{ROCK_EMOJI}">🪨</tg-emoji></b> '
-        f'<tg-emoji emoji-id="{NOPHONE_ICON}">📵</tg-emoji>\n'
+        f"               {money_icon}{payout_str}/OTP{no_phone_icon}\n"
+        f"\n"
+        f"{gear_icon}<b>THIS IS YOUR</b>{phone_icon_2}<b>{html.escape(str(country).upper())}</b>"
+        f"{flag_html}<b>NUMBERS</b>{phone_icon_end}"
     )
     return render_body_text(header)
 
@@ -1962,7 +1714,7 @@ def is_user_banned(user_id):
     banned = False
     if db:
         try:
-            doc = db.collection('users').document(str(user_id)).get(timeout=5.0)
+            doc = db.collection('users').document(str(user_id)).get()
             banned = doc.exists and doc.to_dict().get("banned", False)
         except: pass
     user_banned_cache[user_id] = {'banned': banned, 'time': time.time()}
@@ -2010,7 +1762,7 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
 
 
 # ==========================================
-# Panel monitor (FIXED: uses credit_otp_to_user)
+# Panel monitor (uses credit_otp_to_user)
 # ==========================================
 def panel_monitor_thread():
     global processed_otps, recent_traffic, panel_sessions
@@ -2140,7 +1892,6 @@ def panel_monitor_thread():
                             owners = list(set(owners))
                             for owner_id in owners:
                                 reward = get_payout_for_number(clean_api_num, app_full_name)
-                                # FIXED: atomic credit + OTP count
                                 credit_otp_to_user(owner_id, reward, app_full_name)
                                 new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
                                 it, ik = deliver_to_inbox(owner_id, app_full_name, display_num, msg_text, new_bal, reward, lang)
@@ -2577,10 +2328,10 @@ def handle_message(msg):
             if inviter != chat_id:
                 if db:
                     try:
-                        doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
+                        doc = db.collection('users').document(str(chat_id)).get()
                         if not doc.exists:
                             get_user(chat_id)
-                            db.collection('users').document(str(chat_id)).update({"referred_by": inviter, "ref_paid": False}, timeout=5.0)
+                            db.collection('users').document(str(chat_id)).update({"referred_by": inviter, "ref_paid": False})
                     except: pass
 
     if not check_force_join(chat_id):
@@ -2692,7 +2443,7 @@ def handle_message(msg):
             target_uid = int(target_uid_str)
             if db:
                 try:
-                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)
+                    doc = db.collection('users').document(str(target_uid)).get()
                     if not doc.exists:
                         send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
                     current_bal = doc.to_dict().get('balance', 0.0)
@@ -2724,12 +2475,12 @@ def handle_message(msg):
             if db:
                 try:
                     doc_ref = db.collection('users').document(str(target_uid))
-                    doc = doc_ref.get(timeout=5.0)
+                    doc = doc_ref.get()
                     if not doc.exists:
                         send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
                     current_status = doc.to_dict().get("banned", False)
                     new_status = not current_status
-                    doc_ref.update({"banned": new_status}, timeout=5.0)
+                    doc_ref.update({"banned": new_status})
                     user_banned_cache[target_uid] = {'banned': new_status, 'time': time.time()}
                     if target_uid in user_cache:
                         user_cache[target_uid]["banned"] = new_status
@@ -2746,7 +2497,7 @@ def handle_message(msg):
             target_uid = int(target_uid_str)
             if db:
                 try:
-                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)
+                    doc = db.collection('users').document(str(target_uid)).get()
                     if not doc.exists:
                         send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
                     data = doc.to_dict()
@@ -3371,6 +3122,7 @@ def handle_message(msg):
                     else: hdr_country = query
                 except: hdr_country = query
             else: hdr_country = query
+            # ⭐ FIXED header — new format
             text_numbers = build_numbers_header(hdr_country)
             if wait_msg_id:
                 edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
@@ -3432,7 +3184,7 @@ def handle_message(msg):
                     db.collection('withdrawals').document(req_id).set({
                         "user_id": str(chat_id), "amount": amount, "method": method,
                         "status": "pending", "timestamp": firestore.SERVER_TIMESTAMP
-                    }, timeout=5.0)
+                    })
                 except: pass
             if bot_settings["w_group"]:
                 admin_msg = build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id)
@@ -3448,15 +3200,15 @@ def handle_message(msg):
         get_user(chat_id)
         if db:
             try:
-                doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
+                doc = db.collection('users').document(str(chat_id)).get()
                 if doc.exists:
                     u_data = doc.to_dict()
                     if u_data.get("referred_by") and not u_data.get("ref_paid"):
                         inviter = u_data["referred_by"]
-                        db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)
+                        db.collection('users').document(str(chat_id)).update({"ref_paid": True})
                         reward = bot_settings.get("refer_reward", 0.2)
                         update_balance(inviter, reward)
-                        db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
+                        db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)})
                         send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+${reward}</b>\n👤 <code>{chat_id}</code>"))
             except: pass
         c_msg = bot_settings["custom_messages"].get("start", {})
@@ -3505,7 +3257,6 @@ def handle_message(msg):
                    .replace("{min_w}", f"{float(bot_settings['min_withdraw']):.2f}"))
         txt = render_body_text(raw_txt)
         kb = []
-        # FIXED: use each method's custom premium emoji if configured
         for m_name, m_emoji_html, m_icon_id in get_wmethod_display_list():
             kb.append([{"text": m_name.strip(), "icon_custom_emoji_id": m_icon_id,
                         "callback_data": f"sel_wm_{m_name.strip()}", "style": "primary"}])
@@ -3579,7 +3330,7 @@ def build_data_zip():
                     zf.writestr("firestore_withdrawals.json", json.dumps(all_wd, default=str, indent=2))
                 except: pass
                 try:
-                    stg = db.collection('settings').document('bot_config').get(timeout=8.0)
+                    stg = db.collection('settings').document('bot_config').get()
                     if stg.exists:
                         zf.writestr("firestore_settings.json", json.dumps(stg.to_dict(), default=str, indent=2))
                 except: pass
@@ -3664,15 +3415,15 @@ def handle_callback(call):
             send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Thanks for joining!</b>"), reply_markup=main_menu(chat_id))
             if db:
                 try:
-                    doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
+                    doc = db.collection('users').document(str(chat_id)).get()
                     if doc.exists:
                         u_data = doc.to_dict()
                         if u_data.get("referred_by") and not u_data.get("ref_paid"):
                             inviter = u_data["referred_by"]
-                            db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)
+                            db.collection('users').document(str(chat_id)).update({"ref_paid": True})
                             reward = bot_settings.get("refer_reward", 0.2)
                             update_balance(inviter, reward)
-                            db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
+                            db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)})
                             send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+${reward}</b>\n👤 <code>{chat_id}</code>"))
                 except: pass
         else:
@@ -3802,6 +3553,7 @@ def handle_callback(call):
         kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_bs|{service}|{country}", "style": "danger"},
                    {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
+        # ⭐ FIXED header — new format
         text_numbers = build_numbers_header(country, service)
         edit_target = call.get("_edit_in_place")
         if edit_target:
@@ -4917,6 +4669,7 @@ def handle_callback(call):
                     else: hdr_country = query
                 except: hdr_country = query
             else: hdr_country = query
+            # ⭐ FIXED header — new format
             text_numbers = build_numbers_header(hdr_country, service_from_cb)
             edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
             user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
@@ -4988,6 +4741,7 @@ def handle_callback(call):
         kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n|{service}|{country}", "style": "danger"},
                    {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
+        # ⭐ FIXED header — new format
         text_numbers = build_numbers_header(country, service)
         try:
             edit_message(chat_id, msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
@@ -5030,7 +4784,7 @@ def handle_callback(call):
             else:
                 send_message(u_id, render_body_text(f"❌ Your ${amt} withdrawal request was rejected."))
             if db:
-                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"}, timeout=5.0)
+                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"})
                 except: pass
             del pending_withdrawals[req_id]
         else:
@@ -5038,7 +4792,7 @@ def handle_callback(call):
 
 
 # ==========================================
-# Voltx SMS Listener (FIXED)
+# Voltx SMS Listener — FIXED (uses credit_otp_to_user)
 # ==========================================
 def voltx_sms_listener():
     global processed_otps, recent_traffic, voltx_assigned_numbers
@@ -5090,7 +4844,6 @@ def voltx_sms_listener():
                                             owner_id = n_owner; break
                                 if owner_id:
                                     reward = get_payout_for_number(clean_api_num, app_full_name)
-                                    # FIXED: atomic credit + OTP count
                                     credit_otp_to_user(owner_id, reward, app_full_name)
                                     new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
                                     it, ik = deliver_to_inbox(owner_id, app_full_name, display_num, msg_text, new_bal, reward, lang)
@@ -5102,7 +4855,7 @@ def voltx_sms_listener():
 
 
 # ==========================================
-# Global (StexSMS) SMS Listener (FIXED)
+# StexSMS SMS Listener — FIXED (uses credit_otp_to_user)
 # ==========================================
 def global_sms_listener():
     global processed_otps, recent_traffic, stex_assigned_numbers
@@ -5154,7 +4907,6 @@ def global_sms_listener():
                                             owner_id = n_owner; break
                                 if owner_id:
                                     reward = get_payout_for_number(clean_api_num, app_full_name)
-                                    # FIXED: atomic credit + OTP count
                                     credit_otp_to_user(owner_id, reward, app_full_name)
                                     new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
                                     it, ik = deliver_to_inbox(owner_id, app_full_name, display_num, msg_text, new_bal, reward, lang)
