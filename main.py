@@ -101,7 +101,7 @@ GLOBAL_BODY_EMOJIS = {
 }
 
 # ==========================================
-# API PANEL FIELDS (REMOVED: FULL API URL, RETRY COUNT, COUNTRY PATH, TIMESTAMP PATH, SUCCESS PATH, SUCCESS VALUE, PLACEHOLDERS)
+# API PANEL FIELDS (Reduced set)
 # ==========================================
 API_PANEL_FIELDS = [
     ("NAME",           "name",               "5818775306974006843"),
@@ -142,7 +142,7 @@ def parse_curl_command(curl_str):
     return result
 
 # ==========================================
-# 🌍 Comprehensive World Country Database
+# 🌍 World Country Database
 # ==========================================
 COUNTRY_DB = {
     "1":   {"iso": "US", "name": "United States"},
@@ -349,7 +349,7 @@ DEFAULT_CUSTOM_MESSAGES = {
 }
 
 # ==========================================
-# Firebase Setup
+# Firebase Setup (with 20s timeout + graceful fallback)
 # ==========================================
 firebase_credentials_json = r"""
 {
@@ -367,15 +367,44 @@ firebase_credentials_json = r"""
 }
 """
 
-try:
-    cred_dict = json.loads(firebase_credentials_json)
-    cred = credentials.Certificate(cred_dict)
-    firebase_admin.initialize_app(cred)
-    db = firestore.client()
-    print("✅ Firebase Connected! (Full Sync Enabled)")
-except Exception as e:
-    print(f"❌ Firebase Error: {e}")
+db = None
+_firebase_ready = False
+
+def _init_firebase_with_timeout():
+    """Firebase init with 20-second timeout. Falls back to local-only mode if failed."""
+    global db, _firebase_ready
+    try:
+        cred_dict = json.loads(firebase_credentials_json)
+        cred = credentials.Certificate(cred_dict)
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+        _db = firestore.client()
+        # Quick ping test with 6s timeout to verify real connection
+        try:
+            _db.collection('_startup_ping_').document('x').get(timeout=6.0)
+            db = _db
+            _firebase_ready = True
+            print("✅ Firebase Connected & VERIFIED!")
+        except Exception as _te:
+            print(f"⚠️ Firebase auth FAILED: {type(_te).__name__}: {str(_te)[:120]}")
+            print("⚠️ Firebase DISABLED - running in LOCAL-ONLY mode.")
+            db = None
+            _firebase_ready = False
+    except Exception as e:
+        print(f"❌ Firebase Init Error: {e}")
+        print("⚠️ Running in LOCAL-ONLY mode.")
+        db = None
+        _firebase_ready = False
+
+_fb_t = threading.Thread(target=_init_firebase_with_timeout, daemon=True)
+_fb_t.start()
+_fb_t.join(timeout=20.0)
+if _fb_t.is_alive():
+    print("⏱ Firebase init TIMEOUT (20s) - switching to LOCAL-ONLY mode.")
     db = None
+    _firebase_ready = False
+else:
+    print("🔍 Firebase init completed.")
 
 bot_settings = {
     "admins": [OWNER_ID],
@@ -434,11 +463,7 @@ total_assigned_stats = 0
 processed_otps = set()
 recent_traffic = []
 user_banned_cache = {}
-
-# Per-number metadata (country/service/payout)
 assigned_number_meta = {}
-
-# Active HTTP sessions for Auto Captcha Panels
 panel_sessions = {}
 
 # ==========================================
@@ -584,11 +609,14 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
 user_active_sessions = {}
 
 def load_db():
+    """Load settings — Firestore first (if available), else local file. Timeout-safe."""
     global bot_settings, number_batches, used_numbers_list, total_uploaded_stats, total_assigned_stats, recent_traffic
     global stex_assigned_numbers, voltx_assigned_numbers, assigned_number_meta
+
+    # ---- Load from Firestore (only if db is available) ----
     if db:
         try:
-            doc = db.collection('settings').document('bot_config').get()
+            doc = db.collection('settings').document('bot_config').get(timeout=8.0)
             if doc.exists:
                 fs_data = doc.to_dict()
                 for k in FS_KEYS:
@@ -597,10 +625,12 @@ def load_db():
                 print("✅ Config Loaded from Firestore!")
             else:
                 fs_data = {k: bot_settings[k] for k in FS_KEYS}
-                db.collection('settings').document('bot_config').set(fs_data)
+                db.collection('settings').document('bot_config').set(fs_data, timeout=8.0)
                 print("✅ Firestore Config Initialized!")
         except Exception as e:
-            print(f"❌ Error loading from Firestore: {e}")
+            print(f"⚠️ Firestore load skipped ({type(e).__name__}): {str(e)[:100]}")
+
+    # ---- Load from local file (always — to get stock/UI data) ----
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding='utf-8') as f:
@@ -626,7 +656,7 @@ def load_db():
                 assigned_number_meta.update(data.get("assigned_number_meta", {}))
             print("✅ Local Stock/UI DB Loaded Successfully!")
         except Exception as e:
-            print(f"❌ Error loading local DB: {e}")
+            print(f"⚠️ Error loading local DB: {e}")
 
 def save_local_db():
     local_data = {
@@ -646,17 +676,31 @@ def save_local_db():
     except: pass
 
 def _sync_fs():
+    """Sync bot_settings to Firestore in background (if db available)."""
     if not db: return
     fs_data = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
     try:
-        db.collection('settings').document('bot_config').set(fs_data)
-    except: pass
+        db.collection('settings').document('bot_config').set(fs_data, timeout=8.0)
+    except Exception as e:
+        print(f"⚠️ Firestore sync failed: {e}")
 
 def save_db():
     save_local_db()
-    threading.Thread(target=_sync_fs, daemon=True).start()
+    if db:
+        threading.Thread(target=_sync_fs, daemon=True).start()
 
-load_db()
+# ==========================================
+# BACKGROUND LOAD — Bot starts immediately, DB loads in background
+# ==========================================
+def _bg_load_db():
+    try:
+        load_db()
+        print("✅ load_db() completed in background.")
+    except Exception as e:
+        print(f"❌ load_db() crashed: {e}")
+
+threading.Thread(target=_bg_load_db, daemon=True).start()
+print("🚀 load_db() started in background - bot starting now.")
 
 user_states = {}
 temp_data = {}
@@ -722,11 +766,14 @@ def sync_users_list():
                 with _users_lock:
                     all_known_users = set(json.load(f))
         if not all_known_users and db:
-            for doc in db.collection('users').select([]).stream():
-                with _users_lock:
-                    all_known_users.add(doc.id)
-            with open("users_list.json", "w") as f:
-                json.dump(list(all_known_users), f)
+            try:
+                for doc in db.collection('users').select([]).stream():
+                    with _users_lock:
+                        all_known_users.add(doc.id)
+                with open("users_list.json", "w") as f:
+                    json.dump(list(all_known_users), f)
+            except Exception as e:
+                print(f"⚠️ Firestore user list sync skipped: {e}")
     except: pass
 
 threading.Thread(target=sync_users_list, daemon=True).start()
@@ -907,7 +954,6 @@ def lang_full(code):
 # ==========================================
 # OTP Display Format
 # 🇳🇬 NG | 📱 | +2348🔹372 |✉️ English
-# Service Emoji না থাকলে: #ServiceName
 # ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
     clean = str(num).lstrip('+').replace(" ", "")
@@ -1152,7 +1198,7 @@ def is_user_banned(user_id):
     banned = False
     if db:
         try:
-            doc = db.collection('users').document(str(user_id)).get()
+            doc = db.collection('users').document(str(user_id)).get(timeout=5.0)
             banned = doc.exists and doc.to_dict().get("banned", False)
         except: pass
     user_banned_cache[user_id] = {'banned': banned, 'time': time.time()}
@@ -1380,7 +1426,7 @@ def attempt_auto_login(p, idx):
 
 
 # ==========================================
-# Panel Monitor Thread — Per-country Payout
+# Panel Monitor Thread
 # ==========================================
 def panel_monitor_thread():
     global processed_otps, recent_traffic, panel_sessions
@@ -1408,15 +1454,13 @@ def panel_monitor_thread():
                             del panel_sessions[idx]
                             save_db()
                             continue
-                    elif p.get("api_url") or p.get("full_api_url") or p.get("curl_command"):
-                        full_url = p.get("full_api_url", "").strip()
+                    elif p.get("api_url") or p.get("curl_command"):
                         url = p.get("api_url", "").strip()
                         token = p.get("token", "").strip()
                         curl_cmd = p.get("curl_command", "").strip()
                         parsed_data = []
                         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-                        
-                        # 1) Try CURL first if exists
+
                         if curl_cmd:
                             try:
                                 parsed_curl = parse_curl_command(curl_cmd)
@@ -1432,28 +1476,24 @@ def panel_monitor_thread():
                                     parsed_data = parse_panel_response(res.text, p)
                             except Exception as _ce:
                                 print(f"CURL fetch error (panel {idx}): {_ce}")
-                        
-                        # 2) Try API URL if no CURL data
-                        if not parsed_data and (full_url or url):
+
+                        if not parsed_data and url:
                             urls_to_try = []
-                            if full_url:
-                                urls_to_try.append(full_url)
+                            if "{token}" in url or "{key}" in url:
+                                urls_to_try.append(url.replace("{token}", token).replace("{key}", token))
+                            elif "token=" in url or "key=" in url:
+                                urls_to_try.append(url)
                             else:
-                                if "{token}" in url or "{key}" in url:
-                                    urls_to_try.append(url.replace("{token}", token).replace("{key}", token))
-                                elif "token=" in url or "key=" in url:
-                                    urls_to_try.append(url)
-                                else:
-                                    sep = '&' if '?' in url else '?'
-                                    urls_to_try.append(f"{url}{sep}token={token}")
-                                    urls_to_try.append(f"{url}{sep}key={token}&start=0")
-                                    urls_to_try.append(f"{url}{sep}key={token}")
+                                sep = '&' if '?' in url else '?'
+                                urls_to_try.append(f"{url}{sep}token={token}")
+                                urls_to_try.append(f"{url}{sep}key={token}&start=0")
+                                urls_to_try.append(f"{url}{sep}key={token}")
                             for try_url in urls_to_try:
                                 try:
                                     res = requests.get(try_url, headers=headers, timeout=10)
                                     parsed_data = parse_panel_response(res.text, p)
                                     if parsed_data:
-                                        if not full_url and try_url != url and token:
+                                        if try_url != url and token:
                                             p["api_url"] = try_url.replace(token, "{token}")
                                             save_db()
                                         break
@@ -1461,9 +1501,11 @@ def panel_monitor_thread():
                         if not parsed_data: continue
                     else:
                         continue
+
                     if p.get("type") != "Auto Captcha Panel":
                         limit = p.get("records", 0)
                         if limit > 0: parsed_data = parsed_data[:limit]
+
                     for item in parsed_data:
                         num = item["number"]
                         otp = item["otp"]
@@ -1513,7 +1555,7 @@ def panel_monitor_thread():
                                 if reward > 0:
                                     update_balance(owner_id, reward)
                                     if db:
-                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)})
+                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)}, timeout=5.0)
                                         except: pass
                                 new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
                                 inbox_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=False))
@@ -1526,25 +1568,33 @@ def panel_monitor_thread():
 
 
 # ==========================================
-# Firebase User Management
+# Firebase User Management (Local Cache + Firestore)
 # ==========================================
 user_cache = {}
 
 def get_user(user_id):
     if user_id in user_cache: return user_cache[user_id]
-    if not db: return {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0}
-    doc_ref = db.collection('users').document(str(user_id))
-    doc = doc_ref.get()
-    if doc.exists:
-        data = doc.to_dict()
-        if "total_otps" not in data: data["total_otps"] = 0
-        if "banned" not in data: data["banned"] = False
-        if "verified" not in data: data["verified"] = False
-        user_cache[user_id] = data
-        return data
-    else:
+    if not db:
         new_user = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
-        doc_ref.set(new_user)
+        user_cache[user_id] = new_user
+        return new_user
+    try:
+        doc_ref = db.collection('users').document(str(user_id))
+        doc = doc_ref.get(timeout=5.0)
+        if doc.exists:
+            data = doc.to_dict()
+            if "total_otps" not in data: data["total_otps"] = 0
+            if "banned" not in data: data["banned"] = False
+            if "verified" not in data: data["verified"] = False
+            user_cache[user_id] = data
+            return data
+        else:
+            new_user = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
+            doc_ref.set(new_user, timeout=5.0)
+            user_cache[user_id] = new_user
+            return new_user
+    except Exception as e:
+        new_user = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
         user_cache[user_id] = new_user
         return new_user
 
@@ -1554,7 +1604,7 @@ def update_balance(user_id, amount):
     if not db: return
     try:
         doc_ref = db.collection('users').document(str(user_id))
-        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True)
+        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True, timeout=5.0)
     except: pass
 
 def add_referral(inviter_id, new_user_id):
@@ -1565,12 +1615,12 @@ def add_referral(inviter_id, new_user_id):
         send_message(inviter_id, render_body_text(ref_msg))
         return
     try:
-        doc = db.collection('users').document(str(new_user_id)).get()
+        doc = db.collection('users').document(str(new_user_id)).get(timeout=5.0)
         if not doc.exists:
             get_user(new_user_id)
             reward = bot_settings.get("refer_reward", 0.2)
             update_balance(inviter_id, reward)
-            db.collection('users').document(str(inviter_id)).update({"total_refers": firestore.Increment(1)})
+            db.collection('users').document(str(inviter_id)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
             ref_msg = (f"{PEM['gift']} <b>New Referral !</b>\n------------------\n🔥 <b>You Received {reward} TK</b>\n------------------\n{PEM['user']} <b>From User ID:</b> <code>{new_user_id}</code>")
             send_message(inviter_id, render_body_text(ref_msg))
     except: pass
@@ -1854,7 +1904,6 @@ def panel_config_keyboard(idx):
     kb.append([{"text": action_text, "icon_custom_emoji_id": action_icon, "callback_data": f"tog_pnl_{idx}", "style": "danger" if p['status'] == 'ON' else "success"}])
 
     if p["type"] != "Auto Captcha Panel":
-        # Uses API_PANEL_FIELDS — already reduced in PART 1
         for label, field, emoji_id in API_PANEL_FIELDS:
             value = p.get(field, "")
             if field == "token":
@@ -1973,8 +2022,6 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
 
 # ==========================================
 # Numbers Header Builder
-# ⚙️THIS IS YOUR📱{country_name}{flag} NUMBERS📱
-# 💰{payout}/OTP 📵
 # ==========================================
 def build_numbers_header(country, service=None, payout=None):
     HEADER_EMOJI_1 = "6282641460093260838"
@@ -2049,10 +2096,12 @@ def handle_message(msg):
             inviter = int(parts[1])
             if inviter != chat_id:
                 if db:
-                    doc = db.collection('users').document(str(chat_id)).get()
-                    if not doc.exists:
-                        get_user(chat_id)
-                        db.collection('users').document(str(chat_id)).update({"referred_by": inviter, "ref_paid": False})
+                    try:
+                        doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
+                        if not doc.exists:
+                            get_user(chat_id)
+                            db.collection('users').document(str(chat_id)).update({"referred_by": inviter, "ref_paid": False}, timeout=5.0)
+                    except: pass
 
     if not check_force_join(chat_id):
         send_force_join_msg(chat_id)
@@ -2129,13 +2178,16 @@ def handle_message(msg):
                 send_message(chat_id, render_body_text("❌ Invalid ID!"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
             if db:
-                doc = db.collection('users').document(str(target_uid)).get()
-                if not doc.exists:
-                    send_message(chat_id, render_body_text("❌ User not found!"), reply_markup=get_cancel_kb()); return
-                current_bal = doc.to_dict().get('balance', 0.0)
-                temp_data[chat_id]["target_uid"] = target_uid
-                user_states[chat_id] = "wait_for_um_bal_amt"
-                send_message(chat_id, render_body_text(f"✅ User found!\n💰 Current Balance: {current_bal} ৳\n\n📝 Send amount (+/-):"), reply_markup=get_cancel_kb())
+                try:
+                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)
+                    if not doc.exists:
+                        send_message(chat_id, render_body_text("❌ User not found!"), reply_markup=get_cancel_kb()); return
+                    current_bal = doc.to_dict().get('balance', 0.0)
+                    temp_data[chat_id]["target_uid"] = target_uid
+                    user_states[chat_id] = "wait_for_um_bal_amt"
+                    send_message(chat_id, render_body_text(f"✅ User found!\n💰 Current Balance: {current_bal} ৳\n\n📝 Send amount (+/-):"), reply_markup=get_cancel_kb())
+                except Exception as e:
+                    send_message(chat_id, render_body_text(f"❌ DB error: {e}"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_um_bal_amt" and text:
             try:
@@ -2154,17 +2206,20 @@ def handle_message(msg):
                 send_message(chat_id, render_body_text("❌ Invalid ID!"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
             if db:
-                doc_ref = db.collection('users').document(str(target_uid))
-                doc = doc_ref.get()
-                if not doc.exists:
-                    send_message(chat_id, render_body_text("❌ User not found!"), reply_markup=get_cancel_kb()); return
-                current_status = doc.to_dict().get("banned", False)
-                new_status = not current_status
-                doc_ref.update({"banned": new_status})
-                user_banned_cache[target_uid] = {'banned': new_status, 'time': time.time()}
-                status_text = "BANNED 🚫" if new_status else "UNBANNED ✅"
-                send_message(chat_id, render_body_text(f"✅ User {target_uid} → {status_text}!"), reply_markup=main_menu(chat_id))
-                del user_states[chat_id]; del temp_data[chat_id]
+                try:
+                    doc_ref = db.collection('users').document(str(target_uid))
+                    doc = doc_ref.get(timeout=5.0)
+                    if not doc.exists:
+                        send_message(chat_id, render_body_text("❌ User not found!"), reply_markup=get_cancel_kb()); return
+                    current_status = doc.to_dict().get("banned", False)
+                    new_status = not current_status
+                    doc_ref.update({"banned": new_status}, timeout=5.0)
+                    user_banned_cache[target_uid] = {'banned': new_status, 'time': time.time()}
+                    status_text = "BANNED 🚫" if new_status else "UNBANNED ✅"
+                    send_message(chat_id, render_body_text(f"✅ User {target_uid} → {status_text}!"), reply_markup=main_menu(chat_id))
+                    del user_states[chat_id]; del temp_data[chat_id]
+                except Exception as e:
+                    send_message(chat_id, render_body_text(f"❌ DB error: {e}"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_um_prof_uid" and text:
             target_uid_str = text.strip()
@@ -2172,11 +2227,12 @@ def handle_message(msg):
                 send_message(chat_id, render_body_text("❌ Invalid ID!"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
             if db:
-                doc = db.collection('users').document(str(target_uid)).get()
-                if not doc.exists:
-                    send_message(chat_id, render_body_text("❌ User not found!"), reply_markup=get_cancel_kb()); return
-                data = doc.to_dict()
-                prof_text = f"""➖➖➖➖➖➖➖➖
+                try:
+                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)
+                    if not doc.exists:
+                        send_message(chat_id, render_body_text("❌ User not found!"), reply_markup=get_cancel_kb()); return
+                    data = doc.to_dict()
+                    prof_text = f"""➖➖➖➖➖➖➖➖
 👤 <b>USER PROFILE</b>
 ➖➖➖➖➖➖➖➖
 🆔 ID: <code>{target_uid}</code>
@@ -2185,9 +2241,11 @@ def handle_message(msg):
 🔐 OTPs: {data.get('total_otps', 0)}
 🚫 Banned: {data.get('banned', False)}
 ➖➖➖➖➖➖➖➖"""
-                kb = {"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "user_management", "style": "primary"}]]}
-                send_message(chat_id, render_body_text(prof_text), reply_markup=kb)
-                del user_states[chat_id]; del temp_data[chat_id]
+                    kb = {"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "user_management", "style": "primary"}]]}
+                    send_message(chat_id, render_body_text(prof_text), reply_markup=kb)
+                    del user_states[chat_id]; del temp_data[chat_id]
+                except Exception as e:
+                    send_message(chat_id, render_body_text(f"❌ DB error: {e}"), reply_markup=get_cancel_kb())
             return
 
         # ================== MENU DESIGN ==================
@@ -2621,36 +2679,6 @@ def handle_message(msg):
             send_message(chat_id, render_body_text(f"{PEM['ok']} <b>{field}</b> updated!"))
             send_message(chat_id, render_body_text(f"⚙️ <b>Configure</b> <b>{p['name']}</b>"), reply_markup=panel_config_keyboard(idx))
             return
-        elif state == "wait_for_p_api" and text:
-            idx = temp_data[chat_id]["p_idx"]
-            bot_settings["panels"][idx]["api_url"] = text.strip()
-            save_db()
-            delete_message(chat_id, msg["message_id"])
-            p = bot_settings["panels"][idx]
-            ui_text = f"⚙️ <b>Configure {p['name']}</b>\n\n<b>API URL:</b> <code>{p.get('api_url', 'None')}</code>"
-            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(ui_text), reply_markup=panel_config_keyboard(idx))
-            del user_states[chat_id]; del temp_data[chat_id]
-            return
-        elif state == "wait_for_p_tok" and text:
-            idx = temp_data[chat_id]["p_idx"]
-            bot_settings["panels"][idx]["token"] = text.strip()
-            save_db()
-            delete_message(chat_id, msg["message_id"])
-            p = bot_settings["panels"][idx]
-            ui_text = f"⚙️ <b>Configure {p['name']}</b>\n\n<b>Token:</b> <code>{p.get('token', 'None')}</code>"
-            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(ui_text), reply_markup=panel_config_keyboard(idx))
-            del user_states[chat_id]; del temp_data[chat_id]
-            return
-        elif state == "wait_for_p_fapi" and text:
-            idx = temp_data[chat_id]["p_idx"]
-            bot_settings["panels"][idx]["full_api_url"] = text.strip()
-            save_db()
-            delete_message(chat_id, msg["message_id"])
-            p = bot_settings["panels"][idx]
-            ui_text = f"⚙️ <b>Configure {p['name']}</b>\n\n<b>Full API:</b> <code>{p.get('full_api_url', 'None')}</code>"
-            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(ui_text), reply_markup=panel_config_keyboard(idx))
-            del user_states[chat_id]; del temp_data[chat_id]
-            return
         elif state == "wait_for_p_rec" and text:
             if text.isdigit():
                 idx = temp_data[chat_id]["p_idx"]
@@ -2922,7 +2950,6 @@ def handle_message(msg):
             first_name = msg.get("from", {}).get("first_name", "User")
             last_name = msg.get("from", {}).get("last_name", "")
             full_name = f"{first_name} {last_name}".strip()
-            # Balance কাটা হবে না — শুধু Approve হলে কাটা হবে
             pending_withdrawals[req_id] = {
                 "user_id": chat_id, "amount": amount, "method": method,
                 "number": number, "full_name": full_name
@@ -2932,7 +2959,7 @@ def handle_message(msg):
                     db.collection('withdrawals').document(req_id).set({
                         "user_id": str(chat_id), "amount": amount, "method": method,
                         "status": "pending", "timestamp": firestore.SERVER_TIMESTAMP
-                    })
+                    }, timeout=5.0)
                 except: pass
             if bot_settings["w_group"]:
                 admin_msg = build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id)
@@ -2957,17 +2984,19 @@ def handle_message(msg):
     if text.startswith("/start"):
         get_user(chat_id)
         if db:
-            doc = db.collection('users').document(str(chat_id)).get()
-            if doc.exists:
-                u_data = doc.to_dict()
-                if u_data.get("referred_by") and not u_data.get("ref_paid"):
-                    inviter = u_data["referred_by"]
-                    db.collection('users').document(str(chat_id)).update({"ref_paid": True})
-                    reward = bot_settings.get("refer_reward", 0.2)
-                    update_balance(inviter, reward)
-                    db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)})
-                    ref_msg = (f"{PEM['gift']} <b>New Referral !</b>\n------------------\n🔥 <b>You Received {reward} TK</b>\n------------------\n{PEM['user']} <b>From User ID:</b> <code>{chat_id}</code>")
-                    send_message(inviter, render_body_text(ref_msg))
+            try:
+                doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
+                if doc.exists:
+                    u_data = doc.to_dict()
+                    if u_data.get("referred_by") and not u_data.get("ref_paid"):
+                        inviter = u_data["referred_by"]
+                        db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)
+                        reward = bot_settings.get("refer_reward", 0.2)
+                        update_balance(inviter, reward)
+                        db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
+                        ref_msg = (f"{PEM['gift']} <b>New Referral !</b>\n------------------\n🔥 <b>You Received {reward} TK</b>\n------------------\n{PEM['user']} <b>From User ID:</b> <code>{chat_id}</code>")
+                        send_message(inviter, render_body_text(ref_msg))
+            except: pass
         c_msg = bot_settings["custom_messages"].get("start", {})
         txt = render_body_text(c_msg.get("text", f"{PEM['hi']} Welcome!"))
         kb = []
@@ -3092,13 +3121,10 @@ def build_data_zip():
     mem = io.BytesIO()
     try:
         with zipfile.ZipFile(mem, 'w', zipfile.ZIP_DEFLATED) as zf:
-            # Local DB
             if os.path.exists(DB_FILE):
                 zf.write(DB_FILE, DB_FILE)
-            # Users list
             if os.path.exists("users_list.json"):
                 zf.write("users_list.json", "users_list.json")
-            # Firestore: users collection
             if db:
                 try:
                     all_users_data = {}
@@ -3106,16 +3132,14 @@ def build_data_zip():
                         all_users_data[doc.id] = doc.to_dict()
                     zf.writestr("firestore_users.json", json.dumps(all_users_data, default=str, indent=2))
                 except: pass
-                # Firestore: withdrawals
                 try:
                     all_wd = {}
                     for doc in db.collection('withdrawals').stream():
                         all_wd[doc.id] = doc.to_dict()
                     zf.writestr("firestore_withdrawals.json", json.dumps(all_wd, default=str, indent=2))
                 except: pass
-                # Firestore: settings
                 try:
-                    stg = db.collection('settings').document('bot_config').get()
+                    stg = db.collection('settings').document('bot_config').get(timeout=8.0)
                     if stg.exists:
                         zf.writestr("firestore_settings.json", json.dumps(stg.to_dict(), default=str, indent=2))
                 except: pass
@@ -3131,7 +3155,6 @@ def delete_all_data():
     global number_batches, used_numbers_list, stex_assigned_numbers, voltx_assigned_numbers
     global total_uploaded_stats, total_assigned_stats, recent_traffic, assigned_number_meta
     global all_known_users
-    # Firestore delete
     if db:
         try:
             for doc in db.collection('users').stream():
@@ -3143,7 +3166,6 @@ def delete_all_data():
                 try: doc.reference.delete()
                 except: pass
         except: pass
-    # Local
     number_batches = {}
     used_numbers_list = []
     stex_assigned_numbers = {}
@@ -3184,7 +3206,6 @@ def handle_callback(call):
             answer_callback(call["id"], "🚫 You are banned!", show_alert=True)
             return
 
-        # MAINTENANCE CHECK (admin bypass)
         if bot_settings.get("maintenance", False) and not is_admin(chat_id):
             allowed_cb = ["close_msg", "check_fj", "cancel_state", "ignore"]
             if data not in allowed_cb:
@@ -3205,17 +3226,19 @@ def handle_callback(call):
             delete_message(chat_id, msg_id)
             send_message(chat_id, render_body_text(f"{PEM['ok']} Thanks for joining!"), reply_markup=main_menu(chat_id))
             if db:
-                doc = db.collection('users').document(str(chat_id)).get()
-                if doc.exists:
-                    u_data = doc.to_dict()
-                    if u_data.get("referred_by") and not u_data.get("ref_paid"):
-                        inviter = u_data["referred_by"]
-                        db.collection('users').document(str(chat_id)).update({"ref_paid": True})
-                        reward = bot_settings.get("refer_reward", 0.2)
-                        update_balance(inviter, reward)
-                        db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)})
-                        ref_msg = (f"{PEM['gift']} <b>New Referral !</b>\n------------------\n🔥 <b>You Received {reward} TK</b>\n------------------\n{PEM['user']} <b>From User ID:</b> <code>{chat_id}</code>")
-                        send_message(inviter, render_body_text(ref_msg))
+                try:
+                    doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
+                    if doc.exists:
+                        u_data = doc.to_dict()
+                        if u_data.get("referred_by") and not u_data.get("ref_paid"):
+                            inviter = u_data["referred_by"]
+                            db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)
+                            reward = bot_settings.get("refer_reward", 0.2)
+                            update_balance(inviter, reward)
+                            db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
+                            ref_msg = (f"{PEM['gift']} <b>New Referral !</b>\n------------------\n🔥 <b>You Received {reward} TK</b>\n------------------\n{PEM['user']} <b>From User ID:</b> <code>{chat_id}</code>")
+                            send_message(inviter, render_body_text(ref_msg))
+                except: pass
         else:
             answer_callback(call["id"], "❌ You haven't joined all channels!", show_alert=True)
         return
@@ -3510,6 +3533,9 @@ def handle_callback(call):
         num_map = {"1": "1️⃣", "2": "2️⃣", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣", "9": "9️⃣", "0": "0️⃣"}
         def get_p_num(n): return "".join([num_map.get(c, c) for c in str(n)])
         try:
+            if not db:
+                edit_message(chat_id, msg_id, render_body_text("❌ Firebase disabled!"), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]})
+                return
             if sub == "top_refs":
                 title, field, limit, icon = "TOP 5 REFERRERS", "total_refers", 5, PEM.get('user', '👥')
                 users = db.collection('users').order_by(field, direction="DESCENDING").limit(limit).stream()
@@ -4100,21 +4126,6 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx, "p_field": field}
         user_states[chat_id] = "wait_for_api_pf_value"
         edit_message(chat_id, msg_id, render_body_text(f"✏️ <b>Edit {label}</b>\n\n<b>Current:</b>\n<code>{html.escape(display)}</code>\n\n<b>Send new value:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
-    elif data.startswith("set_p_api_"):
-        idx = int(data.split("_")[3])
-        user_states[chat_id] = "wait_for_p_api"
-        temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
-        edit_message(chat_id, msg_id, render_body_text("📝 API URL:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
-    elif data.startswith("set_p_tok_"):
-        idx = int(data.split("_")[3])
-        user_states[chat_id] = "wait_for_p_tok"
-        temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
-        edit_message(chat_id, msg_id, render_body_text("📝 Token:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
-    elif data.startswith("set_p_fapi_"):
-        idx = int(data.split("_")[3])
-        user_states[chat_id] = "wait_for_p_fapi"
-        temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
-        edit_message(chat_id, msg_id, render_body_text("📝 Full API URL:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
     elif data.startswith("set_p_rec_"):
         idx = int(data.split("_")[3])
         user_states[chat_id] = "wait_for_p_rec"
@@ -4144,16 +4155,14 @@ def handle_callback(call):
                 check_url = msg_link if msg_link else f"{login_url.split('/login')[0]}/client/SMSCDRStats"
                 parsed, raw_text = fetch_cpt_panel_cdrs(p, sess, check_url)
             else:
-                full_url = p.get("full_api_url", "").strip()
                 url = p.get("api_url", "").strip()
                 token = p.get("token", "").strip()
                 curl_cmd = p.get("curl_command", "").strip()
-                if not full_url and not url and not curl_cmd:
+                if not url and not curl_cmd:
                     if wait_msg_id: delete_message(chat_id, wait_msg_id)
                     send_message(chat_id, render_body_text("❌ Set API URL or CURL first!")); return
 
                 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-                # Try CURL first
                 if curl_cmd:
                     try:
                         parsed_curl = parse_curl_command(curl_cmd)
@@ -4169,27 +4178,24 @@ def handle_callback(call):
                             raw_text = res.text
                             parsed = parse_panel_response(raw_text, p)
                     except Exception as _ce: pass
-                # Fallback URL
-                if not parsed and (full_url or url):
+                if not parsed and url:
                     urls_to_try = []
-                    if full_url: urls_to_try.append(full_url)
+                    if "{token}" in url or "{key}" in url:
+                        urls_to_try.append(url.replace("{token}", token).replace("{key}", token))
+                    elif "token=" in url or "key=" in url:
+                        urls_to_try.append(url)
                     else:
-                        if "{token}" in url or "{key}" in url:
-                            urls_to_try.append(url.replace("{token}", token).replace("{key}", token))
-                        elif "token=" in url or "key=" in url:
-                            urls_to_try.append(url)
-                        else:
-                            sep = '&' if '?' in url else '?'
-                            urls_to_try.append(f"{url}{sep}token={token}")
-                            urls_to_try.append(f"{url}{sep}key={token}&start=0")
-                            urls_to_try.append(f"{url}{sep}key={token}")
+                        sep = '&' if '?' in url else '?'
+                        urls_to_try.append(f"{url}{sep}token={token}")
+                        urls_to_try.append(f"{url}{sep}key={token}&start=0")
+                        urls_to_try.append(f"{url}{sep}key={token}")
                     for try_url in urls_to_try:
                         try:
                             res = requests.get(try_url, headers=headers, timeout=10)
                             raw_text = res.text
                             parsed = parse_panel_response(raw_text, p)
                             if parsed:
-                                if not full_url and try_url != url and token:
+                                if try_url != url and token:
                                     p["api_url"] = try_url.replace(token, "{token}")
                                     save_db()
                                 break
@@ -4554,7 +4560,7 @@ def handle_callback(call):
             else:
                 send_message(u_id, render_body_text(f"❌ Your {amt} ৳ withdrawal request was rejected."))
             if db:
-                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"})
+                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"}, timeout=5.0)
                 except: pass
             del pending_withdrawals[req_id]
         else:
@@ -4625,7 +4631,7 @@ def voltx_sms_listener():
                                         inbox_kb.append([{"text": f"Added {reward} tk", "icon_custom_emoji_id": "5420396762189831222", "callback_data": "ignore", "style": "primary"}])
                                     send_message(owner_id, inbox_msg, reply_markup={"inline_keyboard": inbox_kb})
                                     if db:
-                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)})
+                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)}, timeout=5.0)
                                         except: pass
                 except: pass
         except: pass
@@ -4696,7 +4702,7 @@ def global_sms_listener():
                                         inbox_kb.append([{"text": f"Added {reward} tk", "icon_custom_emoji_id": "5420396762189831222", "callback_data": "ignore", "style": "primary"}])
                                     send_message(owner_id, inbox_msg, reply_markup={"inline_keyboard": inbox_kb})
                                     if db:
-                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)})
+                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)}, timeout=5.0)
                                         except: pass
                 except: pass
         except: pass
