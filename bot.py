@@ -178,7 +178,6 @@ assigned_number_meta = {}
 _last_upload_bcast = {}
 _upload_in_progress = {}
 
-# ✨ UPDATED: Removed FULL API URL, RETRY COUNT, COUNTRY PATH, TIMESTAMP PATH, SUCCESS PATH, SUCCESS VALUE, PLACEHOLDERS
 API_PANEL_FIELDS = [
     ("NAME",           "name",               "5818775306974006843"),
     ("BASE URL",       "api_url",            "6285048454255220485"),
@@ -419,7 +418,7 @@ DEFAULT_CUSTOM_MESSAGES = {
     "select_country": {"text": f"📌 Select a country for {{service}}:", "buttons": []}, 
     "search_number": {"text": "╔═══════════╗\n     🔍 <b>SEARCH NUMBER</b>\n╚═══════════╝\n✅ Enter 3 to 9 digits  \nto search for a number.\n━━━━━━━━━━━━━\n📝 Example:\n➥ 880\n➥ 9227373\n━━━━━━━━━━━━━\n🔍 Fast Number Lookup System", "buttons": []},
     "traffic": {"text": f"{PEM['graph']} <b>Traffic Overview</b>\n\n{PEM['ok']} Available Numbers: {{avail}}\n{PEM['rocket']} Assigned Numbers: {{assigned}}", "buttons": []},
-    "refer": {"text": f"➖➖➖➖➖➖➖\n« {PEM['gift']} REFER & EARN »\n➖➖➖➖➖➖➖\n{PEM['link']} YOUR LINK:\n<code>{{ref_link}}</code>\n➖➖➖➖➖➖➖\n{PEM['user']} TOTAL REFERS: <b>{{total_ref}}</b>\n➖➖➖➖➖➖➖\n{PEM['money']} PER REFER: <b>{{ref_reward}} TK</b>\n➖➖➖➖➖➖➖", "buttons": []},
+    "refer": {"text": f"➖➖➖➖➖➖➖\n« {PEM['gift']} REFER & EARN »\n➖➖➖➖➖➖➖\n{PEM['link']} YOUR LINK:\n<code>{{ref_link}}</code>\n➖➖➖➖➖➖➖\n{PEM['user']} TOTAL REFERS: <b>{{total_ref}}</b>\n➖➖➖➖➖➖➖\n{PEM['money']} PER REFER: <b>${{ref_reward}}</b>\n➖➖➖➖➖➖➖", "buttons": []},
     "withdrawal": {"text": "➖➖➖➖➖➖➖\n《 🙈 <b>USER ID</b> : <code>{user_id}</code> 》\n➖➖➖➖➖➖➖\n☁️ <b>Total Otp:</b> <code>{total_otp}</code>\n➖➖➖➖➖➖➖\n🫂 <b>Reffer :</b><code>{total_ref}</code>\n➖➖➖➖➖➖➖\n📅 <b>BALANCE:</b> <code>${bal}</code>\n➖➖➖➖➖➖➖\n🔐 <b>MINIMUM:</b> <code>${min_w}</code>\n➖➖➖➖➖➖➖\n<blockquote><b>SELECT METHOD <tg-emoji emoji-id=\"5197474438970363734\">📱</tg-emoji></b></blockquote>", "buttons": []},
     "support": {"text": f"{PEM['msg']} Contact us for any help:", "buttons": []}
 }
@@ -1205,7 +1204,6 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
     return text, kb
 
 
-# ✨ UPDATED: Numbers header with country payout
 def build_numbers_header(country, service=None):
     HEADER_EMOJI_1 = "6282641460093260838"
     HEADER_EMOJI_2 = "6267315814190290529"
@@ -1213,7 +1211,6 @@ def build_numbers_header(country, service=None):
     NOPHONE_ICON   = "6266787022111773140"
     flag_html = get_flag_info_html(country)
 
-    # Calculate country payout
     payout_val = float(bot_settings.get("otp_reward", 0.0))
     pr = bot_settings.get("otp_pair_rates", {})
     if service:
@@ -1691,7 +1688,7 @@ def attempt_auto_login(p, idx):
 
 
 # ==========================================
-# Per-country/service Payout Resolver
+# Payout Helper
 # ==========================================
 def get_payout_for_number(clean_api_num, service_hint=""):
     reward = float(bot_settings.get("otp_reward", 0.0))
@@ -1755,9 +1752,6 @@ def get_wmethod_display_list():
     return out
 
 
-# ==========================================
-# Group OTP Keyboard Builder
-# ==========================================
 def build_group_kb(otp_value, fw=None):
     kb = [[{"text": f"{otp_value}", "icon_custom_emoji_id": COPY_EMOJI,
             "copy_text": {"text": otp_value}, "style": "success"}]]
@@ -1777,9 +1771,6 @@ def build_group_kb(otp_value, fw=None):
     return {"inline_keyboard": kb}
 
 
-# ==========================================
-# Withdrawal Group Message Builder
-# ==========================================
 def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id):
     frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
     web_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>'
@@ -1793,7 +1784,7 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
         f"🎙 <b>NEW WITHDRAWAL</b> {web_emoji}\n"
         f"{frog_emoji} <b>USER ID :</b><code>{chat_id}</code>\n"
         f"{user_emoji} <b>User :</b> <a href='tg://user?id={chat_id}'>{full_name}</a>\n"
-        f"{money_emoji} <b>BALANCE:</b> <code>{amount}</code>\n"
+        f"{money_emoji} <b>BALANCE:</b> <code>${amount}</code>\n"
         f"{phone_emoji} <b>NUMBER :</b> <code>{number}</code>\n"
         f"{bank_emoji} <b>METHOD :</b> {method_icon} <b>{method}</b>\n\n"
         f"{tkt_emoji} <b>WITHDRAW ID :</b> <code>{req_id}</code>"
@@ -1993,7 +1984,7 @@ def add_referral(inviter_id, new_user_id):
         ref_msg = (
             f"{PEM['gift']} <b>New Referral !</b>\n"
             f"------------------\n"
-            f"<b>You Received {reward} TK</b>\n"
+            f"<b>You Received ${reward}</b>\n"
             f"------------------\n"
             f"<b>From User ID:</b> <code>{new_user_id}</code>"
         )
@@ -2009,7 +2000,7 @@ def add_referral(inviter_id, new_user_id):
             ref_msg = (
                 f"{PEM['gift']} <b>New Referral !</b>\n"
                 f"------------------\n"
-                f"<b>You Received {reward} TK</b>\n"
+                f"<b>You Received ${reward}</b>\n"
                 f"------------------\n"
                 f"<b>From User ID:</b> <code>{new_user_id}</code>"
             )
@@ -2068,7 +2059,6 @@ def get_admin_text():
 """
     return render_body_text(txt)
 
-# ✨ UPDATED: Added 📁DATABASE and MAINTENENCE toggle
 def admin_panel_keyboard():
     maint_on = bot_settings.get("maintenance", False)
     if maint_on:
@@ -2089,7 +2079,6 @@ def admin_panel_keyboard():
         [{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}]
     ]}
 
-# ✨ NEW: Database Menu Keyboard
 def database_menu_keyboard():
     return {"inline_keyboard": [
         [{"text": "DOWNLOAD DATA", "icon_custom_emoji_id": "6203886371363364022", "callback_data": "db_download", "style": "success"}],
@@ -2098,7 +2087,6 @@ def database_menu_keyboard():
         [{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "primary"}]
     ]}
 
-# ✨ UPDATED: SUBSCRIPTION → CHANGE PAYOUT
 def system_settings_keyboard():
     return {"inline_keyboard": [
         [{"text": "StexSMS Control", "icon_custom_emoji_id": "5336972142066047577", "callback_data": "stex_control", "style": "success"},
@@ -2295,7 +2283,6 @@ def panel_config_keyboard(idx):
     action_text = "STOP POLLING" if p['status'] == 'ON' else "START POLLING"
     action_icon = "5318840353510408444" if p['status'] == 'ON' else "5192812028632274956"
     kb.append([{"text": action_text, "icon_custom_emoji_id": action_icon, "callback_data": f"tog_pnl_{idx}", "style": "danger" if p['status'] == 'ON' else "success"}])
-    # UPDATED: Uses reduced API_PANEL_FIELDS
     for label, field, emoji_id in API_PANEL_FIELDS:
         value = p.get(field, "")
         if field == "token":
@@ -2576,7 +2563,7 @@ def handle_message(msg):
                     user_states[chat_id] = "wait_for_um_bal_amt"
                     send_message(chat_id, render_body_text(
                         f"{PEM['ok']} <b>User found!</b>\n\n"
-                        f"💰 <b>Current Balance:</b> <b>{current_bal}</b>\n\n"
+                        f"💰 <b>Current Balance:</b> <b>${current_bal}</b>\n\n"
                         f"📝 <b>Send amount to ADD/REMOVE:</b>"
                     ), reply_markup=get_cancel_kb())
                 except Exception as e:
@@ -2587,7 +2574,7 @@ def handle_message(msg):
                 amt = float(text.strip()); target_uid = temp_data[chat_id]["target_uid"]
                 update_balance(target_uid, amt)
                 send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Balance updated for</b> <b>{target_uid}!</b>"), reply_markup=main_menu(chat_id))
-                send_message(target_uid, render_body_text(f"🔔 <b>Your balance adjusted by</b> <b>{amt}</b>"))
+                send_message(target_uid, render_body_text(f"🔔 <b>Your balance adjusted by</b> <b>${amt}</b>"))
                 del user_states[chat_id]; del temp_data[chat_id]
             except ValueError:
                 send_message(chat_id, render_body_text("❌ <b>Invalid amount!</b>"), reply_markup=get_cancel_kb())
@@ -2628,7 +2615,7 @@ def handle_message(msg):
 👤 <b>USER PROFILE</b>
 ➖➖➖➖➖➖➖➖
 🆔 <b>ID:</b> <code>{target_uid}</code>
-💰 <b>Balance:</b> <b>{data.get('balance', 0.0)}</b>
+💰 <b>Balance:</b> <b>${data.get('balance', 0.0)}</b>
 🤝 <b>Refers:</b> <b>{data.get('total_refers', 0)}</b>
 🔐 <b>OTPs:</b> <b>{data.get('total_otps', 0)}</b>
 🚫 <b>Banned:</b> <b>{data.get('banned', False)}</b>
@@ -3105,7 +3092,7 @@ def handle_message(msg):
                 edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA</b>\n\n❌ <b>Invalid!</b>"), reply_markup=dxa_control_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
-        # ================== CHANGE PAYOUT - New Value ==================
+        # ================== CHANGE PAYOUT ==================
         elif state == "set_payout_value" and text:
             msg_id = temp_data[chat_id]["msg_id"]
             service = temp_data[chat_id]["service"]
@@ -3133,8 +3120,8 @@ def handle_message(msg):
         # ================== DATABASE RESTORE ==================
         elif state == "wait_for_data_zip" and "document" in msg:
             doc = msg["document"]
-            if doc["file_name"] != "DXA_BOT_DATA.zip":
-                send_message(chat_id, render_body_text(f"{PEM['no']} <b>File name must be exactly</b> <code>DXA_BOT_DATA.zip</code>"))
+            if doc["file_name"] != "STR_BOT_DATA.zip":
+                send_message(chat_id, render_body_text(f"{PEM['no']} <b>File name must be exactly</b> <code>STR_BOT_DATA.zip</code>"))
                 return
             file_id = doc["file_id"]
             file_info = requests.get(f"{BASE_URL}/getFile?file_id={file_id}").json()
@@ -3269,15 +3256,15 @@ def handle_message(msg):
                 amount = float(text.strip())
                 bal = temp_data[chat_id]["balance"]; min_w = bot_settings['min_withdraw']
                 if amount < min_w:
-                    if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(f"❌ <b>Min</b> <b>{min_w}!</b>\n💰 <b>Balance:</b> <b>{bal}</b>"), reply_markup=get_cancel_kb())
+                    if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(f"❌ <b>Min</b> <b>${min_w}!</b>\n💰 <b>Balance:</b> <b>${bal}</b>"), reply_markup=get_cancel_kb())
                     return
                 if amount > bal:
-                    if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(f"❌ <b>Insufficient!</b>\n💰 <b>Balance:</b> <b>{bal}</b>"), reply_markup=get_cancel_kb())
+                    if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(f"❌ <b>Insufficient!</b>\n💰 <b>Balance:</b> <b>${bal}</b>"), reply_markup=get_cancel_kb())
                     return
                 temp_data[chat_id]["amount"] = amount
                 user_states[chat_id] = "wait_for_withdraw_number"
                 if msg_id_to_edit:
-                    edit_message(chat_id, msg_id_to_edit, render_body_text(f"{PEM['ok']} <b>Amount:</b> <b>{amount}</b>\n\n📱 <b>Send</b> <b>{temp_data[chat_id]['method']}</b> <b>number:</b>"), reply_markup=get_cancel_kb())
+                    edit_message(chat_id, msg_id_to_edit, render_body_text(f"{PEM['ok']} <b>Amount:</b> <b>${amount}</b>\n\n📱 <b>Send</b> <b>{temp_data[chat_id]['method']}</b> <b>number:</b>"), reply_markup=get_cancel_kb())
             except ValueError:
                 if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text("❌ <b>Invalid amount!</b>"), reply_markup=get_cancel_kb())
             return
@@ -3312,7 +3299,6 @@ def handle_message(msg):
             first_name = msg.get("from", {}).get("first_name", "User")
             last_name = msg.get("from", {}).get("last_name", "")
             full_name = f"{first_name} {last_name}".strip()
-            # NOTE: Balance NOT deducted here — only on Approve
             pending_withdrawals[req_id] = {"user_id": chat_id, "amount": amount, "method": method, "number": number, "full_name": full_name}
             if db:
                 try:
@@ -3326,7 +3312,7 @@ def handle_message(msg):
                 kb = {"inline_keyboard": [[{"text": "APPROVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"wapp_{req_id}", "style": "success"}, {"text": "REJECT", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"wrej_{req_id}", "style": "danger"}]]}
                 send_message(bot_settings["w_group"], admin_msg, reply_markup=kb)
             kb = {"inline_keyboard": [[{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}]]}
-            success_text = f"{PEM['ok']} <b>Submitted!</b>\n\n🧾 <b>{req_id}</b>\n💰 <b>{amount}</b>\n🏦 <b>{method}</b>\n📱 <code>{number}</code>"
+            success_text = f"{PEM['ok']} <b>Submitted!</b>\n\n🧾 <b>{req_id}</b>\n💰 <b>${amount}</b>\n🏦 <b>{method}</b>\n📱 <code>{number}</code>"
             if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(success_text), reply_markup=kb)
             else: send_message(chat_id, render_body_text(success_text), reply_markup=kb)
             del user_states[chat_id]; del temp_data[chat_id]; return
@@ -3347,7 +3333,7 @@ def handle_message(msg):
                         reward = bot_settings.get("refer_reward", 0.2)
                         update_balance(inviter, reward)
                         db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
-                        send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+{reward} TK</b>\n👤 <code>{chat_id}</code>"))
+                        send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+${reward}</b>\n👤 <code>{chat_id}</code>"))
             except: pass
         c_msg = bot_settings["custom_messages"].get("start", {})
         start_text = c_msg.get("text", "").strip()
@@ -3435,7 +3421,7 @@ def handle_message(msg):
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb} if kb else None)
         # ==========================================
-# Database Helpers (for DATABASE menu)
+# Database Helpers
 # ==========================================
 def build_data_zip():
     mem = io.BytesIO()
@@ -3524,7 +3510,6 @@ def handle_callback(call):
             answer_callback(call["id"], "🚫 Banned!", show_alert=True)
             return
 
-        # MAINTENANCE CHECK
         if bot_settings.get("maintenance", False) and not is_admin(chat_id):
             allowed_cb = ["close_msg", "check_fj", "cancel_state", "ignore"]
             if data not in allowed_cb:
@@ -3555,7 +3540,7 @@ def handle_callback(call):
                             reward = bot_settings.get("refer_reward", 0.2)
                             update_balance(inviter, reward)
                             db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
-                            send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+{reward} TK</b>\n👤 <code>{chat_id}</code>"))
+                            send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+${reward}</b>\n👤 <code>{chat_id}</code>"))
                 except: pass
         else:
             answer_callback(call["id"], "❌ Join all channels first!", show_alert=True)
@@ -3608,7 +3593,9 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, txt, reply_markup=markup)
         answer_callback(call["id"], "✅ Refreshed!", show_alert=False)
 
-    # ============ Get Numbers from broadcast ============
+    # ==========================================
+    # Get Numbers from broadcast
+    # ==========================================
     elif data.startswith("g_bs|"):
         user_states.pop(chat_id, None)
         temp_data.pop(chat_id, None)
@@ -3769,7 +3756,9 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(f"📊 <b>Ranges:</b> {prem_app_html} <b>{app_full_name}</b> - {prem_flag_html} <b>{iso_query}</b>"), reply_markup={"inline_keyboard": kb})
         answer_callback(call["id"])
 
-    # ============ User Management ============
+    # ==========================================
+    # User Management
+    # ==========================================
     elif data == "user_management":
         edit_message(chat_id, msg_id, get_user_management_text(), reply_markup=user_management_keyboard())
     elif data == "um_manage_balance":
@@ -3785,7 +3774,9 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>Send User ID:</b>"), reply_markup=get_cancel_kb())
 
-    # ============ Menu Design ============
+    # ==========================================
+    # Menu Design
+    # ==========================================
     elif data == "menu_design_list":
         edit_message(chat_id, msg_id, render_body_text("🎨 <b>Menu Design Editor</b>"), reply_markup=menu_design_list_keyboard())
     elif data == "md_reset_defaults":
@@ -3826,16 +3817,18 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"⚙️ <b>Buttons:</b> <b>{key.upper()}</b>"), reply_markup=menu_buttons_list_keyboard(key))
 
-    # ============ Withdraw method selection ============
+    # ==========================================
+    # Withdraw method
+    # ==========================================
     elif data.startswith("sel_wm_"):
         method = data.replace("sel_wm_", "")
         bal = get_user(chat_id).get('balance', 0.0)
         min_w = bot_settings['min_withdraw']
         if bal < min_w:
-            answer_callback(call["id"], f"❌ Min {min_w} required!", show_alert=True); return
+            answer_callback(call["id"], f"❌ Min ${min_w} required!", show_alert=True); return
         temp_data[chat_id] = {"method": method, "balance": bal, "msg_id": msg_id}
         user_states[chat_id] = "wait_for_withdraw_amount"
-        edit_message(chat_id, msg_id, render_body_text(f"{PEM['ok']} <b>{method}</b>\n💰 <b>{bal}</b>\n\n<b>Enter amount:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text(f"{PEM['ok']} <b>{method}</b>\n💰 <b>${bal}</b>\n\n<b>Enter amount:</b>"), reply_markup=get_cancel_kb())
         answer_callback(call["id"])
 
     elif data == "test_message_flow":
@@ -3843,7 +3836,9 @@ def handle_callback(call):
         temp_data[chat_id] = {}
         edit_message(chat_id, msg_id, render_body_text("🧪 <b>Send Service:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "danger"}]]})
 
-    # ============ Broadcast / Upload / Delete ============
+    # ==========================================
+    # Broadcast / Upload / Delete
+    # ==========================================
     elif data == "broadcast_msg":
         user_states[chat_id] = "wait_for_broadcast"
         edit_message(chat_id, msg_id, render_body_text("📢 <b>Send message to broadcast:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
@@ -3882,7 +3877,9 @@ def handle_callback(call):
         send_document(chat_id, "unused_numbers.txt", "\n".join(unused_list).encode('utf-8'))
         answer_callback(call["id"])
 
-    # ============ Leaderboard ============
+    # ==========================================
+    # Leaderboard
+    # ==========================================
     elif data == "lb_main":
         txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
@@ -3928,7 +3925,7 @@ def handle_callback(call):
                     s = str(d.get('status','Pending')).lower()
                     stat_icon = "✅" if s in ["approved","success"] else "❌" if s=="rejected" else "⏳"
                     uid = d.get('user_id','User')
-                    res_txt += f"| {count} <a href='tg://user?id={uid}'>{uid}</a> → <b>{d.get('amount',0)}</b> {stat_icon}\n"
+                    res_txt += f"| {count} <a href='tg://user?id={uid}'>{uid}</a> → <b>${d.get('amount',0)}</b> {stat_icon}\n"
                     count += 1
                 if not res_txt: res_txt = "No history.\n"
             final_msg = f"━━━━━━━━━━━━━━━\n📊 <b>{title}</b>\n━━━━━━━━━━━━━━━\n{res_txt}━━━━━━━━━━━━━━━"
@@ -3943,7 +3940,9 @@ def handle_callback(call):
     elif data == "system_settings":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['gear']} <b>System Settings</b>"), reply_markup=system_settings_keyboard())
 
-    # ============ MAINTENANCE TOGGLE ============
+    # ==========================================
+    # MAINTENANCE TOGGLE
+    # ==========================================
     elif data == "toggle_maintenance":
         current = bot_settings.get("maintenance", False)
         bot_settings["maintenance"] = not current
@@ -3962,7 +3961,9 @@ def handle_callback(call):
             )
             threading.Thread(target=broadcast_text_all, args=(render_body_text(thanks_msg),), daemon=True).start()
 
-    # ============ DATABASE MENU ============
+    # ==========================================
+    # DATABASE MENU
+    # ==========================================
     elif data == "database_menu":
         txt = (
             f'{PEM["file"]} <b>DATABASE MANAGEMENT</b>\n'
@@ -3978,7 +3979,7 @@ def handle_callback(call):
             raw = build_data_zip()
             if wait_id: delete_message(chat_id, wait_id)
             if raw:
-                send_document_bytes(chat_id, "DXA_BOT_DATA.zip", raw)
+                send_document_bytes(chat_id, "STR_BOT_DATA.zip", raw)
                 send_message(chat_id, render_body_text(f'{PEM["ok"]} <b>Database Downloaded!</b>'), reply_markup=database_menu_keyboard())
             else:
                 send_message(chat_id, render_body_text(f'{PEM["no"]} <b>Failed to build zip!</b>'))
@@ -3988,7 +3989,7 @@ def handle_callback(call):
 
     elif data == "db_upload":
         user_states[chat_id] = "wait_for_data_zip"
-        edit_message(chat_id, msg_id, render_body_text("📂 Send the <code>DXA_BOT_DATA.zip</code> file to restore:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "database_menu", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📂 Send the <code>STR_BOT_DATA.zip</code> file to restore:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "database_menu", "style": "danger"}]]})
 
     elif data == "db_delete_confirm":
         txt = (
@@ -4008,7 +4009,9 @@ def handle_callback(call):
     elif data == "db_delete_no":
         edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>Cancelled.</b>'), reply_markup=database_menu_keyboard())
 
-    # ============ CHANGE PAYOUT Flow ============
+    # ==========================================
+    # CHANGE PAYOUT Flow
+    # ==========================================
     elif data == "change_payout_menu":
         local_srvs = set([b["service"] for b in number_batches.values() if b["numbers"]])
         stex_srvs = set(bot_settings.get("stex_services", {}).keys())
@@ -4089,13 +4092,15 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id, "service": srv, "country": country}
 
         txt = (
-            f'<b>{country}</b>{country_flag} <b>Payout :</b> <code>{current_payout}</code>\n\n'
+            f'<b>{country}</b>{country_flag} <b>Payout :</b> <code>${current_payout}</code>\n\n'
             f'<b>Send The New Value</b> <code>country_payout</code> :'
         )
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=get_cancel_kb())
         answer_callback(call["id"])
 
-    # ============ Stex Control ============
+    # ==========================================
+    # Stex Control
+    # ==========================================
     elif data == "stex_control":
         edit_message(chat_id, msg_id, render_body_text(f"🌐 <b>StexSMS Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('stex_keys', []))}</b>"), reply_markup=stex_control_keyboard())
     elif data == "add_stex_key":
@@ -4204,7 +4209,9 @@ def handle_callback(call):
         save_db()
         handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": f"nx_srv_{srv}", "id": call["id"]})
 
-    # ============ Voltx Control ============
+    # ==========================================
+    # Voltx Control
+    # ==========================================
     elif data == "voltx_control":
         edit_message(chat_id, msg_id, render_body_text(f"⚡ <b>Voltx Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('voltx_keys', []))}</b>"), reply_markup=voltx_control_keyboard())
     elif data == "add_voltx_key":
@@ -4313,7 +4320,9 @@ def handle_callback(call):
         save_db()
         handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": f"vx_srv_{srv}", "id": call["id"]})
 
-    # ============ Force Join ============
+    # ==========================================
+    # Force Join
+    # ==========================================
     elif data == "manage_fj":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
     elif data == "toggle_fj":
@@ -4330,7 +4339,9 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
 
-    # ============ Admin Management ============
+    # ==========================================
+    # Admin Management
+    # ==========================================
     elif data == "manage_admins":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['user']} <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
     elif data == "add_adm":
@@ -4344,7 +4355,9 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['user']} <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
 
-    # ============ OTP Group ============
+    # ==========================================
+    # OTP Group
+    # ==========================================
     elif data == "manage_otp_groups":
         edit_message(chat_id, msg_id, render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
     elif data == "edit_main_channel_link":
@@ -4384,7 +4397,9 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>OTP Group Link:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "danger"}]]})
 
-    # ============ Panel Management ============
+    # ==========================================
+    # Panel Management
+    # ==========================================
     elif data == "manage_panels":
         api_count = len([p for p in bot_settings["panels"] if p.get("type") == "API Panel"])
         cpt_count = len([p for p in bot_settings["panels"] if p.get("type", "API Panel") == "Auto Captcha Panel"])
@@ -4502,7 +4517,9 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>Records count (0=Unlimited):</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
 
-    # ============ Test Connection ============
+    # ==========================================
+    # Test Connection
+    # ==========================================
     elif data.startswith("test_p_conn_"):
         idx = int(data.split("_")[3])
         p = bot_settings["panels"][idx]
@@ -4614,7 +4631,9 @@ def handle_callback(call):
             if wait_msg_id: delete_message(chat_id, wait_msg_id)
             send_message(chat_id, render_body_text(f"❌ <b>Failed!</b>\n{html.escape(str(e))}"))
 
-    # ============ DXA Control ============
+    # ==========================================
+    # DXA Control
+    # ==========================================
     elif data == "dxa_control":
         if chat_id in user_states: del user_states[chat_id]
         edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
@@ -4642,7 +4661,9 @@ def handle_callback(call):
             edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New value for</b> <code>{key_map[key]}</code><b>:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_dxa_edit", "style": "danger"}]]})
             answer_callback(call["id"])
 
-    # ============ Service -> Country list ============
+    # ==========================================
+    # Service -> Country list
+    # ==========================================
     elif data.startswith("g_s|"):
         user_states.pop(chat_id, None); temp_data.pop(chat_id, None)
         service = data.split("g_s|", 1)[1]
@@ -4888,7 +4909,9 @@ def handle_callback(call):
             msg_res = send_message(chat_id, text_numbers, reply_markup={"inline_keyboard": kb})
             if msg_res and "result" in msg_res: user_active_sessions[chat_id] = {"msg_id": msg_res["result"]["message_id"], "nums": fetched_nums}
 
-    # ============ WITHDRAWAL APPROVE/REJECT ============
+    # ==========================================
+    # WITHDRAWAL APPROVE/REJECT
+    # ==========================================
     elif data.startswith("wapp_") or data.startswith("wrej_"):
         user_id_clicked = call["from"]["id"]
         if not is_admin(user_id_clicked):
@@ -4899,7 +4922,7 @@ def handle_callback(call):
             req_data = pending_withdrawals[req_id]
             u_id, amt = req_data["user_id"], req_data["amount"]
             num = req_data["number"]; full_name = req_data.get("full_name", u_id)
-            if action == "APPROVE" and len(num) >= 7: masked_num = f"{num[:4]}❖DXA❖{num[-3:]}"
+            if action == "APPROVE" and len(num) >= 7: masked_num = f"{num[:4]}❖STR❖{num[-3:]}"
             else: masked_num = num
             status_text = "APPROVED" if action == "APPROVE" else "REJECTED"
             emoji_icon_id = "5352694861990501856" if action == "APPROVE" else "5420130255174145507"
@@ -4910,7 +4933,7 @@ def handle_callback(call):
                 f"🎙 <b>WITHDRAWAL {status_text}</b> {web_emoji}\n"
                 f"{frog_emoji} <b>USER ID :</b><code>{u_id}</code>\n"
                 f"👤 <b>User :</b> <a href='tg://user?id={u_id}'>{full_name}</a>\n"
-                f"💸 <b>BALANCE:</b> <code>{amt}</code>\n"
+                f"💸 <b>BALANCE:</b> <code>${amt}</code>\n"
                 f"🍏 <b>NUMBER :</b> <code>{masked_num}</code>\n"
                 f"🏦 <b>METHOD :</b> {method_icon} <b>{req_data['method']}</b>\n\n"
                 f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>"
@@ -4919,9 +4942,9 @@ def handle_callback(call):
             edit_message(chat_id, msg_id, render_body_text(new_text), reply_markup=kb)
             if action == "APPROVE":
                 update_balance(u_id, -amt)
-                send_message(u_id, render_body_text(f"{PEM['ok']} Your {amt} ৳ withdrawal has been paid successfully!"))
+                send_message(u_id, render_body_text(f"{PEM['ok']} Your ${amt} withdrawal has been paid successfully!"))
             else:
-                send_message(u_id, render_body_text(f"❌ Your {amt} ৳ withdrawal request was rejected."))
+                send_message(u_id, render_body_text(f"❌ Your ${amt} withdrawal request was rejected."))
             if db:
                 try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"}, timeout=5.0)
                 except: pass
