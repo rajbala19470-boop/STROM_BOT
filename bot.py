@@ -424,7 +424,7 @@ DEFAULT_CUSTOM_MESSAGES = {
 }
 
 # ==========================================
-# Firebase Setup (20s timeout + Local fallback)
+# Firebase Setup
 # ==========================================
 firebase_credentials_json = r"""
 {
@@ -1144,7 +1144,7 @@ def mask_number(num):
 
 def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balance, reward, lang):
     app = get_premium_app(service_name)
-    sid = app.get("id","")
+    sid = app.get("id", "")
     svc_char = app.get("emoji", "📱")
     if re.match(r'^[A-Za-z0-9#]{1,4}$', str(svc_char)):
         svc_char = "📱"
@@ -1349,8 +1349,8 @@ def get_premium_app(service_name):
             return {"name": ad.get("name", ak.title()), "emoji": char, "id": ad.get("id")}
     for sk in SERVICE_SMS_KEYWORDS.keys():
         if sk.upper() == ku or sk.upper() in ku or ku in sk.upper():
-            return {"name":sk.title(),"emoji":"📱","id":None}
-    return {"name":service_name,"emoji":"📱","id":None}
+            return {"name": sk.title(), "emoji": "📱", "id": None}
+    return {"name": service_name, "emoji": "📱", "id": None}
 
 
 def detect_language(text):
@@ -1687,9 +1687,6 @@ def attempt_auto_login(p, idx):
     return False
 
 
-# ==========================================
-# Payout Helper
-# ==========================================
 def get_payout_for_number(clean_api_num, service_hint=""):
     reward = float(bot_settings.get("otp_reward", 0.0))
     meta = assigned_number_meta.get(clean_api_num, {})
@@ -1792,9 +1789,6 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
     return render_body_text(txt)
 
 
-# ==========================================
-# Panel Monitor Thread
-# ==========================================
 def panel_monitor_thread():
     global processed_otps, recent_traffic, panel_sessions
     while True:
@@ -1937,9 +1931,6 @@ def panel_monitor_thread():
         time.sleep(5)
 
 
-# ==========================================
-# Firebase User Management
-# ==========================================
 user_cache = {}
 
 def get_user(user_id):
@@ -2368,7 +2359,6 @@ def handle_message(msg):
     text = msg.get("text", "")
     register_user_local(chat_id)
 
-    # -- /dmotp admin command --
     if text.startswith("/dmotp"):
         if not is_admin(chat_id): return
         parts = text.split(maxsplit=4)
@@ -2388,7 +2378,6 @@ def handle_message(msg):
         send_message(chat_id, render_body_text(dm_text), reply_markup=dm_kb)
         return
 
-    # -- /setservice admin command --
     if text.startswith("/setservice"):
         if not is_admin(chat_id): return
         raw = text.replace("/setservice", "", 1).strip()
@@ -2419,7 +2408,6 @@ def handle_message(msg):
         send_message(chat_id, render_body_text("🚫 <b>You are banned from using this bot!</b>\n<i>If you think this is a mistake, please contact support.</i>"))
         return
 
-    # ================== MAINTENANCE CHECK ==================
     if bot_settings.get("maintenance", False) and not is_admin(chat_id):
         if not text.startswith("/start") and text != "SUPPORT":
             maint_msg = (
@@ -2457,7 +2445,6 @@ def handle_message(msg):
     if chat_id in user_states and not is_main_cmd:
         state = user_states[chat_id]
 
-        # ================== AUTO CAPTCHA PANEL SETUP ==================
         if state == "wait_for_cpanel_url" and text:
             temp_data[chat_id]["p_data"]["login_url"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_user"
@@ -2527,7 +2514,6 @@ def handle_message(msg):
                 send_message(chat_id, render_body_text("❌ <b>Please enter a valid number serial!</b>"), reply_markup=get_cancel_kb())
             return
 
-        # ================== API Panel Field Edit ==================
         elif state == "wait_for_api_pf_value" and text:
             idx = temp_data[chat_id]["p_idx"]; field = temp_data[chat_id]["p_field"]
             new_value = text.strip()
@@ -2547,7 +2533,6 @@ def handle_message(msg):
             send_message(chat_id, render_body_text(f"⚙️ <b>Configure</b> <b>{p['name']}</b>"), reply_markup=panel_config_keyboard(idx))
             return
 
-        # ================== User Management ==================
         elif state == "wait_for_um_bal_uid" and text:
             target_uid_str = text.strip()
             if not target_uid_str.isdigit():
@@ -2627,7 +2612,6 @@ def handle_message(msg):
                     send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {e}"), reply_markup=get_cancel_kb())
             return
 
-        # ================== Menu Design Flow ==================
         elif state == "wait_for_menu_text" and text:
             try:
                 menu_key = temp_data[chat_id]["menu_key"]
@@ -2672,7 +2656,6 @@ def handle_message(msg):
                 if chat_id in temp_data: del temp_data[chat_id]
             return
 
-        # ================== Test flow ==================
         elif state == "wait_for_test_service" and text:
             temp_data[chat_id]["service"] = text.strip()
             user_states[chat_id] = "wait_for_test_number"
@@ -2701,7 +2684,6 @@ def handle_message(msg):
             del user_states[chat_id]; del temp_data[chat_id]
             return
 
-        # ================== Broadcast ==================
         elif state == "wait_for_broadcast":
             msg_id = msg["message_id"]
             send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Broadcast started...</b>"))
@@ -2709,7 +2691,6 @@ def handle_message(msg):
             del user_states[chat_id]
             return
 
-        # ================== Upload Number ==================
         elif state == "wait_for_txt" and "document" in msg:
             doc = msg["document"]
             if not doc["file_name"].endswith(".txt"):
@@ -2907,7 +2888,6 @@ def handle_message(msg):
             del user_states[chat_id]; del temp_data[chat_id]
             return
 
-        # ================== Stex/Voltx Keys & Services ==================
         elif state == "wait_for_add_stex_key" and text:
             bot_settings["stex_keys"].append(text.strip()); save_db()
             delete_message(chat_id, msg["message_id"])
@@ -2981,7 +2961,6 @@ def handle_message(msg):
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": f"vx_cnt_{srv}_{cnt}", "id": "internal"})
             del user_states[chat_id]; return
 
-        # ================== W.METHOD / FJ / ADMIN / OTP GROUP ==================
         elif state == "wait_for_add_wm" and text:
             raw = text.strip()
             if "|" in raw:
@@ -3046,7 +3025,6 @@ def handle_message(msg):
             edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
-        # ================== Panel Add ==================
         elif state == "wait_for_panel_name" and text:
             p_name = text.strip()
             t_key = temp_data[chat_id].get("add_type", "api")
@@ -3077,7 +3055,6 @@ def handle_message(msg):
                 if chat_id in temp_data: del temp_data[chat_id]
                 return
 
-        # ================== DXA Edit ==================
         elif state == "set_dxa":
             msg_id = temp_data[chat_id]["msg_id"]; key = temp_data[chat_id]["key"]
             try:
@@ -3092,7 +3069,6 @@ def handle_message(msg):
                 edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA</b>\n\n❌ <b>Invalid!</b>"), reply_markup=dxa_control_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
-        # ================== CHANGE PAYOUT ==================
         elif state == "set_payout_value" and text:
             msg_id = temp_data[chat_id]["msg_id"]
             service = temp_data[chat_id]["service"]
@@ -3117,7 +3093,6 @@ def handle_message(msg):
                 send_message(chat_id, render_body_text("❌ <b>Invalid value!</b> Please send a number."), reply_markup=get_cancel_kb())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
-        # ================== DATABASE RESTORE ==================
         elif state == "wait_for_data_zip" and "document" in msg:
             doc = msg["document"]
             if doc["file_name"] != "STR_BOT_DATA.zip":
@@ -3137,7 +3112,6 @@ def handle_message(msg):
             if chat_id in user_states: del user_states[chat_id]
             return
 
-        # ================== Search Number ==================
         elif state == "wait_for_search" and text:
             query = text.strip().replace("+", "")
             if not query.isdigit() or len(query) < 3 or len(query) > 9:
@@ -3249,7 +3223,6 @@ def handle_message(msg):
                 user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
             return
 
-        # ================== Withdraw flows ==================
         elif state == "wait_for_withdraw_amount" and text:
             msg_id_to_edit = temp_data[chat_id].get("msg_id")
             try:
@@ -3317,9 +3290,6 @@ def handle_message(msg):
             else: send_message(chat_id, render_body_text(success_text), reply_markup=kb)
             del user_states[chat_id]; del temp_data[chat_id]; return
 
-    # ==========================================
-    # Regular Commands
-    # ==========================================
     if text.startswith("/start"):
         get_user(chat_id)
         if db:
@@ -3593,9 +3563,6 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, txt, reply_markup=markup)
         answer_callback(call["id"], "✅ Refreshed!", show_alert=False)
 
-    # ==========================================
-    # Get Numbers from broadcast
-    # ==========================================
     elif data.startswith("g_bs|"):
         user_states.pop(chat_id, None)
         temp_data.pop(chat_id, None)
@@ -3756,9 +3723,6 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(f"📊 <b>Ranges:</b> {prem_app_html} <b>{app_full_name}</b> - {prem_flag_html} <b>{iso_query}</b>"), reply_markup={"inline_keyboard": kb})
         answer_callback(call["id"])
 
-    # ==========================================
-    # User Management
-    # ==========================================
     elif data == "user_management":
         edit_message(chat_id, msg_id, get_user_management_text(), reply_markup=user_management_keyboard())
     elif data == "um_manage_balance":
@@ -3774,9 +3738,6 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>Send User ID:</b>"), reply_markup=get_cancel_kb())
 
-    # ==========================================
-    # Menu Design
-    # ==========================================
     elif data == "menu_design_list":
         edit_message(chat_id, msg_id, render_body_text("🎨 <b>Menu Design Editor</b>"), reply_markup=menu_design_list_keyboard())
     elif data == "md_reset_defaults":
@@ -3817,9 +3778,6 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"⚙️ <b>Buttons:</b> <b>{key.upper()}</b>"), reply_markup=menu_buttons_list_keyboard(key))
 
-    # ==========================================
-    # Withdraw method
-    # ==========================================
     elif data.startswith("sel_wm_"):
         method = data.replace("sel_wm_", "")
         bal = get_user(chat_id).get('balance', 0.0)
@@ -3836,9 +3794,6 @@ def handle_callback(call):
         temp_data[chat_id] = {}
         edit_message(chat_id, msg_id, render_body_text("🧪 <b>Send Service:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "danger"}]]})
 
-    # ==========================================
-    # Broadcast / Upload / Delete
-    # ==========================================
     elif data == "broadcast_msg":
         user_states[chat_id] = "wait_for_broadcast"
         edit_message(chat_id, msg_id, render_body_text("📢 <b>Send message to broadcast:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
@@ -3877,9 +3832,6 @@ def handle_callback(call):
         send_document(chat_id, "unused_numbers.txt", "\n".join(unused_list).encode('utf-8'))
         answer_callback(call["id"])
 
-    # ==========================================
-    # Leaderboard
-    # ==========================================
     elif data == "lb_main":
         txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
@@ -3940,9 +3892,6 @@ def handle_callback(call):
     elif data == "system_settings":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['gear']} <b>System Settings</b>"), reply_markup=system_settings_keyboard())
 
-    # ==========================================
-    # MAINTENANCE TOGGLE
-    # ==========================================
     elif data == "toggle_maintenance":
         current = bot_settings.get("maintenance", False)
         bot_settings["maintenance"] = not current
@@ -3961,9 +3910,6 @@ def handle_callback(call):
             )
             threading.Thread(target=broadcast_text_all, args=(render_body_text(thanks_msg),), daemon=True).start()
 
-    # ==========================================
-    # DATABASE MENU
-    # ==========================================
     elif data == "database_menu":
         txt = (
             f'{PEM["file"]} <b>DATABASE MANAGEMENT</b>\n'
@@ -4009,9 +3955,6 @@ def handle_callback(call):
     elif data == "db_delete_no":
         edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>Cancelled.</b>'), reply_markup=database_menu_keyboard())
 
-    # ==========================================
-    # CHANGE PAYOUT Flow
-    # ==========================================
     elif data == "change_payout_menu":
         local_srvs = set([b["service"] for b in number_batches.values() if b["numbers"]])
         stex_srvs = set(bot_settings.get("stex_services", {}).keys())
@@ -4098,9 +4041,6 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=get_cancel_kb())
         answer_callback(call["id"])
 
-    # ==========================================
-    # Stex Control
-    # ==========================================
     elif data == "stex_control":
         edit_message(chat_id, msg_id, render_body_text(f"🌐 <b>StexSMS Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('stex_keys', []))}</b>"), reply_markup=stex_control_keyboard())
     elif data == "add_stex_key":
@@ -4209,9 +4149,6 @@ def handle_callback(call):
         save_db()
         handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": f"nx_srv_{srv}", "id": call["id"]})
 
-    # ==========================================
-    # Voltx Control
-    # ==========================================
     elif data == "voltx_control":
         edit_message(chat_id, msg_id, render_body_text(f"⚡ <b>Voltx Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('voltx_keys', []))}</b>"), reply_markup=voltx_control_keyboard())
     elif data == "add_voltx_key":
@@ -4320,9 +4257,6 @@ def handle_callback(call):
         save_db()
         handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": f"vx_srv_{srv}", "id": call["id"]})
 
-    # ==========================================
-    # Force Join
-    # ==========================================
     elif data == "manage_fj":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
     elif data == "toggle_fj":
@@ -4339,9 +4273,6 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
 
-    # ==========================================
-    # Admin Management
-    # ==========================================
     elif data == "manage_admins":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['user']} <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
     elif data == "add_adm":
@@ -4355,9 +4286,6 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['user']} <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
 
-    # ==========================================
-    # OTP Group
-    # ==========================================
     elif data == "manage_otp_groups":
         edit_message(chat_id, msg_id, render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
     elif data == "edit_main_channel_link":
@@ -4397,9 +4325,6 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>OTP Group Link:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "danger"}]]})
 
-    # ==========================================
-    # Panel Management
-    # ==========================================
     elif data == "manage_panels":
         api_count = len([p for p in bot_settings["panels"] if p.get("type") == "API Panel"])
         cpt_count = len([p for p in bot_settings["panels"] if p.get("type", "API Panel") == "Auto Captcha Panel"])
@@ -4517,9 +4442,6 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>Records count (0=Unlimited):</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
 
-    # ==========================================
-    # Test Connection
-    # ==========================================
     elif data.startswith("test_p_conn_"):
         idx = int(data.split("_")[3])
         p = bot_settings["panels"][idx]
@@ -4631,9 +4553,6 @@ def handle_callback(call):
             if wait_msg_id: delete_message(chat_id, wait_msg_id)
             send_message(chat_id, render_body_text(f"❌ <b>Failed!</b>\n{html.escape(str(e))}"))
 
-    # ==========================================
-    # DXA Control
-    # ==========================================
     elif data == "dxa_control":
         if chat_id in user_states: del user_states[chat_id]
         edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
@@ -4661,9 +4580,6 @@ def handle_callback(call):
             edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New value for</b> <code>{key_map[key]}</code><b>:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_dxa_edit", "style": "danger"}]]})
             answer_callback(call["id"])
 
-    # ==========================================
-    # Service -> Country list
-    # ==========================================
     elif data.startswith("g_s|"):
         user_states.pop(chat_id, None); temp_data.pop(chat_id, None)
         service = data.split("g_s|", 1)[1]
@@ -4909,9 +4825,6 @@ def handle_callback(call):
             msg_res = send_message(chat_id, text_numbers, reply_markup={"inline_keyboard": kb})
             if msg_res and "result" in msg_res: user_active_sessions[chat_id] = {"msg_id": msg_res["result"]["message_id"], "nums": fetched_nums}
 
-    # ==========================================
-    # WITHDRAWAL APPROVE/REJECT
-    # ==========================================
     elif data.startswith("wapp_") or data.startswith("wrej_"):
         user_id_clicked = call["from"]["id"]
         if not is_admin(user_id_clicked):
