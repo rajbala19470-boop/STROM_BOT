@@ -1111,7 +1111,9 @@ def mask_smart(num):
 
 def mask_number(num):
     return mask_smart(num)
-    def format_otp_display(num, app_full_name, lang, masked=True):
+
+
+def format_otp_display(num, app_full_name, lang, masked=True):
     clean = str(num).lstrip('+').replace(" ", "")
     flag_html, iso, dial_code = get_country_from_num(num)
 
@@ -1160,12 +1162,12 @@ def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balanc
     otp = extract_otp_code(msg_text)
     if not otp:
         otp = "N/A"
-    taka_tag = ""
+    dollar_tag = ""
     if TAKA_EMOJI and str(TAKA_EMOJI).isdigit() and len(str(TAKA_EMOJI)) >= 10:
-        taka_tag = f'<tg-emoji emoji-id="{TAKA_EMOJI}">💰</tg-emoji>'
+        dollar_tag = f'<tg-emoji emoji-id="{TAKA_EMOJI}">💵</tg-emoji>'
     text = (
         f"{set_html} <b>{snu}</b>\n"
-        f" ┃  {taka_tag} <b>+ {amount_display}</b>\n"
+        f" ┃  {dollar_tag} <b>+ {amount_display}</b>\n"
         f" ┗━➢ {flag_html} <b>+{clean_number}</b>\n\n"
     )
     btn = {"text": otp, "copy_text": {"text": otp}, "style": "success",
@@ -2088,7 +2090,7 @@ def system_settings_keyboard():
          {"text": "User Management", "icon_custom_emoji_id": "5193063022226086560", "callback_data": "user_management", "style": "primary"}],
         [{"text": "Panel MANAGEMENT", "icon_custom_emoji_id": "5336879280578138635", "callback_data": "manage_panels", "style": "danger"},
          {"text": "CHANGE PAYOUT", "icon_custom_emoji_id": "5190899075968441286", "callback_data": "change_payout_menu", "style": "success"}],
-        [{"text": "DXA Control", "icon_custom_emoji_id": "5193100774988617665", "callback_data": "dxa_control", "style": "primary"}],
+        [{"text": "STORM Control", "icon_custom_emoji_id": "5193100774988617665", "callback_data": "dxa_control", "style": "primary"}],
         [{"text": "Menu Design", "icon_custom_emoji_id": "5190751148704833975", "callback_data": "menu_design_list", "style": "primary"},
          {"text": "Test", "icon_custom_emoji_id": "5190781475468915802", "callback_data": "test_message_flow", "style": "primary"}],
         [{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]
@@ -2210,7 +2212,7 @@ def specific_fw_group_keyboard(idx):
     kb.append([{"text": "Back to Groups", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "primary"}])
     return {"inline_keyboard": kb}
 
-def dxa_control_keyboard():
+def storm_control_keyboard():
     w_status = "ON" if bot_settings["withdraw_on"] else "OFF"
     sup_status = "ON" if bot_settings.get("support_link") else "OFF"
     grp_status = "ON" if bot_settings.get("w_group") else "OFF"
@@ -3063,10 +3065,10 @@ def handle_message(msg):
                 else: bot_settings[key] = text
                 save_db()
                 delete_message(chat_id, msg["message_id"])
-                edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
+                edit_message(chat_id, msg_id, render_body_text("🕹 <b>STORM CONTROL PANEL</b>"), reply_markup=storm_control_keyboard())
             except:
                 delete_message(chat_id, msg["message_id"])
-                edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA</b>\n\n❌ <b>Invalid!</b>"), reply_markup=dxa_control_keyboard())
+                edit_message(chat_id, msg_id, render_body_text("🕹 <b>STORM</b>\n\n❌ <b>Invalid!</b>"), reply_markup=storm_control_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
         elif state == "set_payout_value" and text:
@@ -3390,7 +3392,7 @@ def handle_message(msg):
         if sup_link: kb.insert(0, [{"text": "Contact Support", "icon_custom_emoji_id": "5337302974806922068", "url": sup_link, "style": "success"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb} if kb else None)
-        # ==========================================
+                # ==========================================
 # Database Helpers
 # ==========================================
 def build_data_zip():
@@ -3555,7 +3557,7 @@ def handle_callback(call):
     elif data == "cancel_dxa_edit":
         if chat_id in user_states: del user_states[chat_id]
         if chat_id in temp_data: del temp_data[chat_id]
-        edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
+        edit_message(chat_id, msg_id, render_body_text("🕹 <b>STORM CONTROL PANEL</b>"), reply_markup=storm_control_keyboard())
     elif data == "dummy_alert":
         answer_callback(call["id"], "Coming soon!", show_alert=True)
     elif data == "refresh_traffic":
@@ -4555,10 +4557,10 @@ def handle_callback(call):
 
     elif data == "dxa_control":
         if chat_id in user_states: del user_states[chat_id]
-        edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
+        edit_message(chat_id, msg_id, render_body_text("🕹 <b>STORM CONTROL PANEL</b>"), reply_markup=storm_control_keyboard())
     elif data == "dxa_toggle_w":
         bot_settings["withdraw_on"] = not bot_settings["withdraw_on"]; save_db()
-        edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
+        edit_message(chat_id, msg_id, render_body_text("🕹 <b>STORM CONTROL PANEL</b>"), reply_markup=storm_control_keyboard())
     elif data == "manage_w_methods":
         edit_message(chat_id, msg_id, render_body_text("💳 <b>WITHDRAWAL METHODS</b>"), reply_markup=w_methods_keyboard())
     elif data == "add_wm":
@@ -4864,9 +4866,7 @@ def handle_callback(call):
             del pending_withdrawals[req_id]
         else:
             answer_callback(call["id"], "❌ Already processed!", show_alert=True)
-
-
-# ==========================================
+            # ==========================================
 # Voltx SMS Listener
 # ==========================================
 def voltx_sms_listener():
