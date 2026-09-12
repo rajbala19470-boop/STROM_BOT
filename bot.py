@@ -2,6 +2,8 @@ import requests
 import time
 import json
 import os
+import zipfile
+import io
 import firebase_admin
 from firebase_admin import credentials, firestore
 import uuid
@@ -19,7 +21,7 @@ from urllib.parse import urljoin
 # ==========================================
 # Configuration (Token & Owner ID)
 # ==========================================
-TOKEN = "8979274305:AAEohpqkBNA2VNKL-J_AsFBPejTcD705qFE"
+TOKEN = "8979274305:AAFZW02islSVKhvBQTjwYUFHozbacE1xmhc"
 BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
 FILE_URL = f"https://api.telegram.org/file/bot{TOKEN}/"
 
@@ -97,7 +99,19 @@ GLOBAL_BODY_EMOJIS = {
     "⏳": "5337172996211648018",
     "🏳️": "5780471598932337683",
     "🔧": "5818967150278218011",
-    "✉️": "6235307467337635626"
+    "✉️": "6235307467337635626",
+    "🐸": "6307777408300753473",
+    "🕸️": "6206245785877616415",
+    "🪲": "6267107057304868214",
+    "🐷": "6204104220694550861",
+    "㊙️": "6267262260243076354",
+    "🦕": "5226560988291019577",
+    "☁️": "6266764202950530136",
+    "📵": "6266787022111773140",
+    "🐚": "6203886371363364022",
+    "⏫": "6206046503690048595",
+    "🆘": "6206108815075579644",
+    "❓": "6203773684306418660"
 }
 
 # ==========================================
@@ -164,26 +178,20 @@ assigned_number_meta = {}
 _last_upload_bcast = {}
 _upload_in_progress = {}
 
+# ✨ UPDATED: Removed FULL API URL, RETRY COUNT, COUNTRY PATH, TIMESTAMP PATH, SUCCESS PATH, SUCCESS VALUE, PLACEHOLDERS
 API_PANEL_FIELDS = [
     ("NAME",           "name",               "5818775306974006843"),
     ("BASE URL",       "api_url",            "6285048454255220485"),
-    ("FULL API URL",   "full_api_url",       "6285048454255220485"),
     ("CURL COMMAND",   "curl_command",       "5978568938156461643"),
     ("ENDPOINT",       "endpoint",           "6267172559851099903"),
     ("TOKEN",          "token",              "5821453562680448557"),
     ("METHOD",         "method",             "5926860096008098405"),
     ("INTERVAL",       "interval_sec",       "6093456762113888541"),
     ("MAX RECORDS",    "records",            "5868569066154757449"),
-    ("RETRY COUNT",    "retry_count",        "5978846612087114958"),
     ("OTP LIST PATH",  "otp_list_path",      "5818955300463447293"),
     ("NUMBER PATH",    "number_path",        "5877410604225924969"),
     ("MESSAGE PATH",   "message_path",       "5980911993140284450"),
-    ("COUNTRY PATH",   "country_path",       "5188381825701021648"),
     ("SERVICE PATH",   "service_path",       "5818967150278218011"),
-    ("TIMESTAMP PATH", "timestamp_path",     "6285240160120477644"),
-    ("SUCCESS PATH",   "success_path",       "6267008582294705964"),
-    ("SUCCESS VALUE",  "success_value",      "6267039884016358504"),
-    ("PLACEHOLDERS",   "placeholder_config", "6267264360482084046"),
 ]
 
 def parse_curl_command(curl_str):
@@ -208,7 +216,8 @@ def parse_curl_command(curl_str):
             k, v = hm.split(": ", 1)
             result["headers"][k.strip()] = v.strip()
     return result
-    # ==========================================
+
+# ==========================================
 # World Country Database
 # ==========================================
 COUNTRY_DB = {
@@ -411,12 +420,12 @@ DEFAULT_CUSTOM_MESSAGES = {
     "search_number": {"text": "╔═══════════╗\n     🔍 <b>SEARCH NUMBER</b>\n╚═══════════╝\n✅ Enter 3 to 9 digits  \nto search for a number.\n━━━━━━━━━━━━━\n📝 Example:\n➥ 880\n➥ 9227373\n━━━━━━━━━━━━━\n🔍 Fast Number Lookup System", "buttons": []},
     "traffic": {"text": f"{PEM['graph']} <b>Traffic Overview</b>\n\n{PEM['ok']} Available Numbers: {{avail}}\n{PEM['rocket']} Assigned Numbers: {{assigned}}", "buttons": []},
     "refer": {"text": f"➖➖➖➖➖➖➖\n« {PEM['gift']} REFER & EARN »\n➖➖➖➖➖➖➖\n{PEM['link']} YOUR LINK:\n<code>{{ref_link}}</code>\n➖➖➖➖➖➖➖\n{PEM['user']} TOTAL REFERS: <b>{{total_ref}}</b>\n➖➖➖➖➖➖➖\n{PEM['money']} PER REFER: <b>{{ref_reward}} TK</b>\n➖➖➖➖➖➖➖", "buttons": []},
-    "withdrawal": {"text": "➖➖➖➖➖➖➖\n《 🙈 <b>USER ID</b> : <code>{user_id}</code> 》\n➖➖➖➖➖➖➖\n👋 <b>Total Otp:</b> <code>{total_otp}</code>\n➖➖➖➖➖➖➖\n🫂 <b>Reffer :</b><code>{total_ref}</code>\n➖➖➖➖➖➖➖\n📅 <b>BALANCE:</b> <code>${bal}</code>\n➖➖➖➖➖➖➖\n🔐 <b>MINIMUM:</b> <code>${min_w}</code>\n➖➖➖➖➖➖➖\n<blockquote><b>SELECT METHOD <tg-emoji emoji-id=\"5197474438970363734\">📱</tg-emoji></b></blockquote>", "buttons": []},
+    "withdrawal": {"text": "➖➖➖➖➖➖➖\n《 🙈 <b>USER ID</b> : <code>{user_id}</code> 》\n➖➖➖➖➖➖➖\n☁️ <b>Total Otp:</b> <code>{total_otp}</code>\n➖➖➖➖➖➖➖\n🫂 <b>Reffer :</b><code>{total_ref}</code>\n➖➖➖➖➖➖➖\n📅 <b>BALANCE:</b> <code>${bal}</code>\n➖➖➖➖➖➖➖\n🔐 <b>MINIMUM:</b> <code>${min_w}</code>\n➖➖➖➖➖➖➖\n<blockquote><b>SELECT METHOD <tg-emoji emoji-id=\"5197474438970363734\">📱</tg-emoji></b></blockquote>", "buttons": []},
     "support": {"text": f"{PEM['msg']} Contact us for any help:", "buttons": []}
 }
 
 # ==========================================
-# Firebase Setup
+# Firebase Setup (20s timeout + Local fallback)
 # ==========================================
 firebase_credentials_json = r"""
 {
@@ -447,23 +456,24 @@ def _init_firebase_with_timeout():
         try:
             _db.collection('_startup_ping_').document('x').get(timeout=6.0)
             db = _db
-            print("Firebase Connected & VERIFIED! (Full Sync Enabled)")
+            print("✅ Firebase Connected & VERIFIED! (Full Sync Enabled)")
         except Exception as _te:
-            print(f"Firebase auth FAILED: {type(_te).__name__}: {str(_te)[:100]}")
-            print("Firebase DISABLED - running in LOCAL-ONLY mode.")
+            print(f"⚠️ Firebase auth FAILED: {type(_te).__name__}: {str(_te)[:100]}")
+            print("⚠️ Firebase DISABLED - running in LOCAL-ONLY mode.")
             db = None
     except Exception as e:
-        print(f"Firebase Init Error: {e}")
+        print(f"❌ Firebase Init Error: {e}")
+        print("⚠️ Running in LOCAL-ONLY mode.")
         db = None
 
 _fb_t = threading.Thread(target=_init_firebase_with_timeout, daemon=True)
 _fb_t.start()
-_fb_t.join(timeout=10.0)
+_fb_t.join(timeout=20.0)
 if _fb_t.is_alive():
-    print("Firebase init TIMEOUT (10s) - switching to LOCAL-ONLY mode.")
+    print("⏱ Firebase init TIMEOUT (20s) - switching to LOCAL-ONLY mode.")
     db = None
 else:
-    print("Firebase init completed.")
+    print("🔍 Firebase init completed.")
 
 bot_settings = {
     "admins": [OWNER_ID],
@@ -488,6 +498,8 @@ bot_settings = {
     "search_countries": [],
     "stex_services": {},
     "voltx_services": {},
+    "otp_pair_rates": {},
+    "maintenance": False,
     "premium_flags": {},
     "premium_apps": {},
     "custom_messages": DEFAULT_CUSTOM_MESSAGES.copy()
@@ -497,7 +509,8 @@ FS_KEYS = [
     "admins", "panels", "fw_groups", "otp_link", "main_channel_link", "withdraw_on", 
     "min_withdraw", "otp_reward", "refer_reward", "cooldown", 
     "num_req", "num_share", "support_link", "w_methods", "w_group", "stex_keys", "voltx_keys",
-    "search_countries", "stex_services", "voltx_services", "fj_on", "fj_channels"
+    "search_countries", "stex_services", "voltx_services", "fj_on", "fj_channels",
+    "otp_pair_rates", "maintenance"
 ]
 
 number_batches = {}
@@ -640,7 +653,6 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
         clean_num = re.sub(r'\D', '', str(num_val))
         if not (clean_num and 5 <= len(clean_num) <= 18): return None
         otp = extract_otp_code(msg_val)
-        # CHANGE #3: OTP detect না হলে "N/A" দিয়ে দিবে, skip করবে না
         if not otp:
             otp = "N/A"
         if not (len(str(msg_val)) > 4): return None
@@ -693,7 +705,6 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
                     clean_num = re.sub(r'\D', '', num_text)
                     if clean_num and 5 <= len(clean_num) <= 18:
                         otp = extract_otp_code(msg_text)
-                        # CHANGE #3: OTP detect না হলে "N/A"
                         if not otp:
                             otp = "N/A"
                         if len(msg_text) > 4:
@@ -808,7 +819,7 @@ def _bg_load_db():
         print(f"load_db() crashed: {e}")
 
 threading.Thread(target=_bg_load_db, daemon=True).start()
-print("load_db() started in background - bot starting now.")
+print("🚀 load_db() started in background - bot starting now.")
 
 user_states = {}
 temp_data = {}
@@ -879,6 +890,13 @@ def send_document(chat_id, filename, text_content):
     try: requests.post(url, data=data, files=files)
     except: pass
 
+def send_document_bytes(chat_id, filename, bytes_content):
+    url = f"{BASE_URL}/sendDocument"
+    files = {'document': (filename, bytes_content)}
+    data = {'chat_id': chat_id}
+    try: return requests.post(url, data=data, files=files).json()
+    except: return {}
+
 all_known_users = set()
 
 def sync_users_list():
@@ -930,6 +948,22 @@ def broadcast_copymessage(from_chat_id, msg_id):
             last_err = str(e)[:80]
         time.sleep(0.035)
     send_message(from_chat_id, render_body_text(f"📢 <b>Broadcast Completed!</b>\n✅ Success: {success}\n❌ Failed: {failed}\n👥 Total Sent: {len(users)}\n⚠️ Last Error: {last_err}"))
+
+def broadcast_text_all(txt, kb=None):
+    users = list(all_known_users)
+    b_session = requests.Session()
+    url = f"{BASE_URL}/sendMessage"
+    ok = 0; fail = 0
+    for u_id in users:
+        try:
+            payload = {"chat_id": u_id, "text": txt, "parse_mode": "HTML", "disable_web_page_preview": True}
+            if kb: payload["reply_markup"] = kb
+            r = b_session.post(url, json=payload, timeout=5).json()
+            if r.get("ok"): ok += 1
+            else: fail += 1
+        except: fail += 1
+        time.sleep(0.035)
+    return ok, fail
 
 
 def render_body_text(text):
@@ -1078,8 +1112,7 @@ def mask_smart(num):
 
 def mask_number(num):
     return mask_smart(num)
-
-def format_otp_display(num, app_full_name, lang, masked=True):
+    def format_otp_display(num, app_full_name, lang, masked=True):
     clean = str(num).lstrip('+').replace(" ", "")
     flag_html, iso, dial_code = get_country_from_num(num)
 
@@ -1125,7 +1158,6 @@ def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balanc
     flag_html, iso, _ = get_country_from_num(raw_number)
     reward_str = fmt_payout(reward)
     amount_display = f"${reward_str}"
-    # CHANGE #3: OTP detect না হলে "N/A" দেখাবে
     otp = extract_otp_code(msg_text)
     if not otp:
         otp = "N/A"
@@ -1173,17 +1205,38 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
     return text, kb
 
 
+# ✨ UPDATED: Numbers header with country payout
 def build_numbers_header(country, service=None):
     HEADER_EMOJI_1 = "6282641460093260838"
     HEADER_EMOJI_2 = "6267315814190290529"
     PHONE_ICON     = "5197474438970363734"
+    NOPHONE_ICON   = "6266787022111773140"
     flag_html = get_flag_info_html(country)
+
+    # Calculate country payout
+    payout_val = float(bot_settings.get("otp_reward", 0.0))
+    pr = bot_settings.get("otp_pair_rates", {})
+    if service:
+        key = f"{str(country).upper()}|{str(service).upper()}"
+        if key in pr:
+            try: payout_val = float(pr[key])
+            except: pass
+        else:
+            for k, v in pr.items():
+                try:
+                    if k.split("|")[0] == str(country).upper():
+                        payout_val = float(v); break
+                except: pass
+
+    payout_str = fmt_payout(payout_val)
+
     header = (
-        f'<tg-emoji emoji-id="{HEADER_EMOJI_1}">⚙️</tg-emoji> <b>THIS IS YOUR</b> '
-        f'<tg-emoji emoji-id="{HEADER_EMOJI_2}">📱</tg-emoji> '
-        f'<b>{html.escape(str(country).upper())}</b> '
-        f'{flag_html} <b>NUMBERS</b> '
-        f'<tg-emoji emoji-id="{PHONE_ICON}">📱</tg-emoji>\n\n'
+        f'<tg-emoji emoji-id="{HEADER_EMOJI_1}">⚙️</tg-emoji> <b>THIS IS YOUR</b>'
+        f'<tg-emoji emoji-id="{HEADER_EMOJI_2}">📱</tg-emoji>'
+        f'<b>{html.escape(str(country).upper())}</b>'
+        f'{flag_html} <b>NUMBERS</b>'
+        f'<tg-emoji emoji-id="{PHONE_ICON}">📱</tg-emoji>\n'
+        f'<b>💰{payout_str}/OTP</b> <tg-emoji emoji-id="{NOPHONE_ICON}">📵</tg-emoji>\n'
     )
     return render_body_text(header)
 
@@ -1433,7 +1486,6 @@ def _extract_by_paths(data, p_config):
         if not (5 <= len(clean_num) <= 18): continue
         msg_str = str(msg_raw) if msg_raw is not None else ""
         if len(msg_str) < 4: continue
-        # CHANGE #3: OTP detect না হলে "N/A"
         otp = extract_otp_code(msg_str)
         if not otp:
             otp = "N/A"
@@ -1474,7 +1526,6 @@ def parse_panel_response(response_text, p_config=None):
                         svc_text = cols[final_s_idx].get_text(separator=" ", strip=True) if len(cols) > final_s_idx else ""
                         clean_num = re.sub(r'\D', '', num_text)
                         if clean_num and 5 <= len(clean_num) <= 18:
-                            # CHANGE #3: OTP detect না হলে "N/A"
                             otp = extract_otp_code(msg_text)
                             if not otp:
                                 otp = "N/A"
@@ -1540,7 +1591,6 @@ def parse_panel_response(response_text, p_config=None):
             else: pot_num = pot_nums_list[0]
         if pot_num and pot_msg:
             otp = extract_otp_code(pot_msg)
-            # CHANGE #3: OTP detect না হলে "N/A"
             if not otp:
                 otp = "N/A"
             temp_results.append({"number": pot_num, "message": pot_msg, "otp": otp, "service_name": pot_svc})
@@ -1638,23 +1688,19 @@ def attempt_auto_login(p, idx):
     except Exception as e:
         p["login_status"] = f"Error: {str(e)[:20]}"
     return False
-    # ==========================================
-# Payout Helper (CHANGE #2)
+
+
+# ==========================================
+# Per-country/service Payout Resolver
 # ==========================================
 def get_payout_for_number(clean_api_num, service_hint=""):
-    """দেশ অনুযায়ী সঠিক payout বের করে।"""
     reward = float(bot_settings.get("otp_reward", 0.0))
     meta = assigned_number_meta.get(clean_api_num, {})
-
-    # 1) Meta-তে সরাসরি payout থাকলে সেটাই
     if "payout" in meta:
         try: return float(meta["payout"])
         except: pass
-
     oc = str(meta.get("country", "") or "").strip()
     osvc = str(meta.get("service", "") or service_hint or "").strip()
-
-    # 2) Country auto-detect number থেকে
     if not oc:
         try:
             _, iso_det, _ = get_country_from_num(clean_api_num)
@@ -1667,28 +1713,52 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                         if cinfo["iso"] == iso_det:
                             oc = cinfo["name"]; break
         except: pass
-
-    # 3) Country|Service pair rate
     pr = bot_settings.get("otp_pair_rates", {})
     if oc and osvc:
         key = f"{oc.upper()}|{osvc.upper()}"
         if key in pr:
             try: return float(pr[key])
             except: pass
-
-    # 4) Country-only fallback (যেকোনো service)
     if oc:
         for k, v in pr.items():
             try:
                 if k.split("|")[0] == oc.upper():
                     return float(v)
             except: pass
-
     return reward
 
 
+def get_wmethod_emoji_html(method_name):
+    for m in bot_settings.get("w_methods", []):
+        if isinstance(m, dict):
+            if m.get("name", "").lower() == method_name.lower():
+                eid = m.get("emoji_id", "")
+                if eid:
+                    return f'<tg-emoji emoji-id="{eid}">{m.get("char", "💳")}</tg-emoji>'
+    return '<tg-emoji emoji-id="5190899075968441286">💳</tg-emoji>'
+
+
+def get_wmethod_display_list():
+    out = []
+    for m in bot_settings.get("w_methods", []):
+        if isinstance(m, dict):
+            name = m.get("name", "")
+            eid = m.get("emoji_id", "")
+            char = m.get("char", "💳")
+            if eid:
+                emoji_html = f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
+            else:
+                emoji_html = "💳"
+            out.append((name, emoji_html))
+        else:
+            out.append((str(m), "💳"))
+    return out
+
+
+# ==========================================
+# Group OTP Keyboard Builder
+# ==========================================
 def build_group_kb(otp_value, fw=None):
-    """Group-এর জন্য inline keyboard: OTP (1×1), NUMBER+CHANNEL (2×2)।"""
     kb = [[{"text": f"{otp_value}", "icon_custom_emoji_id": COPY_EMOJI,
             "copy_text": {"text": otp_value}, "style": "success"}]]
     row2 = [{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI,
@@ -1708,7 +1778,31 @@ def build_group_kb(otp_value, fw=None):
 
 
 # ==========================================
-# Panel Monitor
+# Withdrawal Group Message Builder
+# ==========================================
+def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id):
+    frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
+    web_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>'
+    user_emoji = '<tg-emoji emoji-id="5352861489541714456">👤</tg-emoji>'
+    money_emoji = '<tg-emoji emoji-id="5348469219761626211">💸</tg-emoji>'
+    phone_emoji = '<tg-emoji emoji-id="5337132498965010628">🍏</tg-emoji>'
+    bank_emoji = '<tg-emoji emoji-id="5348469219761626211">🏦</tg-emoji>'
+    tkt_emoji = '<tg-emoji emoji-id="5192739271886282680">🧾</tg-emoji>'
+    method_icon = get_wmethod_emoji_html(method)
+    txt = (
+        f"🎙 <b>NEW WITHDRAWAL</b> {web_emoji}\n"
+        f"{frog_emoji} <b>USER ID :</b><code>{chat_id}</code>\n"
+        f"{user_emoji} <b>User :</b> <a href='tg://user?id={chat_id}'>{full_name}</a>\n"
+        f"{money_emoji} <b>BALANCE:</b> <code>{amount}</code>\n"
+        f"{phone_emoji} <b>NUMBER :</b> <code>{number}</code>\n"
+        f"{bank_emoji} <b>METHOD :</b> {method_icon} <b>{method}</b>\n\n"
+        f"{tkt_emoji} <b>WITHDRAW ID :</b> <code>{req_id}</code>"
+    )
+    return render_body_text(txt)
+
+
+# ==========================================
+# Panel Monitor Thread
 # ==========================================
 def panel_monitor_thread():
     global processed_otps, recent_traffic, panel_sessions
@@ -1737,8 +1831,7 @@ def panel_monitor_thread():
                             save_db()
                             continue
 
-                    elif p.get("api_url") or p.get("full_api_url") or p.get("curl_command"):
-                        full_url = p.get("full_api_url", "").strip()
+                    elif p.get("api_url") or p.get("curl_command"):
                         url = p.get("api_url", "").strip()
                         token = p.get("token", "").strip()
                         curl_cmd = p.get("curl_command", "").strip()
@@ -1761,26 +1854,23 @@ def panel_monitor_thread():
                             except Exception as _ce:
                                 print(f"CURL fetch error (panel {idx}): {_ce}")
 
-                        if not parsed_data and (full_url or url):
+                        if not parsed_data and url:
                             urls_to_try = []
-                            if full_url:
-                                urls_to_try.append(full_url)
+                            if "{token}" in url or "{key}" in url:
+                                urls_to_try.append(url.replace("{token}", token).replace("{key}", token))
+                            elif "token=" in url or "key=" in url:
+                                urls_to_try.append(url)
                             else:
-                                if "{token}" in url or "{key}" in url:
-                                    urls_to_try.append(url.replace("{token}", token).replace("{key}", token))
-                                elif "token=" in url or "key=" in url:
-                                    urls_to_try.append(url)
-                                else:
-                                    sep = '&' if '?' in url else '?'
-                                    urls_to_try.append(f"{url}{sep}token={token}")
-                                    urls_to_try.append(f"{url}{sep}key={token}&start=0")
-                                    urls_to_try.append(f"{url}{sep}key={token}")
+                                sep = '&' if '?' in url else '?'
+                                urls_to_try.append(f"{url}{sep}token={token}")
+                                urls_to_try.append(f"{url}{sep}key={token}&start=0")
+                                urls_to_try.append(f"{url}{sep}key={token}")
                             for try_url in urls_to_try:
                                 try:
                                     res = requests.get(try_url, headers=headers, timeout=10)
                                     parsed_data = parse_panel_response(res.text, p)
                                     if parsed_data:
-                                        if not full_url and try_url != url and token:
+                                        if try_url != url and token:
                                             p["api_url"] = try_url.replace(token, "{token}")
                                             save_db()
                                         break
@@ -1821,12 +1911,10 @@ def panel_monitor_thread():
 
                             display_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=True))
 
-                            # ---- GROUP OTP (CHANGE #1: OTP (1×1) + NUMBER/CHANNEL (2×2)) ----
                             for fw in bot_settings["fw_groups"]:
                                 kb = build_group_kb(otp, fw)
                                 send_message(fw["chat_id"], display_msg, reply_markup=kb)
 
-                            # ---- DM OTP (CHANGE #2: country-specific payout) ----
                             owners = []
                             clean_api_num = str(num).replace("+", "").replace(" ", "").replace("-", "").strip()
                             for uid, session_data in user_active_sessions.items():
@@ -1844,13 +1932,11 @@ def panel_monitor_thread():
                             owners = list(set(owners))
                             for owner_id in owners:
                                 reward = get_payout_for_number(clean_api_num, app_full_name)
-
                                 if reward > 0:
                                     update_balance(owner_id, reward)
                                     if db:
                                         try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)}, timeout=5.0)
                                         except: pass
-
                                 new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
                                 it, ik = deliver_to_inbox(owner_id, app_full_name, display_num, msg_text, new_bal, reward, lang)
                                 it = render_body_text(it)
@@ -1929,9 +2015,7 @@ def add_referral(inviter_id, new_user_id):
             )
             send_message(inviter_id, render_body_text(ref_msg))
     except: pass
-
-
-# ==========================================
+    # ==========================================
 # UI Keyboards
 # ==========================================
 def get_cancel_kb():
@@ -1963,6 +2047,7 @@ def get_admin_text():
     users_count = len(all_known_users)
     total_files = len(number_batches)
     available_nums = sum(len(b["numbers"]) for b in number_batches.values())
+    maint_status = "🟢 OFF" if not bot_settings.get("maintenance") else "🔴 ON"
     txt = f"""
 {PEM['admin']} <b>ADMIN CONTROL PANEL</b> {PEM['admin']}
 ━━━━━━━━━━━━━━━━━━
@@ -1978,21 +2063,42 @@ def get_admin_text():
 {PEM['graph']} <b>STOCK LEVEL</b>
 — — — — — — — — — —
 [██████░░░░░░░░░] {available_nums} free
+
+{PEM['gear']} <b>MAINTENANCE:</b> {maint_status}
 """
     return render_body_text(txt)
 
+# ✨ UPDATED: Added 📁DATABASE and MAINTENENCE toggle
 def admin_panel_keyboard():
+    maint_on = bot_settings.get("maintenance", False)
+    if maint_on:
+        maint_btn = {"text": "MAINTENENCE OFF", "icon_custom_emoji_id": "5318840353510408444", "callback_data": "toggle_maintenance", "style": "danger"}
+    else:
+        maint_btn = {"text": "MAINTENENCE ON", "icon_custom_emoji_id": "5192812028632274956", "callback_data": "toggle_maintenance", "style": "success"}
+
     return {"inline_keyboard": [
         [{"text": "LEADER BOARD SYSTEM", "icon_custom_emoji_id": "5353032893096567467", "callback_data": "lb_main", "style": "success"}],
         [{"text": "Upload Number", "icon_custom_emoji_id": "5353001161878182134", "callback_data": "upload_num", "style": "primary"},
          {"text": "Delete files", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "delete_files", "style": "danger"}],
         [{"text": "Broadcast", "icon_custom_emoji_id": "5789428375261023681", "callback_data": "broadcast_msg", "style": "success"},
          {"text": "System", "icon_custom_emoji_id": "5420155432272438703", "callback_data": "system_settings", "style": "primary"}],
+        [{"text": "📁DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
+        [maint_btn],
         [{"text": "Used number", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "show_used", "style": "success"},
          {"text": "Unused number", "icon_custom_emoji_id": "5352597830089347330", "callback_data": "show_unused", "style": "success"}],
         [{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}]
     ]}
 
+# ✨ NEW: Database Menu Keyboard
+def database_menu_keyboard():
+    return {"inline_keyboard": [
+        [{"text": "DOWNLOAD DATA", "icon_custom_emoji_id": "6203886371363364022", "callback_data": "db_download", "style": "success"}],
+        [{"text": "UPLOAD DATA", "icon_custom_emoji_id": "6206046503690048595", "callback_data": "db_upload", "style": "primary"}],
+        [{"text": "DELETE DATA", "icon_custom_emoji_id": "6206108815075579644", "callback_data": "db_delete_confirm", "style": "danger"}],
+        [{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "primary"}]
+    ]}
+
+# ✨ UPDATED: SUBSCRIPTION → CHANGE PAYOUT
 def system_settings_keyboard():
     return {"inline_keyboard": [
         [{"text": "StexSMS Control", "icon_custom_emoji_id": "5336972142066047577", "callback_data": "stex_control", "style": "success"},
@@ -2002,7 +2108,7 @@ def system_settings_keyboard():
         [{"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "callback_data": "manage_otp_groups", "style": "danger"},
          {"text": "User Management", "icon_custom_emoji_id": "5193063022226086560", "callback_data": "user_management", "style": "primary"}],
         [{"text": "Panel MANAGEMENT", "icon_custom_emoji_id": "5336879280578138635", "callback_data": "manage_panels", "style": "danger"},
-         {"text": "Subscription", "icon_custom_emoji_id": "5190899075968441286", "callback_data": "dummy_alert", "style": "success"}],
+         {"text": "CHANGE PAYOUT", "icon_custom_emoji_id": "5190899075968441286", "callback_data": "change_payout_menu", "style": "success"}],
         [{"text": "DXA Control", "icon_custom_emoji_id": "5193100774988617665", "callback_data": "dxa_control", "style": "primary"}],
         [{"text": "Menu Design", "icon_custom_emoji_id": "5190751148704833975", "callback_data": "menu_design_list", "style": "primary"},
          {"text": "Test", "icon_custom_emoji_id": "5190781475468915802", "callback_data": "test_message_flow", "style": "primary"}],
@@ -2146,7 +2252,14 @@ def dxa_control_keyboard():
 def w_methods_keyboard():
     kb = []
     for idx, m in enumerate(bot_settings["w_methods"]):
-        kb.append([{"text": f"Delete: {m}", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"del_wm_{idx}", "style": "danger"}])
+        if isinstance(m, dict):
+            name = m.get("name", "")
+            eid = m.get("emoji_id", "")
+            icon = eid if eid else "5190899075968441286"
+        else:
+            name = str(m)
+            icon = "5190899075968441286"
+        kb.append([{"text": f"Delete: {name}", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"del_wm_{idx}", "style": "danger"}])
     kb.append([{"text": "Add Method", "icon_custom_emoji_id": "5420323438508155202", "callback_data": "add_wm", "style": "success"}])
     kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "dxa_control", "style": "primary"}])
     return {"inline_keyboard": kb}
@@ -2182,14 +2295,10 @@ def panel_config_keyboard(idx):
     action_text = "STOP POLLING" if p['status'] == 'ON' else "START POLLING"
     action_icon = "5318840353510408444" if p['status'] == 'ON' else "5192812028632274956"
     kb.append([{"text": action_text, "icon_custom_emoji_id": action_icon, "callback_data": f"tog_pnl_{idx}", "style": "danger" if p['status'] == 'ON' else "success"}])
+    # UPDATED: Uses reduced API_PANEL_FIELDS
     for label, field, emoji_id in API_PANEL_FIELDS:
         value = p.get(field, "")
-        if field == "placeholder_config":
-            try:
-                pv = json.loads(value) if value else {}
-                display_value = ", ".join([f"{k}={v}" for k, v in pv.items()]) if pv else "None"
-            except: display_value = str(value)[:20] if value else "None"
-        elif field == "token":
+        if field == "token":
             display_value = ('*' * min(len(str(value)), 15)) if value else "Not set"
         elif field == "curl_command":
             sv = str(value).replace("\n", " ")
@@ -2323,6 +2432,17 @@ def handle_message(msg):
         send_message(chat_id, render_body_text("🚫 <b>You are banned from using this bot!</b>\n<i>If you think this is a mistake, please contact support.</i>"))
         return
 
+    # ================== MAINTENANCE CHECK ==================
+    if bot_settings.get("maintenance", False) and not is_admin(chat_id):
+        if not text.startswith("/start") and text != "SUPPORT":
+            maint_msg = (
+                f'<tg-emoji emoji-id="6267262260243076354">㊙️</tg-emoji> <b>The Bot Is On Under MENTENENCE.</b>\n\n'
+                f'Wait Some Time <tg-emoji emoji-id="5226560988291019577">🦕</tg-emoji> <b>Bot Will Available Soon</b> '
+                f'<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>'
+            )
+            send_message(chat_id, render_body_text(maint_msg))
+            return
+
     if text.startswith("/start"):
         parts = text.split()
         if len(parts) > 1 and parts[1].isdigit():
@@ -2350,9 +2470,7 @@ def handle_message(msg):
     if chat_id in user_states and not is_main_cmd:
         state = user_states[chat_id]
 
-        # ==========================================
-        # Auto Captcha Panel Setup Flow (10 steps)
-        # ==========================================
+        # ================== AUTO CAPTCHA PANEL SETUP ==================
         if state == "wait_for_cpanel_url" and text:
             temp_data[chat_id]["p_data"]["login_url"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_user"
@@ -2422,9 +2540,7 @@ def handle_message(msg):
                 send_message(chat_id, render_body_text("❌ <b>Please enter a valid number serial!</b>"), reply_markup=get_cancel_kb())
             return
 
-        # ==========================================
-        # API Panel Field Edit
-        # ==========================================
+        # ================== API Panel Field Edit ==================
         elif state == "wait_for_api_pf_value" and text:
             idx = temp_data[chat_id]["p_idx"]; field = temp_data[chat_id]["p_field"]
             new_value = text.strip()
@@ -2433,20 +2549,9 @@ def handle_message(msg):
                 p = bot_settings["panels"][idx]
                 send_message(chat_id, render_body_text(f"⚙️ <b>Configure</b> <b>{p['name']}</b>"), reply_markup=panel_config_keyboard(idx))
                 return
-            if field in ["interval_sec", "records", "retry_count"]:
+            if field in ["interval_sec", "records"]:
                 try: new_value = int(new_value)
                 except ValueError: send_message(chat_id, render_body_text("❌ <b>Please send a valid number.</b>")); return
-            elif field == "placeholder_config":
-                try: new_value = json.dumps(json.loads(new_value))
-                except:
-                    try:
-                        parts_x = [px.strip() for px in new_value.split(',')]
-                        np = {}
-                        for px in parts_x:
-                            if '=' in px:
-                                k, v = px.split('=', 1); np[k.strip()] = v.strip()
-                        new_value = json.dumps(np)
-                    except: send_message(chat_id, render_body_text("❌ <b>Invalid format.</b>")); return
             bot_settings["panels"][idx][field] = new_value
             save_db()
             del user_states[chat_id]; del temp_data[chat_id]
@@ -2455,9 +2560,7 @@ def handle_message(msg):
             send_message(chat_id, render_body_text(f"⚙️ <b>Configure</b> <b>{p['name']}</b>"), reply_markup=panel_config_keyboard(idx))
             return
 
-        # ==========================================
-        # User Management
-        # ==========================================
+        # ================== User Management ==================
         elif state == "wait_for_um_bal_uid" and text:
             target_uid_str = text.strip()
             if not target_uid_str.isdigit():
@@ -2537,9 +2640,7 @@ def handle_message(msg):
                     send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {e}"), reply_markup=get_cancel_kb())
             return
 
-        # ==========================================
-        # Menu Design Flow
-        # ==========================================
+        # ================== Menu Design Flow ==================
         elif state == "wait_for_menu_text" and text:
             try:
                 menu_key = temp_data[chat_id]["menu_key"]
@@ -2584,9 +2685,7 @@ def handle_message(msg):
                 if chat_id in temp_data: del temp_data[chat_id]
             return
 
-        # ==========================================
-        # Test flow
-        # ==========================================
+        # ================== Test flow ==================
         elif state == "wait_for_test_service" and text:
             temp_data[chat_id]["service"] = text.strip()
             user_states[chat_id] = "wait_for_test_number"
@@ -2615,9 +2714,7 @@ def handle_message(msg):
             del user_states[chat_id]; del temp_data[chat_id]
             return
 
-        # ==========================================
-        # Broadcast
-        # ==========================================
+        # ================== Broadcast ==================
         elif state == "wait_for_broadcast":
             msg_id = msg["message_id"]
             send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Broadcast started...</b>"))
@@ -2625,9 +2722,7 @@ def handle_message(msg):
             del user_states[chat_id]
             return
 
-        # ==========================================
-        # Upload Number
-        # ==========================================
+        # ================== Upload Number ==================
         elif state == "wait_for_txt" and "document" in msg:
             doc = msg["document"]
             if not doc["file_name"].endswith(".txt"):
@@ -2825,9 +2920,7 @@ def handle_message(msg):
             del user_states[chat_id]; del temp_data[chat_id]
             return
 
-        # ==========================================
-        # Stex/Voltx Keys & Services
-        # ==========================================
+        # ================== Stex/Voltx Keys & Services ==================
         elif state == "wait_for_add_stex_key" and text:
             bot_settings["stex_keys"].append(text.strip()); save_db()
             delete_message(chat_id, msg["message_id"])
@@ -2901,11 +2994,19 @@ def handle_message(msg):
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": f"vx_cnt_{srv}_{cnt}", "id": "internal"})
             del user_states[chat_id]; return
 
-        # ==========================================
-        # Withdraw Method / FJ / Admin / OTP Group
-        # ==========================================
+        # ================== W.METHOD / FJ / ADMIN / OTP GROUP ==================
         elif state == "wait_for_add_wm" and text:
-            bot_settings["w_methods"].append(text.strip()); save_db()
+            raw = text.strip()
+            if "|" in raw:
+                parts = raw.split("|", 1)
+                m_name = parts[0].strip()
+                m_eid = parts[1].strip()
+                m_char = "💳"
+                method_obj = {"name": m_name, "emoji_id": m_eid, "char": m_char}
+                bot_settings["w_methods"].append(method_obj)
+            else:
+                bot_settings["w_methods"].append(raw)
+            save_db()
             delete_message(chat_id, msg["message_id"])
             edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("💳 <b>WITHDRAWAL METHODS</b>"), reply_markup=w_methods_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
@@ -2958,9 +3059,7 @@ def handle_message(msg):
             edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
-        # ==========================================
-        # Panel Add
-        # ==========================================
+        # ================== Panel Add ==================
         elif state == "wait_for_panel_name" and text:
             p_name = text.strip()
             t_key = temp_data[chat_id].get("add_type", "api")
@@ -2979,12 +3078,11 @@ def handle_message(msg):
             else:
                 bot_settings["panels"].append({
                     "name": p_name, "type": "API Panel", "status": "OFF",
-                    "api_url": "", "full_api_url": "", "curl_command": "",
+                    "api_url": "", "curl_command": "",
                     "endpoint": "/", "token": "", "method": "GET",
-                    "interval_sec": 30, "records": 0, "retry_count": 3,
+                    "interval_sec": 30, "records": 0,
                     "otp_list_path": "data", "number_path": "number", "message_path": "message",
-                    "country_path": "", "service_path": "service", "timestamp_path": "",
-                    "success_path": "status", "success_value": "success", "placeholder_config": "{}"
+                    "service_path": "service"
                 })
                 save_db()
                 handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": "manage_api_panels", "id": "internal"})
@@ -2992,9 +3090,7 @@ def handle_message(msg):
                 if chat_id in temp_data: del temp_data[chat_id]
                 return
 
-        # ==========================================
-        # DXA Edit
-        # ==========================================
+        # ================== DXA Edit ==================
         elif state == "set_dxa":
             msg_id = temp_data[chat_id]["msg_id"]; key = temp_data[chat_id]["key"]
             try:
@@ -3009,9 +3105,52 @@ def handle_message(msg):
                 edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA</b>\n\n❌ <b>Invalid!</b>"), reply_markup=dxa_control_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
-        # ==========================================
-        # Search Number
-        # ==========================================
+        # ================== CHANGE PAYOUT - New Value ==================
+        elif state == "set_payout_value" and text:
+            msg_id = temp_data[chat_id]["msg_id"]
+            service = temp_data[chat_id]["service"]
+            country = temp_data[chat_id]["country"]
+            try:
+                new_val = float(text.strip())
+                if new_val < 0: raise ValueError()
+                if "otp_pair_rates" not in bot_settings: bot_settings["otp_pair_rates"] = {}
+                key = f"{str(country).upper()}|{str(service).upper()}"
+                bot_settings["otp_pair_rates"][key] = new_val
+                save_db()
+                country_flag = get_flag_info_html(country)
+                delete_message(chat_id, msg["message_id"])
+                ok_txt = (
+                    f"{PEM['ok']} <b>Payout Updated Successfully!</b>\n\n"
+                    f"🌍 <b>Country:</b> <code>{country}</code> {country_flag}\n"
+                    f"🔧 <b>Service:</b> <code>{service}</code>\n"
+                    f"💰 <b>New Payout:</b> <code>${new_val}</code>"
+                )
+                edit_message(chat_id, msg_id, render_body_text(ok_txt), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
+            except ValueError:
+                send_message(chat_id, render_body_text("❌ <b>Invalid value!</b> Please send a number."), reply_markup=get_cancel_kb())
+            del user_states[chat_id]; del temp_data[chat_id]; return
+
+        # ================== DATABASE RESTORE ==================
+        elif state == "wait_for_data_zip" and "document" in msg:
+            doc = msg["document"]
+            if doc["file_name"] != "DXA_BOT_DATA.zip":
+                send_message(chat_id, render_body_text(f"{PEM['no']} <b>File name must be exactly</b> <code>DXA_BOT_DATA.zip</code>"))
+                return
+            file_id = doc["file_id"]
+            file_info = requests.get(f"{BASE_URL}/getFile?file_id={file_id}").json()
+            file_path = file_info["result"]["file_path"]
+            raw_bytes = requests.get(f"{FILE_URL}{file_path}").content
+            try:
+                with zipfile.ZipFile(io.BytesIO(raw_bytes), 'r') as zf:
+                    zf.extractall(".")
+                load_db()
+                send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Data restored successfully!</b>"), reply_markup=main_menu(chat_id))
+            except Exception as e:
+                send_message(chat_id, render_body_text(f"❌ <b>Restore failed:</b> {html.escape(str(e))}"))
+            if chat_id in user_states: del user_states[chat_id]
+            return
+
+        # ================== Search Number ==================
         elif state == "wait_for_search" and text:
             query = text.strip().replace("+", "")
             if not query.isdigit() or len(query) < 3 or len(query) > 9:
@@ -3123,9 +3262,7 @@ def handle_message(msg):
                 user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
             return
 
-        # ==========================================
-        # Withdraw flows
-        # ==========================================
+        # ================== Withdraw flows ==================
         elif state == "wait_for_withdraw_amount" and text:
             msg_id_to_edit = temp_data[chat_id].get("msg_id")
             try:
@@ -3175,7 +3312,7 @@ def handle_message(msg):
             first_name = msg.get("from", {}).get("first_name", "User")
             last_name = msg.get("from", {}).get("last_name", "")
             full_name = f"{first_name} {last_name}".strip()
-            update_balance(chat_id, -amount)
+            # NOTE: Balance NOT deducted here — only on Approve
             pending_withdrawals[req_id] = {"user_id": chat_id, "amount": amount, "method": method, "number": number, "full_name": full_name}
             if db:
                 try:
@@ -3185,9 +3322,9 @@ def handle_message(msg):
                     }, timeout=5.0)
                 except: pass
             if bot_settings["w_group"]:
-                admin_msg = f"🎙 <b>NEW WITHDRAWAL</b>\n\n👤 <a href='tg://user?id={chat_id}'>{full_name}</a>\n💳 <b>{amount}</b>\n🍏 <code>{number}</code>\n🏦 <b>{method}</b>\n\n🧾 <b>{req_id}</b>"
+                admin_msg = build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id)
                 kb = {"inline_keyboard": [[{"text": "APPROVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"wapp_{req_id}", "style": "success"}, {"text": "REJECT", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"wrej_{req_id}", "style": "danger"}]]}
-                send_message(bot_settings["w_group"], render_body_text(admin_msg), reply_markup=kb)
+                send_message(bot_settings["w_group"], admin_msg, reply_markup=kb)
             kb = {"inline_keyboard": [[{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}]]}
             success_text = f"{PEM['ok']} <b>Submitted!</b>\n\n🧾 <b>{req_id}</b>\n💰 <b>{amount}</b>\n🏦 <b>{method}</b>\n📱 <code>{number}</code>"
             if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(success_text), reply_markup=kb)
@@ -3252,8 +3389,8 @@ def handle_message(msg):
                    .replace("{min_w}", f"{float(bot_settings['min_withdraw']):.2f}"))
         txt = render_body_text(raw_txt)
         kb = []
-        for m in bot_settings["w_methods"]:
-            kb.append([{"text": m.strip(), "icon_custom_emoji_id": "5190899075968441286", "callback_data": f"sel_wm_{m.strip()}", "style": "primary"}])
+        for m_name, m_emoji in get_wmethod_display_list():
+            kb.append([{"text": m_name.strip(), "icon_custom_emoji_id": "5190899075968441286", "callback_data": f"sel_wm_{m_name.strip()}", "style": "primary"}])
         kb.append([{"text": "Cancel", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
     elif text == "Admin Panel" and is_admin(chat_id):
@@ -3297,7 +3434,74 @@ def handle_message(msg):
         if sup_link: kb.insert(0, [{"text": "Contact Support", "icon_custom_emoji_id": "5337302974806922068", "url": sup_link, "style": "success"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb} if kb else None)
- # ==========================================
+        # ==========================================
+# Database Helpers (for DATABASE menu)
+# ==========================================
+def build_data_zip():
+    mem = io.BytesIO()
+    try:
+        with zipfile.ZipFile(mem, 'w', zipfile.ZIP_DEFLATED) as zf:
+            if os.path.exists(DB_FILE):
+                zf.write(DB_FILE, DB_FILE)
+            if os.path.exists("users_list.json"):
+                zf.write("users_list.json", "users_list.json")
+            if db:
+                try:
+                    all_users_data = {}
+                    for doc in db.collection('users').stream():
+                        all_users_data[doc.id] = doc.to_dict()
+                    zf.writestr("firestore_users.json", json.dumps(all_users_data, default=str, indent=2))
+                except: pass
+                try:
+                    all_wd = {}
+                    for doc in db.collection('withdrawals').stream():
+                        all_wd[doc.id] = doc.to_dict()
+                    zf.writestr("firestore_withdrawals.json", json.dumps(all_wd, default=str, indent=2))
+                except: pass
+                try:
+                    stg = db.collection('settings').document('bot_config').get(timeout=8.0)
+                    if stg.exists:
+                        zf.writestr("firestore_settings.json", json.dumps(stg.to_dict(), default=str, indent=2))
+                except: pass
+        mem.seek(0)
+        return mem.getvalue()
+    except Exception as e:
+        print(f"ZIP build error: {e}")
+        return None
+
+
+def delete_all_data():
+    global number_batches, used_numbers_list, stex_assigned_numbers, voltx_assigned_numbers
+    global total_uploaded_stats, total_assigned_stats, recent_traffic, assigned_number_meta
+    global all_known_users
+    if db:
+        try:
+            for doc in db.collection('users').stream():
+                try: doc.reference.delete()
+                except: pass
+        except: pass
+        try:
+            for doc in db.collection('withdrawals').stream():
+                try: doc.reference.delete()
+                except: pass
+        except: pass
+    number_batches = {}
+    used_numbers_list = []
+    stex_assigned_numbers = {}
+    voltx_assigned_numbers = {}
+    total_uploaded_stats = 0
+    total_assigned_stats = 0
+    recent_traffic = []
+    assigned_number_meta = {}
+    all_known_users = set()
+    try:
+        if os.path.exists(DB_FILE): os.remove(DB_FILE)
+        if os.path.exists("users_list.json"): os.remove("users_list.json")
+    except: pass
+    save_local_db()
+
+
+# ==========================================
 # Callback Query Handler
 # ==========================================
 def handle_callback(call):
@@ -3319,6 +3523,19 @@ def handle_callback(call):
         if is_user_banned(chat_id):
             answer_callback(call["id"], "🚫 Banned!", show_alert=True)
             return
+
+        # MAINTENANCE CHECK
+        if bot_settings.get("maintenance", False) and not is_admin(chat_id):
+            allowed_cb = ["close_msg", "check_fj", "cancel_state", "ignore"]
+            if data not in allowed_cb:
+                maint_msg = (
+                    f'<tg-emoji emoji-id="6267262260243076354">㊙️</tg-emoji> <b>The Bot Is On Under MENTENENCE.</b>\n\n'
+                    f'Wait Some Time <tg-emoji emoji-id="5226560988291019577">🦕</tg-emoji> <b>Bot Will Available Soon</b> '
+                    f'<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>'
+                )
+                send_message(chat_id, render_body_text(maint_msg))
+                return
+
         if not check_force_join(chat_id) and data != "check_fj":
             send_force_join_msg(chat_id)
             return
@@ -3391,9 +3608,7 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, txt, reply_markup=markup)
         answer_callback(call["id"], "✅ Refreshed!", show_alert=False)
 
-    # ==========================================
-    # Get Numbers from broadcast
-    # ==========================================
+    # ============ Get Numbers from broadcast ============
     elif data.startswith("g_bs|"):
         user_states.pop(chat_id, None)
         temp_data.pop(chat_id, None)
@@ -3554,9 +3769,7 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(f"📊 <b>Ranges:</b> {prem_app_html} <b>{app_full_name}</b> - {prem_flag_html} <b>{iso_query}</b>"), reply_markup={"inline_keyboard": kb})
         answer_callback(call["id"])
 
-    # ==========================================
-    # User Management
-    # ==========================================
+    # ============ User Management ============
     elif data == "user_management":
         edit_message(chat_id, msg_id, get_user_management_text(), reply_markup=user_management_keyboard())
     elif data == "um_manage_balance":
@@ -3572,9 +3785,7 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>Send User ID:</b>"), reply_markup=get_cancel_kb())
 
-    # ==========================================
-    # Menu Design
-    # ==========================================
+    # ============ Menu Design ============
     elif data == "menu_design_list":
         edit_message(chat_id, msg_id, render_body_text("🎨 <b>Menu Design Editor</b>"), reply_markup=menu_design_list_keyboard())
     elif data == "md_reset_defaults":
@@ -3615,9 +3826,7 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"⚙️ <b>Buttons:</b> <b>{key.upper()}</b>"), reply_markup=menu_buttons_list_keyboard(key))
 
-    # ==========================================
-    # Withdraw method
-    # ==========================================
+    # ============ Withdraw method selection ============
     elif data.startswith("sel_wm_"):
         method = data.replace("sel_wm_", "")
         bal = get_user(chat_id).get('balance', 0.0)
@@ -3634,9 +3843,7 @@ def handle_callback(call):
         temp_data[chat_id] = {}
         edit_message(chat_id, msg_id, render_body_text("🧪 <b>Send Service:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "danger"}]]})
 
-    # ==========================================
-    # Broadcast / Upload / Delete
-    # ==========================================
+    # ============ Broadcast / Upload / Delete ============
     elif data == "broadcast_msg":
         user_states[chat_id] = "wait_for_broadcast"
         edit_message(chat_id, msg_id, render_body_text("📢 <b>Send message to broadcast:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
@@ -3675,9 +3882,7 @@ def handle_callback(call):
         send_document(chat_id, "unused_numbers.txt", "\n".join(unused_list).encode('utf-8'))
         answer_callback(call["id"])
 
-    # ==========================================
-    # Leaderboard
-    # ==========================================
+    # ============ Leaderboard ============
     elif data == "lb_main":
         txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
@@ -3738,9 +3943,159 @@ def handle_callback(call):
     elif data == "system_settings":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['gear']} <b>System Settings</b>"), reply_markup=system_settings_keyboard())
 
-    # ==========================================
-    # Stex Control
-    # ==========================================
+    # ============ MAINTENANCE TOGGLE ============
+    elif data == "toggle_maintenance":
+        current = bot_settings.get("maintenance", False)
+        bot_settings["maintenance"] = not current
+        save_db()
+        if bot_settings["maintenance"]:
+            edit_message(chat_id, msg_id, get_admin_text(), reply_markup=admin_panel_keyboard())
+            answer_callback(call["id"], "🔴 Maintenance Mode: ON", show_alert=True)
+        else:
+            edit_message(chat_id, msg_id, get_admin_text(), reply_markup=admin_panel_keyboard())
+            answer_callback(call["id"], "🟢 Maintenance Mode: OFF", show_alert=True)
+            thanks_msg = (
+                f'<tg-emoji emoji-id="6204104220694550861">🐷</tg-emoji> <b>Thanks For Qopareting With Us</b> '
+                f'<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>\n'
+                f'Now You Can Use The Bot Properly '
+                f'<tg-emoji emoji-id="6267107057304868214">🪲</tg-emoji>'
+            )
+            threading.Thread(target=broadcast_text_all, args=(render_body_text(thanks_msg),), daemon=True).start()
+
+    # ============ DATABASE MENU ============
+    elif data == "database_menu":
+        txt = (
+            f'{PEM["file"]} <b>DATABASE MANAGEMENT</b>\n'
+            f'━━━━━━━━━━━━━━━\n'
+            f'<i>Choose an option below:</i>'
+        )
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=database_menu_keyboard())
+
+    elif data == "db_download":
+        wait = send_message(chat_id, render_body_text("⏳ <i>Preparing database zip...</i>"))
+        wait_id = wait.get("result", {}).get("message_id")
+        try:
+            raw = build_data_zip()
+            if wait_id: delete_message(chat_id, wait_id)
+            if raw:
+                send_document_bytes(chat_id, "DXA_BOT_DATA.zip", raw)
+                send_message(chat_id, render_body_text(f'{PEM["ok"]} <b>Database Downloaded!</b>'), reply_markup=database_menu_keyboard())
+            else:
+                send_message(chat_id, render_body_text(f'{PEM["no"]} <b>Failed to build zip!</b>'))
+        except Exception as e:
+            if wait_id: delete_message(chat_id, wait_id)
+            send_message(chat_id, render_body_text(f'❌ Error: {html.escape(str(e))}'))
+
+    elif data == "db_upload":
+        user_states[chat_id] = "wait_for_data_zip"
+        edit_message(chat_id, msg_id, render_body_text("📂 Send the <code>DXA_BOT_DATA.zip</code> file to restore:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "database_menu", "style": "danger"}]]})
+
+    elif data == "db_delete_confirm":
+        txt = (
+            f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> '
+            f'<b>DO YOU REALY WANT TO REMOVE ALL THE DATA\'S ?</b>'
+        )
+        kb = {"inline_keyboard": [
+            [{"text": "✅YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
+            [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
+        ]}
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
+
+    elif data == "db_delete_yes":
+        delete_all_data()
+        edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>All data has been removed successfully!</b>'), reply_markup=database_menu_keyboard())
+
+    elif data == "db_delete_no":
+        edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>Cancelled.</b>'), reply_markup=database_menu_keyboard())
+
+    # ============ CHANGE PAYOUT Flow ============
+    elif data == "change_payout_menu":
+        local_srvs = set([b["service"] for b in number_batches.values() if b["numbers"]])
+        stex_srvs = set(bot_settings.get("stex_services", {}).keys())
+        voltx_srvs = set(bot_settings.get("voltx_services", {}).keys())
+        all_services = sorted(local_srvs.union(stex_srvs).union(voltx_srvs))
+        if not all_services:
+            edit_message(chat_id, msg_id, render_body_text(f'{PEM["no"]} <b>No services available!</b>'), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "primary"}]]})
+            return
+        apps_db = bot_settings.get("premium_apps", {})
+        kb = []; row = []
+        for s in all_services:
+            emoji_id = "5352694861990501856"
+            for ak, ad in apps_db.items():
+                if s.upper() == ak or s.upper() in ak or ak in s.upper():
+                    if "id" in ad: emoji_id = ad["id"]; break
+            row.append({"text": f"{s}", "icon_custom_emoji_id": emoji_id, "callback_data": f"cp_srv|{s}", "style": "primary"})
+            if len(row) == 2:
+                kb.append(row); row = []
+        if row: kb.append(row)
+        kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "primary"}])
+        txt = (
+            f'<tg-emoji emoji-id="5190899075968441286">💳</tg-emoji> '
+            f'<b>CHANGE PAYOUT</b>\n'
+            f'━━━━━━━━━━━━━━━\n'
+            f'📌 <b>Select a Service</b> to change its payout:'
+        )
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
+
+    elif data.startswith("cp_srv|"):
+        srv = data.replace("cp_srv|", "")
+        local_cnts = set()
+        for b in number_batches.values():
+            if b["service"] == srv and b["numbers"]:
+                local_cnts.add(b["country"])
+        stex_cnts = set(bot_settings.get("stex_services", {}).get(srv, {}).keys())
+        voltx_cnts = set(bot_settings.get("voltx_services", {}).get(srv, {}).keys())
+        all_countries = sorted(local_cnts.union(stex_cnts).union(voltx_cnts))
+        if not all_countries:
+            edit_message(chat_id, msg_id, render_body_text(f'{PEM["no"]} <b>No countries found for {srv}!</b>'), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
+            return
+        flags_db = bot_settings.get("premium_flags", {})
+        kb = []
+        for c in all_countries:
+            emoji_id = "5780471598932337683"
+            for fc, fd in flags_db.items():
+                iso = fd.get("iso", "").upper(); name = fd.get("name", "").upper()
+                if c.upper() == iso or c.upper() == name or c.upper() in name or name in c.upper():
+                    if "id" in fd: emoji_id = fd["id"]; break
+            kb.append([{"text": f"{c}", "icon_custom_emoji_id": emoji_id, "callback_data": f"cp_cnt|{srv}|{c}", "style": "primary"}])
+        kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "danger"}])
+        txt = (
+            f'<tg-emoji emoji-id="5336972142066047577">🌐</tg-emoji> '
+            f'<b>Select a Country for {srv}:</b>'
+        )
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
+
+    elif data.startswith("cp_cnt|"):
+        parts = data.split("|", 2)
+        srv = parts[1]; country = parts[2]
+        pr = bot_settings.get("otp_pair_rates", {})
+        key = f"{country.upper()}|{srv.upper()}"
+        if key in pr:
+            try: current_payout = float(pr[key])
+            except: current_payout = float(bot_settings.get("otp_reward", 0.0))
+        else:
+            current_payout = None
+            for k, v in pr.items():
+                try:
+                    if k.split("|")[0] == country.upper():
+                        current_payout = float(v); break
+                except: pass
+            if current_payout is None:
+                current_payout = float(bot_settings.get("otp_reward", 0.0))
+
+        country_flag = get_flag_info_html(country)
+
+        user_states[chat_id] = "set_payout_value"
+        temp_data[chat_id] = {"msg_id": msg_id, "service": srv, "country": country}
+
+        txt = (
+            f'<b>{country}</b>{country_flag} <b>Payout :</b> <code>{current_payout}</code>\n\n'
+            f'<b>Send The New Value</b> <code>country_payout</code> :'
+        )
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=get_cancel_kb())
+        answer_callback(call["id"])
+
+    # ============ Stex Control ============
     elif data == "stex_control":
         edit_message(chat_id, msg_id, render_body_text(f"🌐 <b>StexSMS Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('stex_keys', []))}</b>"), reply_markup=stex_control_keyboard())
     elif data == "add_stex_key":
@@ -3849,9 +4204,7 @@ def handle_callback(call):
         save_db()
         handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": f"nx_srv_{srv}", "id": call["id"]})
 
-    # ==========================================
-    # Voltx Control
-    # ==========================================
+    # ============ Voltx Control ============
     elif data == "voltx_control":
         edit_message(chat_id, msg_id, render_body_text(f"⚡ <b>Voltx Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('voltx_keys', []))}</b>"), reply_markup=voltx_control_keyboard())
     elif data == "add_voltx_key":
@@ -3960,9 +4313,7 @@ def handle_callback(call):
         save_db()
         handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": f"vx_srv_{srv}", "id": call["id"]})
 
-    # ==========================================
-    # Force Join
-    # ==========================================
+    # ============ Force Join ============
     elif data == "manage_fj":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
     elif data == "toggle_fj":
@@ -3979,9 +4330,7 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
 
-    # ==========================================
-    # Admin Management
-    # ==========================================
+    # ============ Admin Management ============
     elif data == "manage_admins":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['user']} <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
     elif data == "add_adm":
@@ -3995,9 +4344,7 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['user']} <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
 
-    # ==========================================
-    # OTP Group
-    # ==========================================
+    # ============ OTP Group ============
     elif data == "manage_otp_groups":
         edit_message(chat_id, msg_id, render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
     elif data == "edit_main_channel_link":
@@ -4037,9 +4384,7 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>OTP Group Link:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "danger"}]]})
 
-    # ==========================================
-    # Panel Management
-    # ==========================================
+    # ============ Panel Management ============
     elif data == "manage_panels":
         api_count = len([p for p in bot_settings["panels"] if p.get("type") == "API Panel"])
         cpt_count = len([p for p in bot_settings["panels"] if p.get("type", "API Panel") == "Auto Captcha Panel"])
@@ -4135,21 +4480,13 @@ def handle_callback(call):
                         f"📌 <b>Type:</b> <b>{p['type']}</b>\n"
                         f"{status_icon} <b>Status:</b> <b>{p['status']}</b>\n"
                         f"🌐 <b>API:</b> <code>{p.get('api_url', 'None')}</code>\n"
-                        f"🔐 <b>Token:</b> <code>{p.get('token', 'None')}</code>\n"
-                        f"🔗 <b>Full API:</b> <code>{p.get('full_api_url', 'None')}</code>")
+                        f"🔐 <b>Token:</b> <code>{p.get('token', 'None')}</code>")
             edit_message(chat_id, msg_id, render_body_text(text), reply_markup=panel_config_keyboard(idx))
-
     elif data.startswith("api_pf|"):
         parts = data.split("|")
         idx = int(parts[1]); field = parts[2]
         p = bot_settings["panels"][idx]
-        if field == "placeholder_config":
-            current = p.get(field, "{}")
-            try:
-                parsed = json.loads(current) if current else {}
-                display = "\n".join([f"{k}: {v}" for k, v in parsed.items()]) if parsed else "None"
-            except: display = str(current)
-        elif field == "token":
+        if field == "token":
             val = p.get(field, ""); display = ('*' * len(str(val))) if val else "Not set"
         else:
             display = str(p.get(field, "")) or "Not set"
@@ -4159,38 +4496,19 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx, "p_field": field}
         user_states[chat_id] = "wait_for_api_pf_value"
         edit_message(chat_id, msg_id, render_body_text(f"✏️ <b>Edit {label}</b>\n\n<b>Current:</b>\n<code>{html.escape(display)}</code>\n\n<b>Send new value:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
-
-    elif data.startswith("set_p_api_"):
-        idx = int(data.split("_")[3])
-        user_states[chat_id] = "wait_for_p_api"
-        temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>API URL:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
-    elif data.startswith("set_p_tok_"):
-        idx = int(data.split("_")[3])
-        user_states[chat_id] = "wait_for_p_tok"
-        temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Token:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
-    elif data.startswith("set_p_fapi_"):
-        idx = int(data.split("_")[3])
-        user_states[chat_id] = "wait_for_p_fapi"
-        temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Full API URL:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
     elif data.startswith("set_p_rec_"):
         idx = int(data.split("_")[3])
         user_states[chat_id] = "wait_for_p_rec"
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>Records count (0=Unlimited):</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
 
-    # ==========================================
-    # Test Connection
-    # ==========================================
+    # ============ Test Connection ============
     elif data.startswith("test_p_conn_"):
         idx = int(data.split("_")[3])
         p = bot_settings["panels"][idx]
         wait_msg = send_message(chat_id, render_body_text("⌛ <i>Testing connection...</i>"))
         wait_msg_id = wait_msg.get("result", {}).get("message_id") if wait_msg else None
         answer_callback(call["id"])
-
         try:
             parsed = []
             raw_text = ""
@@ -4210,8 +4528,12 @@ def handle_callback(call):
                 check_url = msg_link if msg_link else f"{login_url.split('/login')[0]}/client/SMSCDRStats"
                 parsed, raw_text = fetch_cpt_panel_cdrs(p, sess, check_url)
             else:
-                full_url = p.get("full_api_url", "").strip(); url = p.get("api_url", "").strip()
-                token = p.get("token", "").strip(); curl_cmd = p.get("curl_command", "").strip()
+                url = p.get("api_url", "").strip()
+                token = p.get("token", "").strip()
+                curl_cmd = p.get("curl_command", "").strip()
+                if not url and not curl_cmd:
+                    if wait_msg_id: delete_message(chat_id, wait_msg_id)
+                    send_message(chat_id, render_body_text("❌ Set API URL or CURL first!")); return
                 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
                 if curl_cmd:
                     try:
@@ -4227,30 +4549,29 @@ def handle_callback(call):
                                 res = requests.get(curl_url, headers=curl_headers, timeout=15)
                             raw_text = res.text
                             parsed = parse_panel_response(raw_text, p)
-                    except Exception as _ce: print(f"Test CURL error: {_ce}")
-                if not parsed and (full_url or url):
+                    except Exception as _ce: pass
+                if not parsed and url:
                     urls_to_try = []
-                    if full_url: urls_to_try.append(full_url)
+                    if "{token}" in url or "{key}" in url:
+                        urls_to_try.append(url.replace("{token}", token).replace("{key}", token))
+                    elif "token=" in url or "key=" in url:
+                        urls_to_try.append(url)
                     else:
-                        if "{token}" in url or "{key}" in url:
-                            urls_to_try.append(url.replace("{token}", token).replace("{key}", token))
-                        elif "token=" in url or "key=" in url:
-                            urls_to_try.append(url)
-                        else:
-                            sep = '&' if '?' in url else '?'
-                            urls_to_try.append(f"{url}{sep}token={token}")
-                            urls_to_try.append(f"{url}{sep}key={token}&start=0")
-                            urls_to_try.append(f"{url}{sep}key={token}")
+                        sep = '&' if '?' in url else '?'
+                        urls_to_try.append(f"{url}{sep}token={token}")
+                        urls_to_try.append(f"{url}{sep}key={token}&start=0")
+                        urls_to_try.append(f"{url}{sep}key={token}")
                     for try_url in urls_to_try:
                         try:
                             res = requests.get(try_url, headers=headers, timeout=10)
                             raw_text = res.text
                             parsed = parse_panel_response(raw_text, p)
-                            if parsed: break
+                            if parsed:
+                                if try_url != url and token:
+                                    p["api_url"] = try_url.replace(token, "{token}")
+                                    save_db()
+                                break
                         except: pass
-                if not parsed and not curl_cmd and not full_url and not url:
-                    if wait_msg_id: delete_message(chat_id, wait_msg_id)
-                    send_message(chat_id, render_body_text("❌ <b>Set API URL first!</b>")); return
             if wait_msg_id: delete_message(chat_id, wait_msg_id)
             if parsed:
                 txt = f"{PEM['ok']} <b>Connection Successful!</b>\n\n<b>Sample (Max 3):</b>\n\n"
@@ -4293,9 +4614,7 @@ def handle_callback(call):
             if wait_msg_id: delete_message(chat_id, wait_msg_id)
             send_message(chat_id, render_body_text(f"❌ <b>Failed!</b>\n{html.escape(str(e))}"))
 
-    # ==========================================
-    # DXA Control
-    # ==========================================
+    # ============ DXA Control ============
     elif data == "dxa_control":
         if chat_id in user_states: del user_states[chat_id]
         edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
@@ -4307,7 +4626,7 @@ def handle_callback(call):
     elif data == "add_wm":
         user_states[chat_id] = "wait_for_add_wm"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Method name:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_w_methods", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 Send in format:\n<code>{method_name} | {emoji_id}</code>\n\nExample:\n<code>Nagad | 5190899075968441286</code>\n\nOr just name for default emoji."), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_w_methods", "style": "danger"}]]})
     elif data.startswith("del_wm_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings["w_methods"]):
@@ -4323,9 +4642,7 @@ def handle_callback(call):
             edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New value for</b> <code>{key_map[key]}</code><b>:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_dxa_edit", "style": "danger"}]]})
             answer_callback(call["id"])
 
-    # ==========================================
-    # Service -> Country list
-    # ==========================================
+    # ============ Service -> Country list ============
     elif data.startswith("g_s|"):
         user_states.pop(chat_id, None); temp_data.pop(chat_id, None)
         service = data.split("g_s|", 1)[1]
@@ -4492,7 +4809,7 @@ def handle_callback(call):
                     else: hdr_country = query
                 except: hdr_country = query
             else: hdr_country = query
-            text_numbers = build_numbers_header(hdr_country)
+            text_numbers = build_numbers_header(hdr_country, service_from_cb)
             edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
             user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
             return
@@ -4571,6 +4888,7 @@ def handle_callback(call):
             msg_res = send_message(chat_id, text_numbers, reply_markup={"inline_keyboard": kb})
             if msg_res and "result" in msg_res: user_active_sessions[chat_id] = {"msg_id": msg_res["result"]["message_id"], "nums": fetched_nums}
 
+    # ============ WITHDRAWAL APPROVE/REJECT ============
     elif data.startswith("wapp_") or data.startswith("wrej_"):
         user_id_clicked = call["from"]["id"]
         if not is_admin(user_id_clicked):
@@ -4581,18 +4899,29 @@ def handle_callback(call):
             req_data = pending_withdrawals[req_id]
             u_id, amt = req_data["user_id"], req_data["amount"]
             num = req_data["number"]; full_name = req_data.get("full_name", u_id)
-            if action == "APPROVE" and len(num) >= 7: masked_num = f"{num[:4]}...{num[-3:]}"
+            if action == "APPROVE" and len(num) >= 7: masked_num = f"{num[:4]}❖DXA❖{num[-3:]}"
             else: masked_num = num
             status_text = "APPROVED" if action == "APPROVE" else "REJECTED"
             emoji_icon_id = "5352694861990501856" if action == "APPROVE" else "5420130255174145507"
-            new_text = f"🎙 <b>WITHDRAWAL {status_text}</b>\n\n👤 <a href='tg://user?id={u_id}'>{full_name}</a>\n💳 <b>{amt}</b>\n🍏 <code>{masked_num}</code>\n🏦 <b>{req_data['method']}</b>\n\n🧾 <b>{req_id}</b>"
+            frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
+            web_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>'
+            method_icon = get_wmethod_emoji_html(req_data['method'])
+            new_text = (
+                f"🎙 <b>WITHDRAWAL {status_text}</b> {web_emoji}\n"
+                f"{frog_emoji} <b>USER ID :</b><code>{u_id}</code>\n"
+                f"👤 <b>User :</b> <a href='tg://user?id={u_id}'>{full_name}</a>\n"
+                f"💸 <b>BALANCE:</b> <code>{amt}</code>\n"
+                f"🍏 <b>NUMBER :</b> <code>{masked_num}</code>\n"
+                f"🏦 <b>METHOD :</b> {method_icon} <b>{req_data['method']}</b>\n\n"
+                f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>"
+            )
             kb = {"inline_keyboard": [[{"text": status_text, "icon_custom_emoji_id": emoji_icon_id, "callback_data": "ignore", "style": "success" if action == "APPROVE" else "danger"}]]}
             edit_message(chat_id, msg_id, render_body_text(new_text), reply_markup=kb)
-            if action == "REJECT":
-                update_balance(u_id, amt)
-                send_message(u_id, render_body_text(f"❌ <b>Your</b> <b>{amt}</b> <b>withdrawal rejected. Balance refunded.</b>"))
+            if action == "APPROVE":
+                update_balance(u_id, -amt)
+                send_message(u_id, render_body_text(f"{PEM['ok']} Your {amt} ৳ withdrawal has been paid successfully!"))
             else:
-                send_message(u_id, render_body_text(f"{PEM['ok']} <b>Your</b> <b>{amt}</b> <b>withdrawal paid!</b>"))
+                send_message(u_id, render_body_text(f"❌ Your {amt} ৳ withdrawal request was rejected."))
             if db:
                 try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"}, timeout=5.0)
                 except: pass
@@ -4616,7 +4945,6 @@ def voltx_sms_listener():
                         for item in resp_data["data"]["otps"]:
                             num = str(item.get("number", "")).replace("+", "")
                             msg_text = str(item.get("message", ""))
-                            # CHANGE #3: OTP detect না হলে "N/A"
                             otp = extract_otp_code(msg_text)
                             if not otp:
                                 otp = "N/A"
@@ -4637,7 +4965,6 @@ def voltx_sms_listener():
                                 display_num = f"+{num}" if not str(num).startswith("+") else str(num)
                                 lang = detect_language(msg_text)
                                 display_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=True))
-                                # GROUP OTP layout
                                 for fw in bot_settings.get("fw_groups", []):
                                     kb = build_group_kb(otp, fw)
                                     send_message(fw["chat_id"], display_msg, reply_markup=kb)
@@ -4655,7 +4982,6 @@ def voltx_sms_listener():
                                         if clean_vtx == clean_api_num or (len(clean_vtx) >= 8 and clean_vtx.endswith(clean_api_num[-8:])) or (len(clean_api_num) >= 8 and clean_api_num.endswith(clean_vtx[-8:])):
                                             owner_id = n_owner; break
                                 if owner_id:
-                                    # CHANGE #2: country-specific payout
                                     reward = get_payout_for_number(clean_api_num, app_full_name)
                                     if reward > 0: update_balance(owner_id, reward)
                                     new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
@@ -4685,7 +5011,6 @@ def global_sms_listener():
                         for item in resp_data["data"]["otps"]:
                             num = str(item.get("number", "")).replace("+", "")
                             msg_text = str(item.get("message", ""))
-                            # CHANGE #3: OTP detect না হলে "N/A"
                             otp = extract_otp_code(msg_text)
                             if not otp:
                                 otp = "N/A"
@@ -4706,7 +5031,6 @@ def global_sms_listener():
                                 display_num = f"+{num}" if not str(num).startswith("+") else str(num)
                                 lang = detect_language(msg_text)
                                 display_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=True))
-                                # GROUP OTP layout
                                 for fw in bot_settings.get("fw_groups", []):
                                     kb = build_group_kb(otp, fw)
                                     send_message(fw["chat_id"], display_msg, reply_markup=kb)
@@ -4724,7 +5048,6 @@ def global_sms_listener():
                                         if clean_stex == clean_api_num or (len(clean_stex) >= 8 and clean_stex.endswith(clean_api_num[-8:])) or (len(clean_api_num) >= 8 and clean_api_num.endswith(clean_stex[-8:])):
                                             owner_id = n_owner; break
                                 if owner_id:
-                                    # CHANGE #2: country-specific payout
                                     reward = get_payout_for_number(clean_api_num, app_full_name)
                                     if reward > 0: update_balance(owner_id, reward)
                                     new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
@@ -4770,4 +5093,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()      
+    main()
