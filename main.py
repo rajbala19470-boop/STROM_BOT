@@ -2,6 +2,8 @@ import requests
 import time
 import json
 import os
+import zipfile
+import io
 import firebase_admin
 from firebase_admin import credentials, firestore
 import uuid
@@ -10,20 +12,20 @@ import random
 import re
 import html
 import pyotp
-from collections import Counter 
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
-from datetime import datetime 
+from datetime import datetime
 from urllib.parse import urljoin
 
 # ==========================================
 # Configuration (Token & Owner ID)
 # ==========================================
-TOKEN = "8979274305:AAEohpqkBNA2VNKL-J_AsFBPejTcD705qFE"
+TOKEN = "7940813464:AAHSDQmgNw-S2LuDDtVacPCHYixLbkYd2tc"
 BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
 FILE_URL = f"https://api.telegram.org/file/bot{TOKEN}/"
 
-OWNER_ID = 8744359777
+OWNER_ID = 6704775322
 BOT_USERNAME = ""
 DB_FILE = "bot_data.json"
 
@@ -52,9 +54,7 @@ PEM = {
     "num": '<tg-emoji emoji-id="5352862640592949843">🔢</tg-emoji>',
     "pin": '<tg-emoji emoji-id="5352922460897452503">📍</tg-emoji>',
     "star": '<tg-emoji emoji-id="5352552689983067014">✨</tg-emoji>',
-    "hi": '<tg-emoji emoji-id="5353027129250453493">👋</tg-emoji>',
-    "i_info": '<tg-emoji emoji-id="6309655288261644098">ℹ️</tg-emoji>',
-    "o_zero": '<tg-emoji emoji-id="6307374961275180239">🅾️</tg-emoji>'
+    "hi": '<tg-emoji emoji-id="5353027129250453493">👋</tg-emoji>'
 }
 
 GLOBAL_BODY_EMOJIS = {
@@ -67,13 +67,10 @@ GLOBAL_BODY_EMOJIS = {
     "🧻": "5348486915026884464", "⚗": "5346311574221000149", "🛴": "5348075478634766440",
     "📊": "5353032893096567467", "🔢": "5352862640592949843", "👤": "5352861489541714456",
     "📁": "5352721946054268944", "🚀": "5352597830089347330", "💎": "5352838545826420397",
-    "📍": "5352922460897452503", "👋": "5199885118214255386", "✅": "5352694861990501856",
+    "📍": "5352922460897452503", "👋": "5353027129250453493", "✅": "5352694861990501856",
     "1️⃣": "5352651766288652742", "2️⃣": "5355186458418257716", "3️⃣": "5352867219028091093",
     "4️⃣": "5352566657216714037", "5️⃣": "5353086880835474989", "6️⃣": "5354859211975071385",
     "7️⃣": "5352859127309707652", "8️⃣": "5352957533600389988", "9️⃣": "5353060913463204207",
-    "🔟": "5353060913463204207",
-    "ℹ️": "6309655288261644098",
-    "🅾️": "6307374961275180239",
     "🔤": "5352727417842606016", "📣": "5352980533150259581", "📤": "5353001161878182134",
     "✨": "5352552689983067014", "🔹": "5352638632278660622", "🎙": "5355102594886833928",
     "💴": "5352985330628730418", "📅": "5352585194295564660", "📴": "5352974971167611327",
@@ -84,106 +81,41 @@ GLOBAL_BODY_EMOJIS = {
     "📝": "5192739271886282680", "🛡": "5190447043545438788", "🤝": "5192805934073685937",
     "💰": "5190576863226933563", "👀": "5190645917711114179", "🕹": "5193100774988617665",
     "🟢": "5192812028632274956", "🧪": "5190781475468915802", "🎨": "5190751148704833975",
-    "📂": "5257969839313526622", "🌍": "5780471598932337683", "📌": "5318986077455795572",
+    "📂": "5257969839313526622", "🌍": "5780471598922337683", "📌": "5318986077455795572",
     "📢": "5789428375261023681", "🆔": "5352862640592949843", "📈": "5352877703043258544",
     "🔔": "5352980533150259581", "🏦": "5348469219761626211", "🧾": "5192739271886282680",
     "👨‍⚖️": "5334763399299506604", "🔍": "5463352748751753567",
     "🔑": "5197288647275071607",
-    "🤔": "5314563983422798645",
-    "📩": "5472239203590888751",
-    "🤑": "5805602131176069048",
-    "🙈": "5818715087237549366",
-    "🔴": "5318840353510408444",
-    "⏳": "5337172996211648018",
-    "🏳️": "5780471598932337683",
-    "🔧": "5818967150278218011",
-    "✉️": "6235307467337635626"
+    "🐸": "6307777408300753473",
+    "🕸️": "6206245785877616415",
+    "🪲": "6267107057304868214",
+    "🐷": "6204104220694550861",
+    "㊙️": "6267262260243076354",
+    "🦕": "5226560988291019577",
+    "☁️": "6266764202950530136",
+    "📵": "6266787022111773140",
+    "🐚": "6203886371363364022",
+    "⏫": "6206046503690048595",
+    "🆘": "6206108815075579644",
+    "❓": "6203773684306418660"
 }
 
 # ==========================================
-# air.py Style Constants
+# API PANEL FIELDS (REMOVED: FULL API URL, RETRY COUNT, COUNTRY PATH, TIMESTAMP PATH, SUCCESS PATH, SUCCESS VALUE, PLACEHOLDERS)
 # ==========================================
-BROADCAST_HEADER_PRE = "6271473763439612077"
-BROADCAST_HEADER_SUF = "5118734498590098251"
-BROADCAST_TOTAL_EMOJI = "5203993413346680064"
-BROADCAST_MONEY_PRE = "6190336264940559752"
-BROADCAST_MONEY_SUF = "6204104220694550861"
-BROADCAST_BTN_EMOJI = "6204108584381322968"
-COPY_EMOJI = "6206420230269310869"
-TAKA_EMOJI = "6267068789146260253"
-HIDDEN_EMOJI = "6235253239080555488"
-MESSAGE_EMOJI = "6235307467337635626"
-CHANNEL_EMOJI = "6204010762206189094"
-EMOJI_BOT_BUTTON = "5339267587337370029"
-NUMBER_BTN_EMOJI = "5339267587337370029"
-
-LANG_FULL_NAMES = {
-    "EN":"English","AR":"Arabic","BN":"Bangla","HI":"Hindi","PA":"Punjabi",
-    "GU":"Gujarati","OR":"Odia","TA":"Tamil","TE":"Telugu","KN":"Kannada",
-    "ML":"Malayalam","SI":"Sinhala","TH":"Thai","LO":"Lao","BO":"Tibetan",
-    "MY":"Burmese","AM":"Amharic","KM":"Khmer","KA":"Georgian","HY":"Armenian",
-    "HE":"Hebrew","EL":"Greek","RU":"Russian","ZH":"Chinese","JA":"Japanese",
-    "KO":"Korean","ID":"Indonesian","MS":"Malay","VN":"Vietnamese","TL":"Tagalog",
-    "ES":"Spanish","PT":"Portuguese","FR":"French","DE":"German","IT":"Italian",
-    "PL":"Polish","TR":"Turkish","NL":"Dutch","SV":"Swedish","DA":"Danish",
-    "NO":"Norwegian","FI":"Finnish","CS":"Czech","SK":"Slovak","HU":"Hungarian",
-    "RO":"Romanian","HR":"Croatian","BG":"Bulgarian","UK":"Ukrainian",
-    "SW":"Swahili","AF":"Afrikaans","FA":"Persian"
-}
-
-def lang_full(lang_code):
-    if not lang_code: return "English"
-    code = str(lang_code).strip().upper().replace("#", "")
-    return LANG_FULL_NAMES.get(code, code.title() if code else "English")
-
-def fmt_payout(val):
-    try:
-        s = f"{float(val):.10f}".rstrip('0').rstrip('.')
-        if '.' not in s: s += ".00"
-        return s
-    except:
-        return "0.00"
-
-def get_by_path(obj, path):
-    if not path or not str(path).strip(): return None
-    parts = str(path).split('.')
-    cur = obj
-    for p in parts:
-        if p == "": continue
-        if isinstance(cur, dict):
-            if p in cur: cur = cur[p]
-            else: return None
-        elif isinstance(cur, list):
-            try: cur = cur[int(p)]
-            except: return None
-        else:
-            return None
-    return cur
-
-assigned_number_meta = {}
-_last_upload_bcast = {}
-_upload_in_progress = {}
-
 API_PANEL_FIELDS = [
     ("NAME",           "name",               "5818775306974006843"),
     ("BASE URL",       "api_url",            "6285048454255220485"),
-    ("FULL API URL",   "full_api_url",       "6285048454255220485"),
     ("CURL COMMAND",   "curl_command",       "5978568938156461643"),
     ("ENDPOINT",       "endpoint",           "6267172559851099903"),
     ("TOKEN",          "token",              "5821453562680448557"),
     ("METHOD",         "method",             "5926860096008098405"),
     ("INTERVAL",       "interval_sec",       "6093456762113888541"),
     ("MAX RECORDS",    "records",            "5868569066154757449"),
-    ("RETRY COUNT",    "retry_count",        "5978846612087114958"),
     ("OTP LIST PATH",  "otp_list_path",      "5818955300463447293"),
     ("NUMBER PATH",    "number_path",        "5877410604225924969"),
     ("MESSAGE PATH",   "message_path",       "5980911993140284450"),
-    ("COUNTRY PATH",   "country_path",       "5188381825701021648"),
     ("SERVICE PATH",   "service_path",       "5818967150278218011"),
-    ("TIMESTAMP PATH", "timestamp_path",     "6285240160120477644"),
-    ("SUCCESS PATH",   "success_path",       "6267008582294705964"),
-    ("SUCCESS VALUE",  "success_value",      "6267039884016358504"),
-    ("PLACEHOLDERS",   "placeholder_config", "6267264360482084046"),
 ]
 
 def parse_curl_command(curl_str):
@@ -210,7 +142,7 @@ def parse_curl_command(curl_str):
     return result
 
 # ==========================================
-# World Country Database
+# 🌍 Comprehensive World Country Database
 # ==========================================
 COUNTRY_DB = {
     "1":   {"iso": "US", "name": "United States"},
@@ -406,13 +338,13 @@ COUNTRY_DB = {
 }
 
 DEFAULT_CUSTOM_MESSAGES = {
-    "start": {"text": "<blockquote>👋 <b>WELCOME TO 𝐒𝐓𝐎𝐑𝐌 𝐗 𝐎𝐍𝐄</b> 🤔</blockquote>\n\n📩 <b>RECEIVE OTP'S AND START EARNING MONEY</b> 🤑", "buttons": []},
+    "start": {"text": "╔═══════════╗\n       📊 NUMBER BOT\n╚═══════════╝\n🚀 Welcome to Number & OTP Service\n━━━━━━━━━━━━\n✅ Choose an option below\nto continue using the bot.\n━━━━━━━━━━━━\n💎 Premium OTP Service", "buttons": []},
     "get_number": {"text": f"{PEM['pin']} Select a service:", "buttons": []},
-    "select_country": {"text": f"📌 Select a country for {{service}}:", "buttons": []}, 
+    "select_country": {"text": f"📌 Select a country for {{service}}:", "buttons": []},
     "search_number": {"text": "╔═══════════╗\n     🔍 <b>SEARCH NUMBER</b>\n╚═══════════╝\n✅ Enter 3 to 9 digits  \nto search for a number.\n━━━━━━━━━━━━━\n📝 Example:\n➥ 880\n➥ 9227373\n━━━━━━━━━━━━━\n🔍 Fast Number Lookup System", "buttons": []},
     "traffic": {"text": f"{PEM['graph']} <b>Traffic Overview</b>\n\n{PEM['ok']} Available Numbers: {{avail}}\n{PEM['rocket']} Assigned Numbers: {{assigned}}", "buttons": []},
     "refer": {"text": f"➖➖➖➖➖➖➖\n« {PEM['gift']} REFER & EARN »\n➖➖➖➖➖➖➖\n{PEM['link']} YOUR LINK:\n<code>{{ref_link}}</code>\n➖➖➖➖➖➖➖\n{PEM['user']} TOTAL REFERS: <b>{{total_ref}}</b>\n➖➖➖➖➖➖➖\n{PEM['money']} PER REFER: <b>{{ref_reward}} TK</b>\n➖➖➖➖➖➖➖", "buttons": []},
-    "withdrawal": {"text": "➖➖➖➖➖➖➖\n《 🙈 <b>USER ID</b> : <code>{user_id}</code> 》\n➖➖➖➖➖➖➖\n👋 <b>Total Otp:</b> <code>{total_otp}</code>\n➖➖➖➖➖➖➖\n🫂 <b>Reffer :</b><code>{total_ref}</code>\n➖➖➖➖➖➖➖\n📅 <b>BALANCE:</b> <code>${bal}</code>\n➖➖➖➖➖➖➖\n🔐 <b>MINIMUM:</b> <code>${min_w}</code>\n➖➖➖➖➖➖➖\n<blockquote><b>SELECT METHOD <tg-emoji emoji-id=\"5197474438970363734\">📱</tg-emoji></b></blockquote>", "buttons": []},
+    "withdrawal": {"text": "➖➖➖➖➖➖➖\n《 🙈 <b>USER ID</b> : <code>{user_id}</code>  》\n➖➖➖➖➖➖➖\n☁️ <b>Total Otp:</b> <code>{total_otp}</code>\n➖➖➖➖➖➖➖\n🫂 <b>Reffer :</b><code>{total_ref}</code>\n➖➖➖➖➖➖➖\n📅 <b>BALANCE:</b> <code>{bal}</code>\n➖➖➖➖➖➖➖\n🔐 <b>MINIMUM:</b> <code>{min_w}</code>\n➖➖➖➖➖➖➖\n<b>SELECT METHOD</b> 📱", "buttons": []},
     "support": {"text": f"{PEM['msg']} Contact us for any help:", "buttons": []}
 }
 
@@ -435,182 +367,146 @@ firebase_credentials_json = r"""
 }
 """
 
-db = None
-
-def _init_firebase_with_timeout():
-    global db
-    try:
-        cred_dict = json.loads(firebase_credentials_json)
-        cred = credentials.Certificate(cred_dict)
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred)
-        _db = firestore.client()
-        try:
-            _db.collection('_startup_ping_').document('x').get(timeout=6.0)
-            db = _db
-            print("Firebase Connected & VERIFIED! (Full Sync Enabled)")
-        except Exception as _te:
-            print(f"Firebase auth FAILED: {type(_te).__name__}: {str(_te)[:100]}")
-            print("Firebase DISABLED - running in LOCAL-ONLY mode.")
-            db = None
-    except Exception as e:
-        print(f"Firebase Init Error: {e}")
-        db = None
-
-_fb_t = threading.Thread(target=_init_firebase_with_timeout, daemon=True)
-_fb_t.start()
-_fb_t.join(timeout=10.0)
-if _fb_t.is_alive():
-    print("Firebase init TIMEOUT (10s) - switching to LOCAL-ONLY mode.")
+try:
+    cred_dict = json.loads(firebase_credentials_json)
+    cred = credentials.Certificate(cred_dict)
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    print("✅ Firebase Connected! (Full Sync Enabled)")
+except Exception as e:
+    print(f"❌ Firebase Error: {e}")
     db = None
-else:
-    print("Firebase init completed.")
 
 bot_settings = {
     "admins": [OWNER_ID],
-    "panels": [], 
-    "fw_groups": [], 
+    "panels": [],
+    "fw_groups": [],
     "otp_link": "https://t.me/your_otp_group",
-    "main_channel_link": "",
     "withdraw_on": True,
     "min_withdraw": 30.0,
     "otp_reward": 0.1,
     "refer_reward": 0.2,
     "cooldown": 10,
     "num_req": 3,
-    "num_share": 1, 
+    "num_share": 1,
     "support_link": "https://t.me/your_support",
     "w_methods": ["bKash", "Nagad"],
-    "w_group": "", 
+    "w_group": "",
     "fj_on": False,
-    "fj_channels": [], 
-    "stex_keys": [], 
+    "fj_channels": [],
+    "stex_keys": [],
     "voltx_keys": [],
     "search_countries": [],
     "stex_services": {},
     "voltx_services": {},
-    "premium_flags": {},
-    "premium_apps": {},
+    "otp_pair_rates": {},
+    "maintenance": False,
+    "premium_flags": {
+        "1": {"char": "🇺🇸", "iso": "US", "name": "United States", "id": "5913463998522592692"},
+        "880": {"char": "🇧🇩", "iso": "BD", "name": "Bangladesh", "id": "5911365056594973179"},
+        "91": {"char": "🇮🇳", "iso": "IN", "name": "India", "id": "5913754823643107921"},
+        "92": {"char": "🇵🇰", "iso": "PK", "name": "Pakistan", "id": "5913705895375672082"},
+        "44": {"char": "🇬🇧", "iso": "GB", "name": "United Kingdom", "id": "5913443365499703513"}
+    },
+    "premium_apps": {
+        "FACEBOOK": {"char": "🚫", "id": "5334807341109908955", "name": "Facebook"},
+        "WHATSAPP": {"char": "🚫", "id": "5334759662677957452", "name": "WhatsApp"}
+    },
     "custom_messages": DEFAULT_CUSTOM_MESSAGES.copy()
 }
 
 FS_KEYS = [
-    "admins", "panels", "fw_groups", "otp_link", "main_channel_link", "withdraw_on", 
-    "min_withdraw", "otp_reward", "refer_reward", "cooldown", 
-    "num_req", "num_share", "support_link", "w_methods", "w_group", "stex_keys", "voltx_keys",
-    "search_countries", "stex_services", "voltx_services", "fj_on", "fj_channels"
+    "admins", "panels", "fw_groups", "otp_link", "withdraw_on",
+    "min_withdraw", "otp_reward", "refer_reward", "cooldown",
+    "num_req", "num_share", "support_link", "w_methods", "w_group",
+    "stex_keys", "voltx_keys", "search_countries", "stex_services", "voltx_services",
+    "fj_on", "fj_channels", "otp_pair_rates", "maintenance"
 ]
 
 number_batches = {}
 used_numbers_list = []
-stex_assigned_numbers = {} 
+stex_assigned_numbers = {}
 voltx_assigned_numbers = {}
 STEX_BASE_URL = "https://api.2oo9.cloud/MXS47FLFX0U/tness/@public/api"
 VOLTX_BASE_URL = "https://api.2oo9.cloud/MXS47FLFX0U/tnevs/@public/api"
 total_uploaded_stats = 0
 total_assigned_stats = 0
-processed_otps = set() 
+processed_otps = set()
 recent_traffic = []
 user_banned_cache = {}
+
+# Per-number metadata (country/service/payout)
+assigned_number_meta = {}
+
+# Active HTTP sessions for Auto Captcha Panels
 panel_sessions = {}
-user_active_sessions = {}
 
-FLAG_TXT_FILE = "flag.txt"
-SERVICE_TXT_FILE = "service.txt"
-
-def load_flag_txt():
-    path = FLAG_TXT_FILE
-    loaded = {}
-    if not os.path.exists(path):
+# ==========================================
+# Per-country/service Payout Resolver
+# ==========================================
+def get_payout_for_number(clean_api_num, service_hint=""):
+    meta = assigned_number_meta.get(clean_api_num, {})
+    if "payout" in meta:
+        try: return float(meta["payout"])
+        except: pass
+    oc = str(meta.get("country", "") or "").strip()
+    osvc = str(meta.get("service", "") or service_hint or "").strip()
+    if not oc:
         try:
-            with open(path, "w", encoding='utf-8') as f:
-                f.write("# flag.txt\n# Format: CountryName (calling_code) (ISO) { \"emoji\": \"🇧🇩\", \"id\": \"5911365056594973179\" }\n")
-                f.write("United States (1) (US) { \"emoji\": \"🇺🇸\", \"id\": \"5913463998522592692\" }\n")
-                f.write("Bangladesh (880) (BD) { \"emoji\": \"🇧🇩\", \"id\": \"5911365056594973179\" }\n")
-                f.write("India (91) (IN) { \"emoji\": \"🇮🇳\", \"id\": \"5913754823643107921\" }\n")
-                f.write("Pakistan (92) (PK) { \"emoji\": \"🇵🇰\", \"id\": \"5913705895375672082\" }\n")
-                f.write("United Kingdom (44) (GB) { \"emoji\": \"🇬🇧\", \"id\": \"5913443365499703513\" }\n")
-                f.write("Madagascar (261) (MG) { \"emoji\": \"🇲🇬\", \"id\": \"5780471598932337683\" }\n")
-                f.write("Kyrgyzstan (996) (KG) { \"emoji\": \"🇰🇬\", \"id\": \"5780471598932337683\" }\n")
-                f.write("Afghanistan (93) (AF) { \"emoji\": \"🇦🇫\", \"id\": \"5780471598932337683\" }\n")
-            print(f"{path} created with defaults")
-        except Exception as e:
-            print(f"Could not create {path}: {e}")
-            return loaded
-    try:
-        with open(path, "r", encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"): continue
-                json_match = re.search(r'(\{.*\})', line)
-                if not json_match: continue
-                try:
-                    data = json.loads(json_match.group(1))
-                    char = data.get("emoji")
-                    eid = data.get("id")
-                    prefix_str = line[:json_match.start()].strip()
-                    code_match = re.search(r'\((\d+)\)', prefix_str)
-                    iso_match = re.search(r'\(([A-Za-z]+)\)', prefix_str)
-                    if code_match and iso_match and char and eid:
-                        code = code_match.group(1)
-                        iso = iso_match.group(1).upper()
-                        name = prefix_str.replace(f"({code})", "").replace(f"({iso_match.group(1)})", "").replace(char, "").strip()
-                        if re.match(r'^[A-Za-z0-9#]{1,4}$', str(char)):
-                            try:
-                                char = ''.join(chr(0x1F1E6 + ord(c) - ord('A')) for c in iso.upper()[:2])
-                            except: char = "🌍"
-                        loaded[code] = {"char": char, "iso": iso, "name": name, "id": str(eid)}
-                except: continue
-        print(f"{path} loaded ({len(loaded)} flags)")
-    except Exception as e:
-        print(f"Error loading {path}: {e}")
-    return loaded
-
-def load_service_txt():
-    path = SERVICE_TXT_FILE
-    loaded = {}
-    if not os.path.exists(path):
-        try:
-            with open(path, "w", encoding='utf-8') as f:
-                f.write("# service.txt\n# Format: ServiceName { \"emoji\": \"📱\", \"id\": \"5334807341109908955\" }\n")
-                f.write("Facebook { \"emoji\": \"📱\", \"id\": \"5334807341109908955\" }\n")
-                f.write("WhatsApp { \"emoji\": \"📱\", \"id\": \"5334759662677957452\" }\n")
-                f.write("Instagram { \"emoji\": \"📱\", \"id\": \"5420130255174145507\" }\n")
-            print(f"{path} created with defaults")
-        except Exception as e:
-            print(f"Could not create {path}: {e}")
-            return loaded
-    try:
-        with open(path, "r", encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"): continue
-                json_match = re.search(r'(\{.*\})', line)
-                if not json_match: continue
-                try:
-                    data = json.loads(json_match.group(1))
-                    char = data.get("emoji", "📱")
-                    eid = data.get("id")
-                    name_part = line[:json_match.start()].strip()
-                    name = name_part.replace(char, '').strip() if char else name_part
-                    if char and re.match(r'^[A-Za-z0-9#]{1,4}$', str(char)):
-                        char = "📱"
-                    if char and eid and name:
-                        loaded[name.upper()] = {"char": char, "id": str(eid), "name": name}
-                except: continue
-        print(f"{path} loaded ({len(loaded)} services)")
-    except Exception as e:
-        print(f"Error loading {path}: {e}")
-    return loaded
-
-COUNTRIES_DATA = {}
-try:
-    if os.path.exists("countries.json"):
-        with open("countries.json", "r", encoding='utf-8') as f:
-            COUNTRIES_DATA = json.load(f)
-except: pass
+            _, iso_det, _ = get_country_from_num(clean_api_num)
+            if iso_det and iso_det != "XX":
+                for _c, fdata in bot_settings.get("premium_flags", {}).items():
+                    if fdata.get("iso", "").upper() == iso_det.upper():
+                        oc = fdata.get("name", ""); break
+                if not oc:
+                    for _c, cinfo in COUNTRY_DB.items():
+                        if cinfo["iso"] == iso_det:
+                            oc = cinfo["name"]; break
+        except: pass
+    pr = bot_settings.get("otp_pair_rates", {})
+    if oc and osvc:
+        key = f"{oc.upper()}|{osvc.upper()}"
+        if key in pr:
+            try: return float(pr[key])
+            except: pass
+        for k, v in pr.items():
+            try:
+                if k.split("|")[0] == oc.upper():
+                    return float(v)
+            except: pass
+    return float(bot_settings.get("otp_reward", 0.0))
 
 
+def get_wmethod_emoji_html(method_name):
+    for m in bot_settings.get("w_methods", []):
+        if isinstance(m, dict):
+            if m.get("name", "").lower() == method_name.lower():
+                eid = m.get("emoji_id", "")
+                if eid:
+                    return f'<tg-emoji emoji-id="{eid}">{m.get("char", "💳")}</tg-emoji>'
+    return '<tg-emoji emoji-id="5190899075968441286">💳</tg-emoji>'
+
+
+def get_wmethod_display_list():
+    out = []
+    for m in bot_settings.get("w_methods", []):
+        if isinstance(m, dict):
+            name = m.get("name", "")
+            eid = m.get("emoji_id", "")
+            char = m.get("char", "💳")
+            if eid:
+                emoji_html = f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
+            else:
+                emoji_html = "💳"
+            out.append((name, emoji_html))
+        else:
+            out.append((str(m), "💳"))
+    return out
+
+
+# ==========================================
+# Captcha Panel CDRs Fetcher
+# ==========================================
 def fetch_cpt_panel_cdrs(p, session, check_url):
     res = session.get(check_url, timeout=15)
     html_text = res.text
@@ -627,26 +523,12 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
     results = []
     n_col_name = p.get("num_col_name", "number").lower()
     m_col_name = p.get("msg_col_name", "message").lower()
-    s_col_name = p.get("service_col_name", "service").lower()
     n_idx = int(p.get("num_col_idx", 1)) - 1 if p.get("num_col_idx") else 1
     m_idx = int(p.get("msg_col_idx", 2)) - 1 if p.get("msg_col_idx") else 2
-    s_idx = int(p.get("service_col_idx", 3)) - 1 if p.get("service_col_idx") else 3
-
-    def _extract_row(row_val):
-        if not isinstance(row_val, list): return None
-        if len(row_val) < max(n_idx, m_idx) + 1: return None
-        num_val = row_val[n_idx] if (0 <= n_idx < len(row_val)) else row_val[2]
-        msg_val = row_val[m_idx] if (0 <= m_idx < len(row_val)) else row_val[4]
-        svc_val = row_val[s_idx] if (0 <= s_idx < len(row_val)) else ""
-        clean_num = re.sub(r'\D', '', str(num_val))
-        if not (clean_num and 5 <= len(clean_num) <= 18): return None
-        otp = extract_otp_code(msg_val)
-        if not (otp and len(str(msg_val)) > 4): return None
-        return {"number": clean_num, "message": str(msg_val), "otp": otp, "service_name": str(svc_val).strip()}
-
     if s_ajax_source:
         baseUrl = p.get("login_url", "").split("/client")[0].split("/login")[0].strip()
-        if not baseUrl.startswith("http"): baseUrl = "http://" + baseUrl
+        if not baseUrl.startswith("http"):
+            baseUrl = "http://" + baseUrl
         full_ajax_url = ""
         if s_ajax_source.startswith("http"):
             full_ajax_url = s_ajax_source
@@ -665,8 +547,15 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
         data_dict = ajax_res.json()
         rows = data_dict.get("aaData", [])
         for row_val in rows:
-            item = _extract_row(row_val)
-            if item: results.append(item)
+            if not isinstance(row_val, list): continue
+            if len(row_val) < max(n_idx, m_idx) + 1: continue
+            num_val = row_val[n_idx] if (0 <= n_idx < len(row_val)) else row_val[2]
+            msg_val = row_val[m_idx] if (0 <= m_idx < len(row_val)) else row_val[4]
+            clean_num = re.sub(r'\D', '', str(num_val))
+            if clean_num and 5 <= len(clean_num) <= 18:
+                otp = extract_otp_code(msg_val)
+                if otp and len(msg_val) > 4:
+                    results.append({"number": clean_num, "message": msg_val, "otp": otp})
     else:
         tables = soup.find_all('table')
         for table in tables:
@@ -674,49 +563,44 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
             if not rows: continue
             final_n_idx = n_idx
             final_m_idx = m_idx
-            final_s_idx = s_idx
             header_cells = rows[0].find_all(['th', 'td'])
             for i, cell in enumerate(header_cells):
                 c_text = cell.get_text(strip=True).lower()
                 if n_col_name in c_text: final_n_idx = i
                 if m_col_name in c_text: final_m_idx = i
-                if s_col_name in c_text: final_s_idx = i
             for row in rows:
                 cols = row.find_all(['td', 'th'])
                 if all(c.name == 'th' for c in cols): continue
                 if len(cols) > max(final_n_idx, final_m_idx):
                     num_text = cols[final_n_idx].get_text(separator=" ", strip=True)
                     msg_text = cols[final_m_idx].get_text(separator=" ", strip=True)
-                    svc_text = cols[final_s_idx].get_text(separator=" ", strip=True) if len(cols) > final_s_idx else ""
                     clean_num = re.sub(r'\D', '', num_text)
                     if clean_num and 5 <= len(clean_num) <= 18:
                         otp = extract_otp_code(msg_text)
                         if otp and len(msg_text) > 4:
-                            results.append({"number": clean_num, "message": msg_text, "otp": otp, "service_name": svc_text.strip()})
+                            results.append({"number": clean_num, "message": msg_text, "otp": otp})
     return results, html_text
 
+user_active_sessions = {}
 
 def load_db():
     global bot_settings, number_batches, used_numbers_list, total_uploaded_stats, total_assigned_stats, recent_traffic
-    global stex_assigned_numbers, voltx_assigned_numbers
-    print("Loading DB...")
+    global stex_assigned_numbers, voltx_assigned_numbers, assigned_number_meta
     if db:
         try:
-            print("   -> Fetching Firestore config (8s timeout)...")
-            doc = db.collection('settings').document('bot_config').get(timeout=8.0)
+            doc = db.collection('settings').document('bot_config').get()
             if doc.exists:
                 fs_data = doc.to_dict()
                 for k in FS_KEYS:
-                    if k in fs_data: bot_settings[k] = fs_data[k]
-                print("Config Loaded from Firestore!")
+                    if k in fs_data:
+                        bot_settings[k] = fs_data[k]
+                print("✅ Config Loaded from Firestore!")
             else:
                 fs_data = {k: bot_settings[k] for k in FS_KEYS}
-                db.collection('settings').document('bot_config').set(fs_data, timeout=8.0)
-                print("Firestore Config Initialized!")
+                db.collection('settings').document('bot_config').set(fs_data)
+                print("✅ Firestore Config Initialized!")
         except Exception as e:
-            print(f"Firestore load skipped ({type(e).__name__}): {str(e)[:100]}")
-            print("   -> Continuing with local DB only.")
-
+            print(f"❌ Error loading from Firestore: {e}")
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding='utf-8') as f:
@@ -740,26 +624,9 @@ def load_db():
                 stex_assigned_numbers = data.get("stex_assigned_numbers", {})
                 voltx_assigned_numbers = data.get("voltx_assigned_numbers", {})
                 assigned_number_meta.update(data.get("assigned_number_meta", {}))
-            print("Local Stock/UI DB Loaded Successfully!")
+            print("✅ Local Stock/UI DB Loaded Successfully!")
         except Exception as e:
-            print(f"Error loading local DB: {e}")
-
-    try:
-        flag_data = load_flag_txt()
-        if flag_data:
-            for code, fd in flag_data.items():
-                bot_settings["premium_flags"][code] = fd
-    except Exception as e:
-        print(f"Flag load error: {e}")
-
-    try:
-        service_data = load_service_txt()
-        if service_data:
-            for name, sd in service_data.items():
-                bot_settings["premium_apps"][name] = sd
-    except Exception as e:
-        print(f"Service load error: {e}")
-
+            print(f"❌ Error loading local DB: {e}")
 
 def save_local_db():
     local_data = {
@@ -776,47 +643,30 @@ def save_local_db():
     try:
         with open(DB_FILE, "w", encoding='utf-8') as f:
             json.dump(local_data, f, indent=4)
-    except Exception as e:
-        pass
-
+    except: pass
 
 def _sync_fs():
     if not db: return
     fs_data = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
     try:
-        db.collection('settings').document('bot_config').set(fs_data, timeout=8.0)
-    except Exception as e:
-        print(f"Firestore sync failed: {e}")
-
+        db.collection('settings').document('bot_config').set(fs_data)
+    except: pass
 
 def save_db():
     save_local_db()
-    if db:
-        threading.Thread(target=_sync_fs, daemon=True).start()
+    threading.Thread(target=_sync_fs, daemon=True).start()
 
-
-def _bg_load_db():
-    try:
-        load_db()
-        print("load_db() completed in background.")
-    except Exception as e:
-        print(f"load_db() crashed: {e}")
-
-threading.Thread(target=_bg_load_db, daemon=True).start()
-print("load_db() started in background - bot starting now.")
+load_db()
 
 user_states = {}
 temp_data = {}
 user_cooldowns = {}
 pending_withdrawals = {}
 
+# ==========================================
+# Telegram API & Helpers
+# ==========================================
 tg_session = requests.Session()
-
-def _strip_premium(text):
-    return re.sub(r'<tg-emoji[^>]*>([^<]*)</tg-emoji>', r'\1', str(text))
-
-def _strip_all_html(text):
-    return re.sub(r'<[^>]+>', '', str(text))
 
 def api_call(method, payload=None):
     url = f"{BASE_URL}/{method}"
@@ -829,17 +679,7 @@ def api_call(method, payload=None):
 def send_message(chat_id, text, reply_markup=None, parse_mode="HTML"):
     payload = {"chat_id": chat_id, "text": text, "parse_mode": parse_mode, "disable_web_page_preview": True}
     if reply_markup: payload["reply_markup"] = reply_markup
-    res = api_call("sendMessage", payload)
-    if res and not res.get("ok"):
-        err = str(res.get("description", "")).lower()
-        if "entity" in err or "parse" in err or "emoji" in err or "unsupported" in err:
-            payload["text"] = _strip_premium(text)
-            res = api_call("sendMessage", payload)
-            if res and not res.get("ok"):
-                payload["text"] = _strip_all_html(text)
-                payload.pop("parse_mode", None)
-                res = api_call("sendMessage", payload)
-    return res
+    return api_call("sendMessage", payload)
 
 def send_photo(chat_id, photo_url_or_file_id, caption="", reply_markup=None, parse_mode="HTML"):
     payload = {"chat_id": chat_id, "photo": photo_url_or_file_id, "caption": caption, "parse_mode": parse_mode}
@@ -849,17 +689,7 @@ def send_photo(chat_id, photo_url_or_file_id, caption="", reply_markup=None, par
 def edit_message(chat_id, message_id, text, reply_markup=None, parse_mode="HTML"):
     payload = {"chat_id": chat_id, "message_id": message_id, "text": text, "parse_mode": parse_mode, "disable_web_page_preview": True}
     if reply_markup: payload["reply_markup"] = reply_markup
-    res = api_call("editMessageText", payload)
-    if res and not res.get("ok"):
-        err = str(res.get("description", "")).lower()
-        if "entity" in err or "parse" in err or "emoji" in err or "unsupported" in err:
-            payload["text"] = _strip_premium(text)
-            res = api_call("editMessageText", payload)
-            if res and not res.get("ok"):
-                payload["text"] = _strip_all_html(text)
-                payload.pop("parse_mode", None)
-                res = api_call("editMessageText", payload)
-    return res
+    return api_call("editMessageText", payload)
 
 def delete_message(chat_id, message_id):
     return api_call("deleteMessage", {"chat_id": chat_id, "message_id": message_id})
@@ -874,42 +704,54 @@ def send_document(chat_id, filename, text_content):
     try: requests.post(url, data=data, files=files)
     except: pass
 
+def send_document_bytes(chat_id, filename, bytes_content):
+    url = f"{BASE_URL}/sendDocument"
+    files = {'document': (filename, bytes_content)}
+    data = {'chat_id': chat_id}
+    try: return requests.post(url, data=data, files=files).json()
+    except: return {}
+
 all_known_users = set()
+_users_lock = threading.Lock()
 
 def sync_users_list():
     global all_known_users
     try:
         if os.path.exists("users_list.json"):
             with open("users_list.json", "r") as f:
-                all_known_users = set(json.load(f))
+                with _users_lock:
+                    all_known_users = set(json.load(f))
         if not all_known_users and db:
-            try:
-                for doc in db.collection('users').select([]).stream():
+            for doc in db.collection('users').select([]).stream():
+                with _users_lock:
                     all_known_users.add(doc.id)
-                with open("users_list.json", "w") as f:
-                    json.dump(list(all_known_users), f)
-            except: pass
+            with open("users_list.json", "w") as f:
+                json.dump(list(all_known_users), f)
     except: pass
 
 threading.Thread(target=sync_users_list, daemon=True).start()
 
 def _save_users_list():
     try:
+        with _users_lock:
+            data_to_save = list(all_known_users)
         with open("users_list.json", "w") as f:
-            json.dump(list(all_known_users), f)
+            json.dump(data_to_save, f)
     except: pass
 
 def register_user_local(uid):
     uid_str = str(uid)
-    if uid_str not in all_known_users:
+    with _users_lock:
+        if uid_str in all_known_users:
+            return
         all_known_users.add(uid_str)
-        threading.Thread(target=_save_users_list, daemon=True).start()
+    threading.Thread(target=_save_users_list, daemon=True).start()
 
 def broadcast_copymessage(from_chat_id, msg_id):
     success = 0
     failed = 0
-    last_err = ""
-    users = list(all_known_users)
+    with _users_lock:
+        users = list(all_known_users)
     b_session = requests.Session()
     url = f"{BASE_URL}/copyMessage"
     for user_id in users:
@@ -917,15 +759,27 @@ def broadcast_copymessage(from_chat_id, msg_id):
         try:
             res = b_session.post(url, json=payload, timeout=5).json()
             if res.get("ok"): success += 1
-            else:
-                failed += 1
-                last_err = str(res.get("description", "?"))[:80]
-        except Exception as e:
-            failed += 1
-            last_err = str(e)[:80]
+            else: failed += 1
+        except: failed += 1
         time.sleep(0.035)
-    send_message(from_chat_id, render_body_text(f"📢 <b>Broadcast Completed!</b>\n✅ Success: {success}\n❌ Failed: {failed}\n👥 Total Sent: {len(users)}\n⚠️ Last Error: {last_err}"))
+    send_message(from_chat_id, render_body_text(f"📢 <b>Broadcast Completed!</b>\n✅ Success: {success}\n❌ Failed: {failed}\n👥 Total Sent: {len(users)}"))
 
+def broadcast_text_all(txt, kb=None):
+    with _users_lock:
+        users = list(all_known_users)
+    b_session = requests.Session()
+    url = f"{BASE_URL}/sendMessage"
+    ok = 0; fail = 0
+    for u_id in users:
+        try:
+            payload = {"chat_id": u_id, "text": txt, "parse_mode": "HTML", "disable_web_page_preview": True}
+            if kb: payload["reply_markup"] = kb
+            r = b_session.post(url, json=payload, timeout=5).json()
+            if r.get("ok"): ok += 1
+            else: fail += 1
+        except: fail += 1
+        time.sleep(0.035)
+    return ok, fail
 
 def render_body_text(text):
     if not text: return str(text)
@@ -936,7 +790,6 @@ def render_body_text(text):
                 if normal_emj in parts[i]:
                     parts[i] = parts[i].replace(normal_emj, f'<tg-emoji emoji-id="{prem_id}">{normal_emj}</tg-emoji>')
     return "".join(parts)
-
 
 def extract_premium_html(msg):
     text = msg.get("text", msg.get("caption", ""))
@@ -956,8 +809,7 @@ def extract_premium_html(msg):
             b_text = b_text[:offset] + replacement + b_text[offset+length:]
         return b_text.decode('utf-16-le')
     except Exception as e:
-        return text 
-
+        return text
 
 def get_flag_info_from_num(num):
     clean = num.replace("+", "").replace(" ", "")
@@ -973,59 +825,18 @@ def get_flag_and_code(num):
     return char, iso
 
 def get_flag_info_html(num_or_iso):
-    s = str(num_or_iso).strip()
-    s_up = s.upper()
-
-    if len(s) == 2:
+    if len(num_or_iso) == 2:
         for code, data in bot_settings.get("premium_flags", {}).items():
-            if data.get("iso", "").upper() == s_up:
+            if data.get("iso") == num_or_iso:
                 eid = data.get("id")
                 char = data.get("char")
                 if eid: return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
                 return char
         return "🌍"
-
-    for code, data in bot_settings.get("premium_flags", {}).items():
-        if data.get("name", "").upper() == s_up:
-            eid = data.get("id")
-            char = data.get("char")
-            if eid: return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
-            return char
-
-    resolved_iso = ""
-    try:
-        for b in number_batches.values():
-            if b.get("country", "").upper() == s_up:
-                ri = b.get("country_iso", "")
-                if ri:
-                    resolved_iso = ri.upper()
-                    break
-    except: pass
-
-    if not resolved_iso:
-        for cname, cinfo in COUNTRIES_DATA.items():
-            if cname.upper() == s_up:
-                resolved_iso = cinfo.get("iso", "").upper()
-                break
-    if not resolved_iso:
-        for ccode, cinfo in COUNTRY_DB.items():
-            if cinfo["name"].upper() == s_up:
-                resolved_iso = cinfo["iso"].upper()
-                break
-
-    if resolved_iso:
-        for code, data in bot_settings.get("premium_flags", {}).items():
-            if data.get("iso", "").upper() == resolved_iso:
-                eid = data.get("id")
-                char = data.get("char")
-                if eid: return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
-                return char
-        return get_flag_emoji(resolved_iso)
-
-    char, _, eid = get_flag_info_from_num(s)
+    char, _, eid = get_flag_info_from_num(num_or_iso)
     if eid:
         return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
-    return char if char else "🌍"
+    return char
 
 def get_flag_emoji(iso2):
     try:
@@ -1073,7 +884,31 @@ def mask_smart(num):
 
 def mask_number(num):
     return mask_smart(num)
+    # ==========================================
+# Language Full Name Lookup
+# ==========================================
+def lang_full(code):
+    if not code: return "English"
+    c = str(code).replace("#","").strip().upper()
+    names = {
+        "EN":"English","AR":"Arabic","BN":"Bangla","HI":"Hindi","PA":"Punjabi","GU":"Gujarati",
+        "OR":"Odia","TA":"Tamil","TE":"Telugu","KN":"Kannada","ML":"Malayalam","SI":"Sinhala",
+        "TH":"Thai","LO":"Lao","BO":"Tibetan","MY":"Burmese","AM":"Amharic","KM":"Khmer",
+        "KA":"Georgian","HY":"Armenian","HE":"Hebrew","EL":"Greek","RU":"Russian","ZH":"Chinese",
+        "JA":"Japanese","KO":"Korean","ID":"Indonesian","MS":"Malay","VN":"Vietnamese","TL":"Tagalog",
+        "ES":"Spanish","PT":"Portuguese","FR":"French","DE":"German","IT":"Italian","PL":"Polish",
+        "TR":"Turkish","NL":"Dutch","SV":"Swedish","DA":"Danish","NO":"Norwegian","FI":"Finnish",
+        "CS":"Czech","SK":"Slovak","HU":"Hungarian","RO":"Romanian","HR":"Croatian","BG":"Bulgarian",
+        "UK":"Ukrainian","SW":"Swahili","AF":"Afrikaans","FA":"Persian"
+    }
+    return names.get(c, c.title() if c else "English")
 
+
+# ==========================================
+# OTP Display Format
+# 🇳🇬 NG | 📱 | +2348🔹372 |✉️ English
+# Service Emoji না থাকলে: #ServiceName
+# ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
     clean = str(num).lstrip('+').replace(" ", "")
     flag_html, iso, dial_code = get_country_from_num(num)
@@ -1083,15 +918,18 @@ def format_otp_display(num, app_full_name, lang, masked=True):
     svc_char = svc_app.get("emoji", "📱")
     if re.match(r'^[A-Za-z0-9#]{1,4}$', str(svc_char)):
         svc_char = "📱"
+
     if svc_id and str(svc_id).isdigit() and len(str(svc_id)) >= 10:
         svc_html = f'<tg-emoji emoji-id="{svc_id}">{svc_char}</tg-emoji>'
-    else:
+    elif svc_char and svc_char != "📱":
         svc_html = svc_char
+    else:
+        svc_html = f"#{app_full_name.replace(' ', '')}"
 
     if masked:
         first4 = clean[:4] if len(clean) >= 4 else clean
         last3 = clean[-3:] if len(clean) >= 3 else clean
-        num_part = f'+<b>{first4}</b><tg-emoji emoji-id="{HIDDEN_EMOJI}">🔹</tg-emoji><b>{last3}</b>'
+        num_part = f'+<b>{first4}</b><tg-emoji emoji-id="5352638632278660622">🔹</tg-emoji><b>{last3}</b>'
     else:
         num_part = f'+<b>{clean}</b>'
 
@@ -1100,104 +938,33 @@ def format_otp_display(num, app_full_name, lang, masked=True):
     return (
         f"{flag_html} <b>{iso}</b> | "
         f"{svc_html} | "
-        f"{num_part} | "
-        f'<tg-emoji emoji-id="{MESSAGE_EMOJI}">✉️</tg-emoji> <b>{lang_display}</b>'
+        f"{num_part} |"
+        f'<tg-emoji emoji-id="5337302974806922068">✉️</tg-emoji> {lang_display}'
     )
 
 
-def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balance, reward, lang):
-    app = get_premium_app(service_name)
-    sid = app.get("id","")
-    svc_char = app.get("emoji", "📱")
-    if re.match(r'^[A-Za-z0-9#]{1,4}$', str(svc_char)):
-        svc_char = "📱"
-    if sid and str(sid).isdigit() and len(str(sid)) >= 10:
-        set_html = f'<tg-emoji emoji-id="{sid}">{svc_char}</tg-emoji>'
-    else:
-        set_html = svc_char
-    snu = app.get("name", service_name).upper()
-    clean_number = str(raw_number).lstrip('+')
-    flag_html, iso, _ = get_country_from_num(raw_number)
-    reward_str = fmt_payout(reward)
-    amount_display = f"${reward_str}"
-    otp = extract_otp_code(msg_text) or "N/A"
-    taka_tag = ""
-    if TAKA_EMOJI and str(TAKA_EMOJI).isdigit() and len(str(TAKA_EMOJI)) >= 10:
-        taka_tag = f'<tg-emoji emoji-id="{TAKA_EMOJI}">💰</tg-emoji>'
-    text = (
-        f"{set_html} <b>{snu}</b>\n"
-        f" ┃  {taka_tag} <b>+ {amount_display}</b>\n"
-        f" ┗━➢ {flag_html} <b>+{clean_number}</b>\n\n"
-    )
-    btn = {"text": otp, "copy_text": {"text": otp}, "style": "success",
-           "icon_custom_emoji_id": COPY_EMOJI}
-    return text, {"inline_keyboard": [[btn]]}
-
-
-def build_stock_broadcast_new(country_display, service_name, count, per_otp,
-                               flag_html=None, app_emoji_html=None):
-    if not flag_html:
-        flag_html = get_flag_info_html(country_display)
-    if not app_emoji_html:
-        _, app_emoji_html = get_service_info_html(service_name)
-
-    HP = f'<tg-emoji emoji-id="{BROADCAST_HEADER_PRE}">📢</tg-emoji>'
-    HS = f'<tg-emoji emoji-id="{BROADCAST_HEADER_SUF}">✨</tg-emoji>'
-    TE = f'<tg-emoji emoji-id="{BROADCAST_TOTAL_EMOJI}">📊</tg-emoji>'
-    MP = f'<tg-emoji emoji-id="{BROADCAST_MONEY_PRE}">💰</tg-emoji>'
-    MS = f'<tg-emoji emoji-id="{BROADCAST_MONEY_SUF}">💰</tg-emoji>'
-
-    payout_str = f"${fmt_payout(per_otp)}"
-
-    text = (
-        f"{HP} <b>New Stock Added</b> {HS}\n\n"
-        f"{flag_html} <b>{country_display.upper()} | {service_name.upper()}</b> {app_emoji_html}\n"
-        f"{TE} <b>TOTAL'S : {count} Numbers</b>\n"
-        f"{MP} <b>{payout_str}/OTP</b> {MS}"
-    )
-    cb_data = f"g_bs|{service_name.upper()}|{country_display.upper()}"
-    kb = {"inline_keyboard": [[{
-        "text": "Get Numbers",
-        "icon_custom_emoji_id": BROADCAST_BTN_EMOJI,
-        "callback_data": cb_data,
-        "style": "success"
-    }]]}
-    return text, kb
-
-
-def build_numbers_header(country, service=None):
-    HEADER_EMOJI_1 = "6282641460093260838"
-    HEADER_EMOJI_2 = "6267315814190290529"
-    PHONE_ICON     = "5197474438970363734"
-    flag_html = get_flag_info_html(country)
-    header = (
-        f'<tg-emoji emoji-id="{HEADER_EMOJI_1}">⚙️</tg-emoji> <b>THIS IS YOUR</b> '
-        f'<tg-emoji emoji-id="{HEADER_EMOJI_2}">📱</tg-emoji> '
-        f'<b>{html.escape(str(country).upper())}</b> '
-        f'{flag_html} <b>NUMBERS</b> '
-        f'<tg-emoji emoji-id="{PHONE_ICON}">📱</tg-emoji>\n\n'
-    )
-    return render_body_text(header)
-
+# ==========================================
+# SERVICE & LANGUAGE DETECTION
+# ==========================================
 SERVICE_SMS_KEYWORDS = {
-    "whatsapp": ["whatsapp", "wa", "wap", "w/a", "whatsapp business", "wa.me", "wa code", "wh"],
-    "facebook": ["facebook", "fb", "meta", "fbook", "fb code", "facebook code"],
-    "instagram": ["instagram", "insta", "ig", "ig code", "instagram code"],
-    "telegram": ["telegram", "tg", "tele", "telegram code", "tg code", "t.me"],
-    "tiktok": ["tiktok", "tik tok", "tikvideo", "tiktok code", "tik code"],
-    "snapchat": ["snapchat", "snap", "snap code"],
-    "twitter": ["twitter", "x.com", "x code", "twitter code"],
-    "discord": ["discord", "discord code"],
-    "viber": ["viber", "viber code"],
-    "line": ["line", "line code", "line verification"],
-    "wechat": ["wechat", "we chat", "wechat code"],
-    "signal": ["signal", "signal code"],
-    "linkedin": ["linkedin", "linked in"],
-    "imo": ["imo", "imo code", "imo verification"],
-    "kakaotalk": ["kakao", "kakaotalk"],
+    "whatsapp": ["whatsapp", "wa", "wap", "w/a", "whatsapp business", "wa.me", "wa code", "wh", "واتساب", "واتساپ", "واٹس ایپ", "व्हाट्सएप", "वाट्सएप", "वॉट्सऐप", "व्हाट्सप्प", "হোয়াটসঅ্যাপ", "হোটসঅ্যাপ", "ватсап", "уотсап", "вотсап", "ватс апп", "వాట్సాప్", "വാട്‌സ്ആപ്പ്", "வாட்ஸ்அப்", "ವಾಟ್ಸಾಪ್", "વોટ્સએપ", "ਵਟਸਐਪ", "ହ୍ଵାଟସ୍ ଆପ୍", "වට්ස්ඇප්", "วอตส์แอปป์", "วอทส์แอพ", "ဝက်စ်အက်ပ်", "វ៉តសាប់", "ວອດແອັບ", "ワッツアップ", "왓츠앱", "whatsapp的", "whatsapp验证码", "וואטסאפ", "γουάτσαπ", "ዋትስአፕ", "ვოთსაფი", "վոթսափ"],
+    "facebook": ["facebook", "fb", "meta", "fbook", "fb code", "facebook code", "فيسبوك", "فيس بوك"],
+    "instagram": ["instagram", "insta", "ig", "ig code", "instagram code", "انستغرام", "انستقرام"],
+    "telegram": ["telegram", "tg", "tele", "telegram code", "tg code", "t.me", "تيليجرام", "تليجرام"],
+    "tiktok": ["tiktok", "tik tok", "tikvideo", "tiktok code", "tik code", "تيك توك"],
+    "snapchat": ["snapchat", "snap", "snap code", "سناب شات"],
+    "twitter": ["twitter", "x.com", "x code", "twitter code", "تويتر"],
+    "discord": ["discord", "discord code", "ديسكورد"],
+    "viber": ["viber", "viber code", "فايبر"],
+    "line": ["line", "line code", "line verification", "لاين"],
+    "wechat": ["wechat", "we chat", "wechat code", "وي تشات"],
+    "signal": ["signal", "signal code", "سيجنال"],
+    "linkedin": ["linkedin", "linked in", "لينكد إن"],
+    "imo": ["imo", "imo code", "imo verification", "ايمو"],
+    "kakaotalk": ["kakao", "kakaotalk", "كاكاو"],
     "qq": ["qq", "tencent qq"],
     "vk": ["vk", "vkontakte"],
-    "google": ["google", "gmail", "youtube", "g-", "google voice"],
+    "google": ["google", "gmail", "youtube", "g-", "google voice", "جوجل", "غوغل"],
     "microsoft": ["microsoft", "ms", "outlook", "live.com", "hotmail"],
     "apple": ["apple", "icloud", "itunes", "apple id"],
     "yahoo": ["yahoo", "yahoo code", "ymail"],
@@ -1269,15 +1036,12 @@ def get_service_info_html(service_text, msg_text=""):
         if app_name == detected_service or app_name == clean_s or app_name in detected_service or detected_service in app_name:
             full_name = data.get("name", app_name.title())
             char = data.get("char", "📱")
-            if re.match(r'^[A-Za-z0-9#]{1,4}$', str(char)):
-                char = "📱"
             eid = data.get("id")
             if eid: return full_name, f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
             return full_name, char
     if len(detected_service) > 20:
         return "Message", "💬"
     return detected_service.title(), "📱"
-
 
 def get_premium_app(service_name):
     if not service_name: service_name = "Other"
@@ -1291,9 +1055,8 @@ def get_premium_app(service_name):
             return {"name": ad.get("name", ak.title()), "emoji": char, "id": ad.get("id")}
     for sk in SERVICE_SMS_KEYWORDS.keys():
         if sk.upper() == ku or sk.upper() in ku or ku in sk.upper():
-            return {"name":sk.title(),"emoji":"📱","id":None}
-    return {"name":service_name,"emoji":"📱","id":None}
-
+            return {"name": sk.title(), "emoji": "📱", "id": None}
+    return {"name": service_name, "emoji": "📱", "id": None}
 
 def detect_language(text):
     if not text: return "#EN"
@@ -1326,12 +1089,30 @@ def detect_language(text):
     text_lower = text_str.lower()
     if any(w in text_lower for w in ["kode verifikasi", "jangan bagikan", "rahasia"]): return "#ID"
     if any(w in text_lower for w in ["kod pengesahan", "jangan kongsi"]): return "#MS"
+    if any(w in text_lower for w in ["mã của bạn", "không chia sẻ", "mã xác minh"]): return "#VN"
+    if any(w in text_lower for w in ["ang iyong code", "huwag ibahagi"]): return "#TL"
+    if any(w in text_lower for w in ["código", "tu código", "verificación", "no compartas"]): return "#ES"
+    if any(w in text_lower for w in ["seu código", "código de verificação", "não compartilhe"]): return "#PT"
     if any(w in text_lower for w in ["code secret", "ne partagez pas", "votre code"]): return "#FR"
     if any(w in text_lower for w in ["dein code", "bestätigungscode", "nicht teilen"]): return "#DE"
-    if any(w in text_lower for w in ["tu código", "verificación", "no compartas"]): return "#ES"
-    if any(w in text_lower for w in ["seu código", "não compartilhe"]): return "#PT"
+    if any(w in text_lower for w in ["il tuo codice", "codice di verifica", "non condividere"]): return "#IT"
+    if any(w in text_lower for w in ["twój kod", "nie udostępniaj", "kod weryfikacyjny"]): return "#PL"
+    if any(w in text_lower for w in ["doğrulama kodu", "paylaşmayın", "onay kodu"]): return "#TR"
+    if any(w in text_lower for w in ["jouw code", "verificatiecode", "niet delen"]): return "#NL"
+    if any(w in text_lower for w in ["din kod", "verifieringskod", "dela inte"]): return "#SV"
+    if any(w in text_lower for w in ["bekræftelseskode", "del ikke"]): return "#DA"
+    if any(w in text_lower for w in ["bekreftelseskode", "ikke del"]): return "#NO"
+    if any(w in text_lower for w in ["vahvistuskoodi", "älä jaa"]): return "#FI"
+    if any(w in text_lower for w in ["váš kód", "ověřovací kód", "nesdílejte"]): return "#CS"
+    if any(w in text_lower for w in ["overovací kód", "nezdieľajte"]): return "#SK"
+    if any(w in text_lower for w in ["ellenőrző kód", "ne oszd meg"]): return "#HU"
+    if any(w in text_lower for w in ["codul tău", "codul de verificare", "nu partaja"]): return "#RO"
+    if any(w in text_lower for w in ["kontrolni kod", "kod za potvrdu", "ne delite"]): return "#HR"
+    if any(w in text_lower for w in ["код за потвърждение", "не споделяйте"]): return "#BG"
+    if any(w in text_lower for w in ["ваш код", "код підтвердження"]): return "#UK"
+    if any(w in text_lower for w in ["msimbo wako", "usishiriki"]): return "#SW"
+    if any(w in text_lower for w in ["verifikasiekode", "moenie deel nie"]): return "#AF"
     return "#EN"
-
 
 def parse_chat_id(text):
     text = text.strip()
@@ -1341,10 +1122,8 @@ def parse_chat_id(text):
         parts = text.split("/")
         username = parts[-1]
         if username: return "@" + username if not username.startswith("@") else username
-    if text.startswith("@"):
-        return text
+    if text.startswith("@"): return text
     return "@" + text
-
 
 def is_admin(user_id):
     return user_id in bot_settings["admins"] or user_id == OWNER_ID
@@ -1373,13 +1152,16 @@ def is_user_banned(user_id):
     banned = False
     if db:
         try:
-            doc = db.collection('users').document(str(user_id)).get(timeout=5.0)
+            doc = db.collection('users').document(str(user_id)).get()
             banned = doc.exists and doc.to_dict().get("banned", False)
         except: pass
     user_banned_cache[user_id] = {'banned': banned, 'time': time.time()}
     return banned
 
 
+# ==========================================
+# OTP Extraction
+# ==========================================
 def extract_otp_code(text):
     clean_text = re.sub(r'[\u200B-\u200D\uFEFF]', '', str(text))
     multi_part = re.search(r'(\d{3}[-\s]+\d{3})|(\d{2}[-\s]+\d{2}[-\s]+\d{2})', clean_text)
@@ -1400,154 +1182,125 @@ def extract_otp_code(text):
     return None
 
 
-def _extract_by_paths(data, p_config):
-    number_path = p_config.get("number_path", "").strip()
-    message_path = p_config.get("message_path", "").strip()
-    service_path = p_config.get("service_path", "").strip()
-    otp_list_path = p_config.get("otp_list_path", "").strip()
-    if not (number_path or message_path or service_path):
-        return None
-    root = data
-    if otp_list_path:
-        try:
-            dr = get_by_path(data, otp_list_path)
-            if dr is not None: root = dr
-        except: pass
-    items = root if isinstance(root, list) else [root]
-    results = []
-    for it in items:
-        if not isinstance(it, (dict, list)): continue
-        num_raw = get_by_path(it, number_path) if number_path else None
-        msg_raw = get_by_path(it, message_path) if message_path else None
-        svc_raw = get_by_path(it, service_path) if service_path else None
-        if num_raw is None: continue
-        clean_num = re.sub(r'\D', '', str(num_raw))
-        if not (5 <= len(clean_num) <= 18): continue
-        msg_str = str(msg_raw) if msg_raw is not None else ""
-        if len(msg_str) < 4: continue
-        otp = extract_otp_code(msg_str)
-        if not otp: continue
-        svc_str = str(svc_raw).strip() if svc_raw is not None else ""
-        results.append({"number": clean_num, "message": msg_str, "otp": otp, "service_name": svc_str})
-    return results if results else None
-
-
+# ==========================================
+# Panel Response Parser
+# ==========================================
 def parse_panel_response(response_text, p_config=None):
     results = []
     p_type = p_config.get("type", "API Panel") if p_config else "API Panel"
+    n_col_name = p_config.get("num_col_name", "number").lower() if p_config else "number"
+    m_col_name = p_config.get("msg_col_name", "message").lower() if p_config else "message"
+    n_idx = int(p_config.get("num_col_idx", 1)) - 1 if p_config and p_config.get("num_col_idx") else 1
+    m_idx = int(p_config.get("msg_col_idx", 2)) - 1 if p_config and p_config.get("msg_col_idx") else 2
+
     if p_type == "Auto Captcha Panel":
         try:
             soup = BeautifulSoup(response_text, 'html.parser')
             tables = soup.find_all('table')
-            n_col_name = p_config.get("num_col_name", "number").lower() if p_config else "number"
-            m_col_name = p_config.get("msg_col_name", "message").lower() if p_config else "message"
-            s_col_name = p_config.get("service_col_name", "service").lower() if p_config else "service"
-            n_idx = int(p_config.get("num_col_idx", 1)) - 1 if p_config and p_config.get("num_col_idx") else 1
-            m_idx = int(p_config.get("msg_col_idx", 2)) - 1 if p_config and p_config.get("msg_col_idx") else 2
-            s_idx = int(p_config.get("service_col_idx", 3)) - 1 if p_config and p_config.get("service_col_idx") else 3
             for table in tables:
                 rows = table.find_all('tr')
                 if not rows: continue
-                final_n_idx = n_idx; final_m_idx = m_idx; final_s_idx = s_idx
+                final_n_idx = n_idx
+                final_m_idx = m_idx
                 header_cells = rows[0].find_all(['th', 'td'])
                 for i, cell in enumerate(header_cells):
                     c_text = cell.get_text(strip=True).lower()
                     if n_col_name in c_text: final_n_idx = i
                     if m_col_name in c_text: final_m_idx = i
-                    if s_col_name in c_text: final_s_idx = i
                 for row in rows:
                     cols = row.find_all(['td', 'th'])
                     if all(c.name == 'th' for c in cols): continue
                     if len(cols) > max(final_n_idx, final_m_idx):
                         num_text = cols[final_n_idx].get_text(separator=" ", strip=True)
                         msg_text = cols[final_m_idx].get_text(separator=" ", strip=True)
-                        svc_text = cols[final_s_idx].get_text(separator=" ", strip=True) if len(cols) > final_s_idx else ""
                         clean_num = re.sub(r'\D', '', num_text)
                         if clean_num and 5 <= len(clean_num) <= 18:
                             otp = extract_otp_code(msg_text)
                             if otp and len(msg_text) > 4:
-                                results.append({"number": clean_num, "message": msg_text, "otp": otp, "service_name": svc_text.strip()})
+                                results.append({"number": clean_num, "message": msg_text, "otp": otp})
         except: pass
-        return results
-
-    try:
-        data = json.loads(response_text)
-    except:
-        return results
-
-    if p_config:
+    else:
         try:
-            path_results = _extract_by_paths(data, p_config)
-            if path_results:
-                return path_results
-        except: pass
+            data = json.loads(response_text)
+            temp_results = []
 
-    temp_results = []
-    def process_item(item):
-        pot_nums_list = []; pot_msg = None; pot_svc = ""
-        values = []
-        if isinstance(item, dict):
-            lower_keys = {str(k).lower(): v for k, v in item.items()}
-            for k in ["number", "num", "phone", "msisdn", "sender"]:
-                if k in lower_keys:
-                    clean_val = re.sub(r'\D', '', str(lower_keys[k]))
-                    if 5 <= len(clean_val) <= 18 and clean_val not in pot_nums_list:
-                        pot_nums_list.append(clean_val)
-            for k in ["service", "app", "application", "type", "site"]:
-                if k in lower_keys:
-                    pot_svc = str(lower_keys[k]).strip()
-                    break
-            for k in ["message", "msg", "sms", "content", "text"]:
-                if k in lower_keys:
-                    val = str(lower_keys[k])
-                    if len(val) > 4:
-                        pot_msg = val
-                        break
-            values = list(item.values())
-        elif isinstance(item, list):
-            values = item
-        for v in values:
-            if isinstance(v, (dict, list)) or v is None: continue
-            v_str = str(v).strip()
-            clean_v = re.sub(r'\D', '', v_str)
-            if 7 <= len(clean_v) <= 18 and not re.search(r'[a-zA-Z]', v_str):
-                if not re.search(r'\d{4}[-/]\d{2}[-/]\d{2}', v_str) and not re.search(r'\d{2}:\d{2}:\d{2}', v_str) and "." not in v_str:
-                    if clean_v not in pot_nums_list: pot_nums_list.append(clean_v)
-            if len(v_str) > 4 and not v_str.isdigit():
-                if extract_otp_code(v_str):
-                    if pot_msg is None or len(v_str) > len(pot_msg): pot_msg = v_str
-        pot_num = None
-        if pot_nums_list:
-            matched_user_num = None
-            for n in pot_nums_list:
-                if n in stex_assigned_numbers or any(n in str(key) for key in stex_assigned_numbers.keys()):
-                    matched_user_num = n; break
-            if matched_user_num: pot_num = matched_user_num
-            elif len(pot_nums_list) >= 2: pot_num = pot_nums_list[1]
-            else: pot_num = pot_nums_list[0]
-        if pot_num and pot_msg:
-            otp = extract_otp_code(pot_msg)
-            if otp:
-                temp_results.append({"number": pot_num, "message": pot_msg, "otp": otp, "service_name": pot_svc})
-    def traverse_json(node):
-        if isinstance(node, list):
-            if len(node) > 0 and not isinstance(node[0], (dict, list)):
-                process_item(node)
-            for child in node:
-                if isinstance(child, (dict, list)): traverse_json(child)
-        elif isinstance(node, dict):
-            process_item(node)
-            for val in node.values():
-                if isinstance(val, (dict, list)): traverse_json(val)
-    traverse_json(data)
-    seen = set()
-    for r in temp_results:
-        uid = f"{r['number']}_{r['otp']}"
-        if uid not in seen:
-            seen.add(uid); results.append(r)
+            def process_item(item):
+                pot_nums_list = []
+                pot_msg = None
+                values = []
+                if isinstance(item, dict):
+                    lower_keys = {str(k).lower(): v for k, v in item.items()}
+                    for k in ["number", "num", "phone", "msisdn", "sender"]:
+                        if k in lower_keys:
+                            clean_val = re.sub(r'\D', '', str(lower_keys[k]))
+                            if 5 <= len(clean_val) <= 18:
+                                if clean_val not in pot_nums_list: pot_nums_list.append(clean_val)
+                    for k in ["message", "msg", "sms", "content", "text"]:
+                        if k in lower_keys:
+                            val = str(lower_keys[k])
+                            if len(val) > 4:
+                                pot_msg = val
+                                break
+                    values = list(item.values())
+                elif isinstance(item, list):
+                    values = item
+                for v in values:
+                    if isinstance(v, (dict, list)) or v is None: continue
+                    v_str = str(v).strip()
+                    clean_v = re.sub(r'\D', '', v_str)
+                    if 7 <= len(clean_v) <= 18 and not re.search(r'[a-zA-Z]', v_str):
+                        if not re.search(r'\d{4}[-/]\d{2}[-/]\d{2}', v_str) and not re.search(r'\d{2}:\d{2}:\d{2}', v_str) and "." not in v_str:
+                            if clean_v not in pot_nums_list:
+                                pot_nums_list.append(clean_v)
+                    if len(v_str) > 4 and not v_str.isdigit():
+                        if extract_otp_code(v_str):
+                            if pot_msg is None or len(v_str) > len(pot_msg):
+                                pot_msg = v_str
+                pot_num = None
+                if pot_nums_list:
+                    matched_user_num = None
+                    for n in pot_nums_list:
+                        if n in stex_assigned_numbers or any(n in str(key) for key in stex_assigned_numbers.keys()):
+                            matched_user_num = n
+                            break
+                    if matched_user_num:
+                        pot_num = matched_user_num
+                    elif len(pot_nums_list) >= 2:
+                        pot_num = pot_nums_list[1]
+                    else:
+                        pot_num = pot_nums_list[0]
+                if pot_num and pot_msg:
+                    otp = extract_otp_code(pot_msg)
+                    if otp:
+                        temp_results.append({"number": pot_num, "message": pot_msg, "otp": otp})
+
+            def traverse_json(node):
+                if isinstance(node, list):
+                    if len(node) > 0 and not isinstance(node[0], (dict, list)):
+                        process_item(node)
+                    for child in node:
+                        if isinstance(child, (dict, list)):
+                            traverse_json(child)
+                elif isinstance(node, dict):
+                    process_item(node)
+                    for val in node.values():
+                        if isinstance(val, (dict, list)):
+                            traverse_json(val)
+
+            traverse_json(data)
+            seen = set()
+            for r in temp_results:
+                uid = f"{r['number']}_{r['otp']}"
+                if uid not in seen:
+                    seen.add(uid)
+                    results.append(r)
+        except: pass
     return results
 
 
+# ==========================================
+# Auto Login for Captcha Panel
+# ==========================================
 def attempt_auto_login(p, idx):
     login_url = p.get("login_url", "").strip()
     if not login_url.startswith("http"):
@@ -1585,9 +1338,10 @@ def attempt_auto_login(p, idx):
             elif op == '*': answer = str(a * b)
         form = soup.find("form")
         if not form:
-            p["login_status"] = "No login form found"
+            p["login_status"] = "❌ No login form found"
             return False
         action = form.get("action")
+        from urllib.parse import urljoin
         post_url = urljoin(login_url, action) if action else login_url
         form_data = {}
         for hidden in form.find_all("input", type="hidden"):
@@ -1615,16 +1369,18 @@ def attempt_auto_login(p, idx):
         check_res = session.get(check_url, timeout=10)
         if 'logout' in login_req.text.lower() or 'logout' in check_res.text.lower() or 'sms reports' in check_res.text.lower() or 'dashboard' in check_res.text.lower() or 'cdrs' in check_res.text.lower():
             panel_sessions[idx] = session
-            p["login_status"] = "Active & Fetching"
+            p["login_status"] = "✅ Active & Fetching"
             return True
         else:
-            p["login_status"] = f"Login Failed (Math: {captcha_text} = {answer})"
+            p["login_status"] = f"❌ Login Failed (Math: {captcha_text} = {answer})"
             return False
     except Exception as e:
-        p["login_status"] = f"Error: {str(e)[:20]}"
+        p["login_status"] = f"❌ Error: {str(e)[:20]}"
     return False
+
+
 # ==========================================
-# Panel Monitor
+# Panel Monitor Thread — Per-country Payout
 # ==========================================
 def panel_monitor_thread():
     global processed_otps, recent_traffic, panel_sessions
@@ -1646,21 +1402,21 @@ def panel_monitor_thread():
                             sess = panel_sessions.get(idx)
                         try:
                             parsed_data, res_text = fetch_cpt_panel_cdrs(p, sess, p["msg_link"])
-                            p["login_status"] = "Active & Fetching"
-                        except Exception as e:
-                            p["login_status"] = "Session Expired (Retrying...)"
+                            p["login_status"] = "✅ Active & Fetching"
+                        except:
+                            p["login_status"] = "❌ Session Expired (Retrying...)"
                             del panel_sessions[idx]
                             save_db()
                             continue
-
                     elif p.get("api_url") or p.get("full_api_url") or p.get("curl_command"):
                         full_url = p.get("full_api_url", "").strip()
                         url = p.get("api_url", "").strip()
                         token = p.get("token", "").strip()
                         curl_cmd = p.get("curl_command", "").strip()
                         parsed_data = []
-                        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-
+                        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+                        
+                        # 1) Try CURL first if exists
                         if curl_cmd:
                             try:
                                 parsed_curl = parse_curl_command(curl_cmd)
@@ -1676,7 +1432,8 @@ def panel_monitor_thread():
                                     parsed_data = parse_panel_response(res.text, p)
                             except Exception as _ce:
                                 print(f"CURL fetch error (panel {idx}): {_ce}")
-
+                        
+                        # 2) Try API URL if no CURL data
                         if not parsed_data and (full_url or url):
                             urls_to_try = []
                             if full_url:
@@ -1701,54 +1458,42 @@ def panel_monitor_thread():
                                             save_db()
                                         break
                                 except: continue
-
                         if not parsed_data: continue
                     else:
                         continue
-
                     if p.get("type") != "Auto Captcha Panel":
                         limit = p.get("records", 0)
                         if limit > 0: parsed_data = parsed_data[:limit]
-
                     for item in parsed_data:
                         num = item["number"]
                         otp = item["otp"]
                         msg_text = item["message"]
-                        panel_svc_name = item.get("service_name", "").strip()
                         unique_id = f"{num}_{otp}"
-
                         if unique_id not in processed_otps:
                             processed_otps.add(unique_id)
                             if len(processed_otps) > 5000: processed_otps.clear()
-
                             char, iso = get_flag_and_code(num)
-                            app_full_name, prem_app_html = get_service_info_html(panel_svc_name or p.get("name", "Panel"), msg_text)
+                            app_full_name, prem_app_html = get_service_info_html(p.get("name", "Panel"), msg_text)
                             current_time = time.time()
-
                             recent_traffic = [t for t in recent_traffic if current_time - t.get("time", 0) <= 3600]
                             recent_traffic.append({
-                                "service": app_full_name, "iso": iso, "flag": char,
-                                "number": num, "time": current_time
+                                "service": app_full_name,
+                                "iso": iso,
+                                "flag": char,
+                                "number": num,
+                                "time": current_time
                             })
                             save_local_db()
-
                             display_num = f"+{num}" if not str(num).startswith("+") else str(num)
                             lang = detect_language(msg_text)
-
                             display_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=True))
-
                             for fw in bot_settings["fw_groups"]:
-                                kb = [[{"text": f"{otp}", "icon_custom_emoji_id": COPY_EMOJI, "copy_text": {"text": otp}, "style": "success"}]]
-                                kb.append([{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI, "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}])
-                                ch_link = bot_settings.get("main_channel_link", "")
-                                if ch_link:
-                                    kb.append([{"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI, "url": ch_link, "style": "primary"}])
+                                kb = [[{"text": f"{otp}", "icon_custom_emoji_id": "5353022963132174959", "copy_text": {"text": otp}, "style": "success"}]]
                                 for btn in fw.get("buttons", []):
                                     b_obj = {"text": btn["text"], "url": btn["url"], "style": "primary"}
                                     if "icon_custom_emoji_id" in btn: b_obj["icon_custom_emoji_id"] = btn["icon_custom_emoji_id"]
                                     kb.append([b_obj])
                                 send_message(fw["chat_id"], display_msg, reply_markup={"inline_keyboard": kb})
-
                             owners = []
                             clean_api_num = str(num).replace("+", "").replace(" ", "").replace("-", "").strip()
                             for uid, session_data in user_active_sessions.items():
@@ -1762,43 +1507,21 @@ def panel_monitor_thread():
                                     clean_stex = str(stex_n).replace("+", "").replace(" ", "").replace("-", "").strip()
                                     if clean_stex == clean_api_num or (len(clean_stex) >= 8 and clean_stex.endswith(clean_api_num[-8:])) or (len(clean_api_num) >= 8 and clean_api_num.endswith(clean_stex[-8:])):
                                         owners.append(n_owner)
-
                             owners = list(set(owners))
                             for owner_id in owners:
-                                meta = assigned_number_meta.get(clean_api_num, {})
-                                if "payout" in meta:
-                                    try: reward = float(meta["payout"])
-                                    except: reward = float(bot_settings.get("otp_reward", 0.0))
-                                else:
-                                    owner_country = meta.get("country", "")
-                                    owner_service = meta.get("service", "")
-                                    if not owner_country:
-                                        for bid, bd in number_batches.items():
-                                            for no in bd["numbers"]:
-                                                if no["num"].lstrip("+") == clean_api_num:
-                                                    owner_country = bd["country"]
-                                                    break
-                                            if owner_country: break
-                                    reward = float(bot_settings.get("otp_reward", 0.0))
-                                    if owner_country and owner_service:
-                                        pr = bot_settings.get("otp_pair_rates", {})
-                                        key = f"{owner_country.upper()}|{owner_service.upper()}"
-                                        if key in pr:
-                                            try: reward = float(pr[key])
-                                            except: pass
-
+                                reward = get_payout_for_number(clean_api_num, app_full_name)
                                 if reward > 0:
                                     update_balance(owner_id, reward)
                                     if db:
-                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)}, timeout=5.0)
+                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)})
                                         except: pass
-
                                 new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
-                                it, ik = deliver_to_inbox(owner_id, app_full_name, display_num, msg_text, new_bal, reward, lang)
-                                it = render_body_text(it)
-                                send_message(owner_id, it, reply_markup=ik)
-        except Exception as e:
-            pass
+                                inbox_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=False))
+                                inbox_kb = [[{"text": f"{otp}", "icon_custom_emoji_id": "5353022963132174959", "copy_text": {"text": otp}, "style": "success"}]]
+                                if reward > 0:
+                                    inbox_kb.append([{"text": f"Added {reward} tk", "icon_custom_emoji_id": "5420396762189831222", "callback_data": "ignore", "style": "primary"}])
+                                send_message(owner_id, inbox_msg, reply_markup={"inline_keyboard": inbox_kb})
+        except: pass
         time.sleep(5)
 
 
@@ -1809,27 +1532,19 @@ user_cache = {}
 
 def get_user(user_id):
     if user_id in user_cache: return user_cache[user_id]
-    if not db: 
+    if not db: return {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0}
+    doc_ref = db.collection('users').document(str(user_id))
+    doc = doc_ref.get()
+    if doc.exists:
+        data = doc.to_dict()
+        if "total_otps" not in data: data["total_otps"] = 0
+        if "banned" not in data: data["banned"] = False
+        if "verified" not in data: data["verified"] = False
+        user_cache[user_id] = data
+        return data
+    else:
         new_user = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
-        user_cache[user_id] = new_user
-        return new_user
-    try:
-        doc_ref = db.collection('users').document(str(user_id))
-        doc = doc_ref.get(timeout=5.0)
-        if doc.exists:
-            data = doc.to_dict()
-            if "total_otps" not in data: data["total_otps"] = 0
-            if "banned" not in data: data["banned"] = False
-            if "verified" not in data: data["verified"] = False
-            user_cache[user_id] = data
-            return data
-        else:
-            new_user = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
-            doc_ref.set(new_user, timeout=5.0)
-            user_cache[user_id] = new_user
-            return new_user
-    except Exception as e:
-        new_user = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
+        doc_ref.set(new_user)
         user_cache[user_id] = new_user
         return new_user
 
@@ -1839,42 +1554,28 @@ def update_balance(user_id, amount):
     if not db: return
     try:
         doc_ref = db.collection('users').document(str(user_id))
-        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True, timeout=5.0)
+        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True)
     except: pass
 
 def add_referral(inviter_id, new_user_id):
     if not db:
         reward = bot_settings.get("refer_reward", 0.2)
         update_balance(inviter_id, reward)
-        ref_msg = (
-            f"{PEM['gift']} <b>New Referral !</b>\n"
-            f"------------------\n"
-            f"<b>You Received {reward} TK</b>\n"
-            f"------------------\n"
-            f"<b>From User ID:</b> <code>{new_user_id}</code>"
-        )
+        ref_msg = (f"{PEM['gift']} <b>New Referral !</b>\n------------------\n🔥 <b>You Received {reward} TK</b>\n------------------\n{PEM['user']} <b>From User ID:</b> <code>{new_user_id}</code>")
         send_message(inviter_id, render_body_text(ref_msg))
         return
     try:
-        doc = db.collection('users').document(str(new_user_id)).get(timeout=5.0)
+        doc = db.collection('users').document(str(new_user_id)).get()
         if not doc.exists:
             get_user(new_user_id)
             reward = bot_settings.get("refer_reward", 0.2)
             update_balance(inviter_id, reward)
-            db.collection('users').document(str(inviter_id)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
-            ref_msg = (
-                f"{PEM['gift']} <b>New Referral !</b>\n"
-                f"------------------\n"
-                f"<b>You Received {reward} TK</b>\n"
-                f"------------------\n"
-                f"<b>From User ID:</b> <code>{new_user_id}</code>"
-            )
+            db.collection('users').document(str(inviter_id)).update({"total_refers": firestore.Increment(1)})
+            ref_msg = (f"{PEM['gift']} <b>New Referral !</b>\n------------------\n🔥 <b>You Received {reward} TK</b>\n------------------\n{PEM['user']} <b>From User ID:</b> <code>{new_user_id}</code>")
             send_message(inviter_id, render_body_text(ref_msg))
     except: pass
-
-
-# ==========================================
-# UI Keyboards
+    # ==========================================
+# UI Keyboards & Menu Builders
 # ==========================================
 def get_cancel_kb():
     return {"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_state", "style": "danger"}]]}
@@ -1882,19 +1583,19 @@ def get_cancel_kb():
 def main_menu(user_id):
     kb = [
         [
-            {"text": "GET NUMBER", "icon_custom_emoji_id": "5262606754725771771", "style": "danger"},
-            {"text": "SEARCH NUMBER", "icon_custom_emoji_id": "5463352748751753567", "style": "success"}
+            {"text": "GET NUMBER", "icon_custom_emoji_id": "5337132498965010628", "style": "primary"},
+            {"text": "Search Number", "icon_custom_emoji_id": "5463352748751753567", "style": "primary"}
         ],
         [
-            {"text": "TRAFFIC", "icon_custom_emoji_id": "5429651785352501917", "style": "success"},
+            {"text": "TRAFFIC", "icon_custom_emoji_id": "5352877703043258544", "style": "success"},
             {"text": "2FA ONLINE", "icon_custom_emoji_id": "5267421176841398765", "style": "primary"}
         ],
         [
-            {"text": "REFER", "icon_custom_emoji_id": "5332724926216428039", "style": "primary"},
-            {"text": "BALANCE", "icon_custom_emoji_id": "5215420556089776398", "style": "danger"}
+            {"text": "Refer", "icon_custom_emoji_id": "5420396762189831222", "style": "success"},
+            {"text": "WITHDRAWAL", "icon_custom_emoji_id": "5352585194295564660", "style": "danger"}
         ],
         [
-            {"text": "SUPPORT", "icon_custom_emoji_id": "5420145051336485498", "style": "success"}
+            {"text": "SUPPORT", "icon_custom_emoji_id": "5420145051336485498", "style": "primary"}
         ]
     ]
     if is_admin(user_id):
@@ -1902,9 +1603,12 @@ def main_menu(user_id):
     return {"keyboard": kb, "resize_keyboard": True}
 
 def get_admin_text():
-    users_count = len(all_known_users)
+    with _users_lock:
+        users_count = len(all_known_users)
     total_files = len(number_batches)
     available_nums = sum(len(b["numbers"]) for b in number_batches.values())
+    maint_status = "🟢 OFF" if not bot_settings.get("maintenance") else "🔴 ON"
+
     txt = f"""
 {PEM['admin']} <b>ADMIN CONTROL PANEL</b> {PEM['admin']}
 ━━━━━━━━━━━━━━━━━━
@@ -1920,19 +1624,37 @@ def get_admin_text():
 {PEM['graph']} <b>STOCK LEVEL</b>
 — — — — — — — — — —
 [██████░░░░░░░░░] {available_nums} free
+
+{PEM['gear']} <b>MAINTENANCE:</b> {maint_status}
 """
     return render_body_text(txt)
 
 def admin_panel_keyboard():
+    maint_on = bot_settings.get("maintenance", False)
+    if maint_on:
+        maint_btn = {"text": "MAINTENENCE OFF", "icon_custom_emoji_id": "5318840353510408444", "callback_data": "toggle_maintenance", "style": "danger"}
+    else:
+        maint_btn = {"text": "MAINTENENCE ON", "icon_custom_emoji_id": "5192812028632274956", "callback_data": "toggle_maintenance", "style": "success"}
+
     return {"inline_keyboard": [
         [{"text": "LEADER BOARD SYSTEM", "icon_custom_emoji_id": "5353032893096567467", "callback_data": "lb_main", "style": "success"}],
         [{"text": "Upload Number", "icon_custom_emoji_id": "5353001161878182134", "callback_data": "upload_num", "style": "primary"},
          {"text": "Delete files", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "delete_files", "style": "danger"}],
         [{"text": "Broadcast", "icon_custom_emoji_id": "5789428375261023681", "callback_data": "broadcast_msg", "style": "success"},
          {"text": "System", "icon_custom_emoji_id": "5420155432272438703", "callback_data": "system_settings", "style": "primary"}],
+        [{"text": "📁DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
+        [maint_btn],
         [{"text": "Used number", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "show_used", "style": "success"},
          {"text": "Unused number", "icon_custom_emoji_id": "5352597830089347330", "callback_data": "show_unused", "style": "success"}],
         [{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}]
+    ]}
+
+def database_menu_keyboard():
+    return {"inline_keyboard": [
+        [{"text": "DOWNLOAD DATA", "icon_custom_emoji_id": "6203886371363364022", "callback_data": "db_download", "style": "success"}],
+        [{"text": "UPLOAD DATA", "icon_custom_emoji_id": "6206046503690048595", "callback_data": "db_upload", "style": "primary"}],
+        [{"text": "DELETE DATA", "icon_custom_emoji_id": "6206108815075579644", "callback_data": "db_delete_confirm", "style": "danger"}],
+        [{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "primary"}]
     ]}
 
 def system_settings_keyboard():
@@ -1944,15 +1666,17 @@ def system_settings_keyboard():
         [{"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "callback_data": "manage_otp_groups", "style": "danger"},
          {"text": "User Management", "icon_custom_emoji_id": "5193063022226086560", "callback_data": "user_management", "style": "primary"}],
         [{"text": "Panel MANAGEMENT", "icon_custom_emoji_id": "5336879280578138635", "callback_data": "manage_panels", "style": "danger"},
-         {"text": "Subscription", "icon_custom_emoji_id": "5190899075968441286", "callback_data": "dummy_alert", "style": "success"}],
-        [{"text": "DXA Control", "icon_custom_emoji_id": "5193100774988617665", "callback_data": "dxa_control", "style": "primary"}],
+         {"text": "CHANGE PAYOUT", "icon_custom_emoji_id": "5190899075968441286", "callback_data": "change_payout_menu", "style": "success"}],
+        [{"text": "STRM Control", "icon_custom_emoji_id": "5193100774988617665", "callback_data": "STRM_control", "style": "primary"},
+         {"text": "Premium Emoji", "icon_custom_emoji_id": "5352552689983067014", "callback_data": "manage_emojis", "style": "success"}],
         [{"text": "Menu Design", "icon_custom_emoji_id": "5190751148704833975", "callback_data": "menu_design_list", "style": "primary"},
          {"text": "Test", "icon_custom_emoji_id": "5190781475468915802", "callback_data": "test_message_flow", "style": "primary"}],
         [{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]
     ]}
 
 def get_user_management_text():
-    total = len(all_known_users)
+    with _users_lock:
+        total = len(all_known_users)
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     txt = f"""➖➖➖➖➖➖➖➖
 《 👋 USER VIEW 》
@@ -2004,6 +1728,17 @@ def menu_buttons_list_keyboard(menu_key):
     kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"md_edit_{menu_key}", "style": "primary"}])
     return {"inline_keyboard": kb}
 
+def emoji_settings_keyboard():
+    return {"inline_keyboard": [
+        [{"text": "Upload Flags (TXT)", "icon_custom_emoji_id": "5353001161878182134", "callback_data": "up_flags_txt", "style": "primary"},
+         {"text": "Download Flags", "icon_custom_emoji_id": "5257969839313526622", "callback_data": "dl_flags_txt", "style": "success"}],
+        [{"text": "Upload Services (TXT)", "icon_custom_emoji_id": "5353001161878182134", "callback_data": "up_apps_txt", "style": "primary"},
+         {"text": "Download Services", "icon_custom_emoji_id": "5257969839313526622", "callback_data": "dl_apps_txt", "style": "success"}],
+        [{"text": "Delete All Flags", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "del_all_flags", "style": "danger"},
+         {"text": "Add Single Emoji", "icon_custom_emoji_id": "5420323438508155202", "callback_data": "add_single_emoji", "style": "success"}],
+        [{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "danger"}]
+    ]}
+
 def fj_settings_keyboard():
     status_text = 'ON' if bot_settings['fj_on'] else 'OFF'
     status_icon = "5352694861990501856" if bot_settings['fj_on'] else "5318840353510408444"
@@ -2026,13 +1761,7 @@ def admin_settings_keyboard():
     return {"inline_keyboard": kb}
 
 def otp_groups_list_keyboard():
-    ch_link = bot_settings.get("main_channel_link", "")
-    ch_display = ch_link if ch_link else "Not Set"
-    if len(ch_display) > 32: ch_display = ch_display[:32] + "..."
-    kb = [[{"text": f"Channel Link: {ch_display}", "icon_custom_emoji_id": "6204010762206189094", "callback_data": "edit_main_channel_link", "style": "success"}]]
-    otp_display = bot_settings.get("otp_link", "")
-    if len(otp_display) > 32: otp_display = otp_display[:32] + "..."
-    kb.append([{"text": f"OTP Link: {otp_display}", "icon_custom_emoji_id": "5420517437885943844", "callback_data": "edit_otp_link", "style": "primary"}])
+    kb = [[{"text": "Edit OTP Button Link", "icon_custom_emoji_id": "5420517437885943844", "callback_data": "edit_otp_link", "style": "primary"}]]
     for idx, fg in enumerate(bot_settings["fw_groups"]):
         kb.append([{"text": f"Group: {fg['chat_id']}", "icon_custom_emoji_id": "5193063022226086560", "callback_data": f"manage_fw_{idx}", "style": "primary"}])
     kb.append([{"text": "Add Forward Group", "icon_custom_emoji_id": "5420323438508155202", "callback_data": "add_fw", "style": "success"}])
@@ -2067,30 +1796,37 @@ def specific_fw_group_keyboard(idx):
     kb.append([{"text": "Back to Groups", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "primary"}])
     return {"inline_keyboard": kb}
 
-def dxa_control_keyboard():
+def STRM_control_keyboard():
     w_status = "ON" if bot_settings["withdraw_on"] else "OFF"
     sup_status = "ON" if bot_settings.get("support_link") else "OFF"
     grp_status = "ON" if bot_settings.get("w_group") else "OFF"
     return {"inline_keyboard": [
-        [{"text": f"WITHDRAW: {w_status}", "icon_custom_emoji_id": "5348469219761626211", "callback_data": "dxa_toggle_w", "style": "primary"}],
-        [{"text": f"MIN WITHDRAW: {bot_settings['min_withdraw']}", "icon_custom_emoji_id": "5352877703043258544", "callback_data": "dxa_min_w", "style": "success"},
-         {"text": f"OTP REWARD: {bot_settings['otp_reward']}", "icon_custom_emoji_id": "5190576863226933563", "callback_data": "dxa_otp_r", "style": "primary"}],
-        [{"text": f"REFER REWARD: {bot_settings['refer_reward']}", "icon_custom_emoji_id": "5420396762189831222", "callback_data": "dxa_ref_r", "style": "success"},
-         {"text": f"COOLDOWN: {bot_settings['cooldown']}s", "icon_custom_emoji_id": "5337172996211648018", "callback_data": "dxa_cool", "style": "primary"}],
-        [{"text": f"NUM/REQ: {bot_settings['num_req']}", "icon_custom_emoji_id": "5337132498965010628", "callback_data": "dxa_num_req", "style": "success"},
-         {"text": f"NUM/SHARE: {bot_settings['num_share']}", "icon_custom_emoji_id": "5352862640592949843", "callback_data": "dxa_num_share", "style": "primary"}],
-        [{"text": f"SUPPORT LINK: {sup_status}", "icon_custom_emoji_id": "5420145051336485498", "callback_data": "dxa_sup_link", "style": "success"},
+        [{"text": f"WITHDRAW: {w_status}", "icon_custom_emoji_id": "5348469219761626211", "callback_data": "STRM_toggle_w", "style": "primary"}],
+        [{"text": f"MIN WITHDRAW: {bot_settings['min_withdraw']}", "icon_custom_emoji_id": "5352877703043258544", "callback_data": "STRM_min_w", "style": "success"},
+         {"text": f"OTP REWARD: {bot_settings['otp_reward']}", "icon_custom_emoji_id": "5190576863226933563", "callback_data": "STRM_otp_r", "style": "primary"}],
+        [{"text": f"REFER REWARD: {bot_settings['refer_reward']}", "icon_custom_emoji_id": "5420396762189831222", "callback_data": "STRM_ref_r", "style": "success"},
+         {"text": f"COOLDOWN: {bot_settings['cooldown']}s", "icon_custom_emoji_id": "5337172996211648018", "callback_data": "STRM_cool", "style": "primary"}],
+        [{"text": f"NUM/REQ: {bot_settings['num_req']}", "icon_custom_emoji_id": "5337132498965010628", "callback_data": "STRM_num_req", "style": "success"},
+         {"text": f"NUM/SHARE: {bot_settings['num_share']}", "icon_custom_emoji_id": "5352862640592949843", "callback_data": "STRM_num_share", "style": "primary"}],
+        [{"text": f"SUPPORT LINK: {sup_status}", "icon_custom_emoji_id": "5420145051336485498", "callback_data": "STRM_sup_link", "style": "success"},
          {"text": "W. METHODS", "icon_custom_emoji_id": "5190899075968441286", "callback_data": "manage_w_methods", "style": "primary"}],
-        [{"text": f"W. GROUP: {grp_status}", "icon_custom_emoji_id": "5420517437885943844", "callback_data": "dxa_w_group", "style": "success"},
+        [{"text": f"W. GROUP: {grp_status}", "icon_custom_emoji_id": "5420517437885943844", "callback_data": "STRM_w_group", "style": "success"},
          {"text": "BACK", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "danger"}]
     ]}
 
 def w_methods_keyboard():
     kb = []
     for idx, m in enumerate(bot_settings["w_methods"]):
-        kb.append([{"text": f"Delete: {m}", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"del_wm_{idx}", "style": "danger"}])
+        if isinstance(m, dict):
+            name = m.get("name", "")
+            eid = m.get("emoji_id", "")
+            icon = eid if eid else "5190899075968441286"
+        else:
+            name = str(m)
+            icon = "5190899075968441286"
+        kb.append([{"text": f"Delete: {name}", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"del_wm_{idx}", "style": "danger"}])
     kb.append([{"text": "Add Method", "icon_custom_emoji_id": "5420323438508155202", "callback_data": "add_wm", "style": "success"}])
-    kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "dxa_control", "style": "primary"}])
+    kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "STRM_control", "style": "primary"}])
     return {"inline_keyboard": kb}
 
 def typed_panels_list_keyboard(p_type):
@@ -2112,50 +1848,46 @@ def typed_panels_list_keyboard(p_type):
 
 def panel_config_keyboard(idx):
     p = bot_settings["panels"][idx]
-    if p.get("type") == "Auto Captcha Panel":
-        kb = []
-        action_text = "Turn OFF" if p['status'] == 'ON' else "Turn ON"
-        action_icon = "5318840353510408444" if p['status'] == 'ON' else "5192812028632274956"
-        kb.append([{"text": action_text, "icon_custom_emoji_id": action_icon, "callback_data": f"tog_pnl_{idx}", "style": "danger" if p['status'] == 'ON' else "success"}])
-        kb.append([{"text": "Test Connection", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"test_p_conn_{idx}", "style": "success"}])
-        kb.append([{"text": "Back to Providers", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_cpt_panels", "style": "danger"}])
-        return {"inline_keyboard": kb}
     kb = []
-    action_text = "STOP POLLING" if p['status'] == 'ON' else "START POLLING"
+    action_text = "Turn OFF" if p['status'] == 'ON' else "Turn ON"
     action_icon = "5318840353510408444" if p['status'] == 'ON' else "5192812028632274956"
     kb.append([{"text": action_text, "icon_custom_emoji_id": action_icon, "callback_data": f"tog_pnl_{idx}", "style": "danger" if p['status'] == 'ON' else "success"}])
-    for label, field, emoji_id in API_PANEL_FIELDS:
-        value = p.get(field, "")
-        if field == "placeholder_config":
-            try:
-                pv = json.loads(value) if value else {}
-                display_value = ", ".join([f"{k}={v}" for k, v in pv.items()]) if pv else "None"
-            except: display_value = str(value)[:20] if value else "None"
-        elif field == "token":
-            display_value = ('*' * min(len(str(value)), 15)) if value else "Not set"
-        elif field == "curl_command":
-            sv = str(value).replace("\n", " ")
-            display_value = (sv[:30] + "...") if len(sv) > 30 else (sv if sv else "Not set")
-        else:
-            sv = str(value) if value is not None else ""
-            display_value = (sv[:28] + "...") if len(sv) > 28 else (sv if sv else "Not set")
-        kb.append([{"text": f"{label}: {display_value}", "icon_custom_emoji_id": emoji_id, "callback_data": f"api_pf|{idx}|{field}", "style": "primary"}])
-    kb.append([{"text": "TEST CONNECTION", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"test_p_conn_{idx}", "style": "success"}])
-    kb.append([{"text": "BACK", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_api_panels", "style": "danger"}])
+
+    if p["type"] != "Auto Captcha Panel":
+        # Uses API_PANEL_FIELDS — already reduced in PART 1
+        for label, field, emoji_id in API_PANEL_FIELDS:
+            value = p.get(field, "")
+            if field == "token":
+                display_value = ('*' * min(len(str(value)), 15)) if value else "Not set"
+            elif field == "curl_command":
+                sv = str(value).replace("\n", " ")
+                display_value = (sv[:30] + "...") if len(sv) > 30 else (sv if sv else "Not set")
+            else:
+                sv = str(value) if value is not None else ""
+                display_value = (sv[:28] + "...") if len(sv) > 28 else (sv if sv else "Not set")
+            kb.append([{"text": f"{label}: {display_value}", "icon_custom_emoji_id": emoji_id, "callback_data": f"api_pf|{idx}|{field}", "style": "primary"}])
+
+    kb.append([{"text": "Test Connection", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"test_p_conn_{idx}", "style": "success"}])
+    back_data = "manage_api_panels" if p.get("type", "API Panel") == "API Panel" else "manage_cpt_panels"
+    kb.append([{"text": "Back to Providers", "icon_custom_emoji_id": "5267490665117275176", "callback_data": back_data, "style": "danger"}])
     return {"inline_keyboard": kb}
 
 def build_traffic_ui():
     global recent_traffic
     current_time = time.time()
     recent_traffic = [t for t in recent_traffic if current_time - t.get("time", 0) <= 3600]
+
     stats = {}
     for t in recent_traffic:
         srv = t.get("service", "Unknown")
         iso = t.get("iso", "XX")
         flag = t.get("flag", "🌍")
-        if srv not in stats: stats[srv] = {}
-        if iso not in stats[srv]: stats[srv][iso] = {"count": 0, "flag": flag}
+        if srv not in stats:
+            stats[srv] = {}
+        if iso not in stats[srv]:
+            stats[srv][iso] = {"count": 0, "flag": flag}
         stats[srv][iso]["count"] += 1
+
     txt = "╔═════════════════╗\n║  📈 <b>NETWORK TRAFFIC</b>\n╚═════════════════╝\n\n"
     kb = []
     if not stats:
@@ -2166,24 +1898,31 @@ def build_traffic_ui():
             total = sum(c["count"] for c in countries.values())
             srv_totals.append((srv, total, countries))
         srv_totals.sort(key=lambda x: x[1], reverse=True)
+
         for srv, total, countries in srv_totals:
             app_full_name, prem_app_html = get_service_info_html(srv)
             txt += f"[ {prem_app_html} <b>{app_full_name}</b> ]\n│\n"
-            c_list = sorted(countries.items(), key=lambda x: x[1]["count"], reverse=True)[:7]
+            c_list = sorted(countries.items(), key=lambda x: x[1]["count"], reverse=True)
+            c_list = c_list[:7]
             for i, (iso, c_data) in enumerate(c_list):
                 prem_flag_html = get_flag_info_html(iso)
                 count = c_data["count"]
                 c_name = iso
                 for code, fdata in bot_settings.get("premium_flags", {}).items():
-                    if fdata.get("iso") == iso: c_name = fdata.get("name", iso); break
+                    if fdata.get("iso") == iso:
+                        c_name = fdata.get("name", iso)
+                        break
                 txt += f"├ {prem_flag_html} <b>{c_name} ({iso})</b>\n"
                 txt += f"│ ╰ Success: {count}\n"
-                if i < len(c_list) - 1: txt += "│\n"
+                if i < len(c_list) - 1:
+                    txt += "│\n"
             txt += "\n"
+
         for srv, _, _ in srv_totals:
             safe_srv = srv[:20]
             app_full_name, _ = get_service_info_html(safe_srv, safe_srv)
             kb.append([{"text": f"Explore {app_full_name} Range", "icon_custom_emoji_id": "5190645917711114179", "callback_data": f"exp_rng_{safe_srv}", "style": "success"}])
+
     txt = render_body_text(txt)
     kb.append([{"text": "Refresh", "icon_custom_emoji_id": "5465368548702446780", "callback_data": "refresh_traffic", "style": "primary"}])
     kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
@@ -2195,73 +1934,114 @@ def expire_previous_number(chat_id):
         prev_msg_id = prev_data["msg_id"]
         nums = prev_data["nums"]
         for num in nums:
-            if num in stex_assigned_numbers: del stex_assigned_numbers[num]
+            if num in stex_assigned_numbers:
+                del stex_assigned_numbers[num]
+            if num in voltx_assigned_numbers:
+                del voltx_assigned_numbers[num]
         save_db()
         kb = [[{"text": "Number Expired", "icon_custom_emoji_id": "5336997731481193790", "callback_data": "ignore", "style": "danger"}]]
         try: edit_message(chat_id, prev_msg_id, "ㅤ\n", reply_markup={"inline_keyboard": kb})
         except: pass
         del user_active_sessions[chat_id]
+
+
+# ==========================================
+# Withdrawal Group Message Builder
+# ==========================================
+def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id):
+    frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
+    web_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>'
+    user_emoji = '<tg-emoji emoji-id="5352861489541714456">👤</tg-emoji>'
+    money_emoji = '<tg-emoji emoji-id="5348469219761626211">💸</tg-emoji>'
+    phone_emoji = '<tg-emoji emoji-id="5337132498965010628">🍏</tg-emoji>'
+    bank_emoji = '<tg-emoji emoji-id="5348469219761626211">🏦</tg-emoji>'
+    tkt_emoji = '<tg-emoji emoji-id="5192739271886282680">🧾</tg-emoji>'
+
+    method_icon = get_wmethod_emoji_html(method)
+
+    txt = (
+        f"🎙 <b>NEW WITHDRAWAL</b> {web_emoji}\n"
+        f"{frog_emoji} <b>USER ID :</b><code>{chat_id}</code>\n"
+        f"{user_emoji} <b>User :</b> <a href='tg://user?id={chat_id}'>{full_name}</a>\n"
+        f"{money_emoji} <b>BALANCE:</b> <code>{amount}</code>\n"
+        f"{phone_emoji} <b>NUMBER :</b> <code>{number}</code>\n"
+        f"{bank_emoji} <b>METHOD :</b> {method_icon} <b>{method}</b>\n\n"
+        f"{tkt_emoji} <b>WITHDRAW ID :</b> <code>{req_id}</code>"
+    )
+    return render_body_text(txt)
+
+
+# ==========================================
+# Numbers Header Builder
+# ⚙️THIS IS YOUR📱{country_name}{flag} NUMBERS📱
+# 💰{payout}/OTP 📵
+# ==========================================
+def build_numbers_header(country, service=None, payout=None):
+    HEADER_EMOJI_1 = "6282641460093260838"
+    HEADER_EMOJI_2 = "6267315814190290529"
+    PHONE_ICON     = "5197474438970363734"
+    NOPHONE_ICON   = "6266787022111773140"
+    flag_html = get_flag_info_html(country)
+
+    if payout is None:
+        payout_val = float(bot_settings.get("otp_reward", 0.0))
+        pr = bot_settings.get("otp_pair_rates", {})
+        if service:
+            key = f"{str(country).upper()}|{str(service).upper()}"
+            if key in pr:
+                try: payout_val = float(pr[key])
+                except: pass
+            else:
+                for k, v in pr.items():
+                    try:
+                        if k.split("|")[0] == str(country).upper():
+                            payout_val = float(v); break
+                    except: pass
+    else:
+        payout_val = float(payout)
+
+    try:
+        payout_str = f"{float(payout_val):.10f}".rstrip('0').rstrip('.')
+        if '.' not in payout_str: payout_str += ".00"
+    except:
+        payout_str = "0.00"
+
+    header = (
+        f'<tg-emoji emoji-id="{HEADER_EMOJI_1}">⚙️</tg-emoji> <b>THIS IS YOUR</b>'
+        f'<tg-emoji emoji-id="{HEADER_EMOJI_2}">📱</tg-emoji>'
+        f'<b>{html.escape(str(country).upper())}</b>{flag_html} <b>NUMBERS</b>'
+        f'<tg-emoji emoji-id="{PHONE_ICON}">📱</tg-emoji>\n'
+        f'<b>💰{payout_str}/OTP</b> <tg-emoji emoji-id="{NOPHONE_ICON}">📵</tg-emoji>\n'
+    )
+    return render_body_text(header)
+
+
 # ==========================================
 # Message Handler
 # ==========================================
 def handle_message(msg):
-    global total_uploaded_stats
+    global total_uploaded_stats, total_assigned_stats
     chat_id = msg["chat"]["id"]
     chat_type = msg["chat"].get("type", "private")
-    if chat_type != "private": return
+    if chat_type != "private":
+        return
     text = msg.get("text", "")
     register_user_local(chat_id)
 
-    # -- /dmotp admin command --
-    if text.startswith("/dmotp"):
-        if not is_admin(chat_id): return
-        parts = text.split(maxsplit=4)
-        if len(parts) < 5:
-            send_message(chat_id, render_body_text("📝 <b>Usage:</b> <code>/dmotp SERVICE NUMBER OTP LANG</code>\n\n<b>Example:</b>\n<code>/dmotp WhatsApp +8801712345678 556677 EN</code>"))
-            return
-        srv_test = parts[1].strip()
-        num_test = parts[2].strip()
-        otp_test = parts[3].strip()
-        lang_test = parts[4].strip().upper()
-        if not lang_test.startswith("#"): lang_test = "#" + lang_test
-        fake_msg = f"Your code is {otp_test}"
-        app_full_name, _ = get_service_info_html(srv_test)
-        reward_test = float(bot_settings.get("otp_reward", 0.0))
-        dm_text, dm_kb = deliver_to_inbox(chat_id, app_full_name, num_test, fake_msg, 0.0, reward_test, lang_test)
-        send_message(chat_id, "🧪 <b>DM OTP Preview:</b>")
-        send_message(chat_id, render_body_text(dm_text), reply_markup=dm_kb)
-        return
-
-    # -- /setservice admin command --
-    if text.startswith("/setservice"):
-        if not is_admin(chat_id): return
-        raw = text.replace("/setservice", "", 1).strip()
-        if "|" not in raw:
-            send_message(chat_id, render_body_text(
-                "📝 <b>Usage:</b> <code>/setservice SERVICE_NAME | EMOJI_ID</code>\n\n"
-                "<b>Example:</b>\n<code>/setservice Facebook | 5334807341109908955</code>\n"
-                "<code>/setservice Instagram | 5420130255174145507</code>"
-            ))
-            return
-        svc_part, eid_part = raw.split("|", 1)
-        svc_name = svc_part.strip().upper()
-        eid = eid_part.strip()
-        if not svc_name or not eid:
-            send_message(chat_id, render_body_text("❌ <b>Both service name and emoji ID are required.</b>"))
-            return
-        default_char = svc_name[0] if svc_name else "📱"
-        bot_settings["premium_apps"][svc_name] = {"char": default_char, "id": str(eid), "name": svc_name.title()}
-        save_db()
-        send_message(chat_id, render_body_text(
-            f"{PEM['ok']} <b>Service emoji saved!</b>\n\n"
-            f"📌 <b>Service:</b> <b>{svc_name}</b>\n"
-            f"🆔 <b>Emoji ID:</b> <code>{eid}</code>"
-        ))
-        return
-
     if is_user_banned(chat_id):
-        send_message(chat_id, render_body_text("🚫 <b>You are banned from using this bot!</b>\n<i>If you think this is a mistake, please contact support.</i>"))
+        send_message(chat_id, render_body_text("🚫 <b>You are banned from using this bot!</b>\nIf you think this is a mistake, please contact support."))
         return
+
+    # ================== MAINTENANCE CHECK ==================
+    if bot_settings.get("maintenance", False) and not is_admin(chat_id):
+        if not text.startswith("/start") and text != "SUPPORT":
+            maint_msg = (
+                f'<tg-emoji emoji-id="6267262260243076354">㊙️</tg-emoji> <b>The Bot Is On Under MENTENENCE.</b>\n\n'
+                f'Wait Some Time <tg-emoji emoji-id="5226560988291019577">🦕</tg-emoji> <b>Bot Will Available Soon</b> '
+                f'<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>'
+            )
+            send_message(chat_id, render_body_text(maint_msg))
+            return
 
     if text.startswith("/start"):
         parts = text.split()
@@ -2269,18 +2049,16 @@ def handle_message(msg):
             inviter = int(parts[1])
             if inviter != chat_id:
                 if db:
-                    try:
-                        doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
-                        if not doc.exists:
-                            get_user(chat_id)
-                            db.collection('users').document(str(chat_id)).update({"referred_by": inviter, "ref_paid": False}, timeout=5.0)
-                    except: pass
+                    doc = db.collection('users').document(str(chat_id)).get()
+                    if not doc.exists:
+                        get_user(chat_id)
+                        db.collection('users').document(str(chat_id)).update({"referred_by": inviter, "ref_paid": False})
 
     if not check_force_join(chat_id):
         send_force_join_msg(chat_id)
         return
 
-    MAIN_MENU_CMDS = ["GET NUMBER", "SEARCH NUMBER", "TRAFFIC", "REFER", "BALANCE", "SUPPORT", "Admin Panel", "2FA ONLINE"]
+    MAIN_MENU_CMDS = ["GET NUMBER", "Search Number", "TRAFFIC", "Refer", "WITHDRAWAL", "SUPPORT", "Admin Panel", "2FA ONLINE"]
     is_main_cmd = False
     if text in MAIN_MENU_CMDS or text.startswith("/start"):
         if chat_id in user_states: del user_states[chat_id]
@@ -2290,223 +2068,129 @@ def handle_message(msg):
     if chat_id in user_states and not is_main_cmd:
         state = user_states[chat_id]
 
-        # ==========================================
-        # Auto Captcha Panel Setup Flow (10 steps with premium emojis)
-        # ==========================================
+        # ================== AUTO CAPTCHA PANEL SETUP ==================
         if state == "wait_for_cpanel_url" and text:
             temp_data[chat_id]["p_data"]["login_url"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_user"
-            send_message(chat_id, render_body_text(
-                "2️⃣ <b>Username</b>\n"
-                "➡️ <i>Panel এর Username দিন:</i>"
-            ), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("2️⃣ <b>Username</b>\n➡️ Panel এর Username দিন:"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_user" and text:
             temp_data[chat_id]["p_data"]["username"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_pass"
-            send_message(chat_id, render_body_text(
-                "3️⃣ <b>Password</b>\n"
-                "➡️ <i>Panel এর Password দিন:</i>"
-            ), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("3️⃣ <b>Password</b>\n➡️ Panel এর Password দিন:"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_pass" and text:
             temp_data[chat_id]["p_data"]["password"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_msg_link"
-            send_message(chat_id, render_body_text(
-                "4️⃣ <b>Message Link</b>\n"
-                "➡️ <i>যেখান থেকে SMS/OTP ডাটা (JSON) আসবে সেই Link দিন:</i>"
-            ), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("4️⃣ <b>Message Link</b>\n➡️ যেখান থেকে SMS/OTP ডাটা আসবে সেই Link দিন:"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_msg_link" and text:
             temp_data[chat_id]["p_data"]["msg_link"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_num_col_name"
-            send_message(chat_id, render_body_text(
-                "5️⃣ <b>Number Column Name</b>\n"
-                "➡️ <i>Data তে Number column এর নাম কী? (যেমন: number, phone):</i>"
-            ), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("5️⃣ <b>Number Column Name</b>\n➡️ Data তে Number column এর নাম কী? (যেমন: number, phone):"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_num_col_name" and text:
             temp_data[chat_id]["p_data"]["num_col_name"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_num_col_idx"
-            send_message(chat_id, render_body_text(
-                "6️⃣ <b>Number Column Serial</b>\n"
-                "➡️ <i>Number Column এর Serial Number কত? (যেমন: 3, 5):</i>"
-            ), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("6️⃣ <b>Number Column Serial</b>\n➡️ Number Column এর Serial Number কত? (যেমন: 3, 5):"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_num_col_idx" and text:
             if text.isdigit():
                 temp_data[chat_id]["p_data"]["num_col_idx"] = int(text)
                 user_states[chat_id] = "wait_for_cpanel_msg_col_name"
-                send_message(chat_id, render_body_text(
-                    "7️⃣ <b>Message Column Name</b>\n"
-                    "➡️ <i>Message/OTP column এর নাম কী? (যেমন: message, sms):</i>"
-                ), reply_markup=get_cancel_kb())
+                send_message(chat_id, render_body_text("7️⃣ <b>Message Column Name</b>\n➡️ Message/OTP column এর নাম কী?"), reply_markup=get_cancel_kb())
             else:
-                send_message(chat_id, render_body_text("❌ <b>Please enter a valid number serial!</b>"), reply_markup=get_cancel_kb())
+                send_message(chat_id, render_body_text("❌ Please enter a valid number serial!"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_msg_col_name" and text:
             temp_data[chat_id]["p_data"]["msg_col_name"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_msg_col_idx"
-            send_message(chat_id, render_body_text(
-                "8️⃣ <b>Message Column Serial</b>\n"
-                "➡️ <i>Message Column এর Serial Number কত? (যেমন: 5, 7):</i>"
-            ), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("8️⃣ <b>Message Column Serial</b>\n➡️ Message Column এর Serial Number কত?"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_msg_col_idx" and text:
             if text.isdigit():
                 temp_data[chat_id]["p_data"]["msg_col_idx"] = int(text)
-                user_states[chat_id] = "wait_for_cpanel_service_col_name"
-                send_message(chat_id, render_body_text(
-                    "9️⃣ <b>Service Column Name</b>\n"
-                    "➡️ <i>Service/App column এর নাম কী? (যেমন: service, app, type):</i>"
-                ), reply_markup=get_cancel_kb())
-            else:
-                send_message(chat_id, render_body_text("❌ <b>Please enter a valid number serial!</b>"), reply_markup=get_cancel_kb())
-            return
-        elif state == "wait_for_cpanel_service_col_name" and text:
-            temp_data[chat_id]["p_data"]["service_col_name"] = text.strip()
-            user_states[chat_id] = "wait_for_cpanel_service_col_idx"
-            send_message(chat_id, render_body_text(
-                "ℹ️🅾️ <b>Service Col Serial</b>\n"
-                "➡️ <i>Service Column এর Serial Number কত? (যেমন: 4, 6):</i>"
-            ), reply_markup=get_cancel_kb())
-            return
-        elif state == "wait_for_cpanel_service_col_idx" and text:
-            if text.isdigit():
-                temp_data[chat_id]["p_data"]["service_col_idx"] = int(text)
-                temp_data[chat_id]["p_data"]["login_status"] = "Pending Auto-Login..."
+                temp_data[chat_id]["p_data"]["login_status"] = "⏳ Pending Auto-Login..."
                 bot_settings["panels"].append(temp_data[chat_id]["p_data"])
                 save_db()
-                send_message(chat_id, render_body_text(
-                    f"{PEM['ok']} <b>Auto Captcha Panel Added Successfully!</b>\n\n"
-                    f"📌 <b>Name:</b> <b>{temp_data[chat_id]['p_data'].get('name', 'Panel')}</b>\n"
-                    f"🔐 <b>Status:</b> <b>Pending Auto-Login</b>"
-                ), reply_markup=main_menu(chat_id))
+                send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Auto Captcha Panel Added Successfully!</b>"), reply_markup=main_menu(chat_id))
                 msg_id = temp_data[chat_id]["msg_id"]
                 handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": "manage_cpt_panels", "id": "internal"})
-                del user_states[chat_id]; del temp_data[chat_id]
+                del user_states[chat_id]
+                del temp_data[chat_id]
             else:
-                send_message(chat_id, render_body_text("❌ <b>Please enter a valid number serial!</b>"), reply_markup=get_cancel_kb())
+                send_message(chat_id, render_body_text("❌ Please enter a valid number serial!"), reply_markup=get_cancel_kb())
             return
 
-        # ==========================================
-        # API Panel Field Edit
-        # ==========================================
-        elif state == "wait_for_api_pf_value" and text:
-            idx = temp_data[chat_id]["p_idx"]; field = temp_data[chat_id]["p_field"]
-            new_value = text.strip()
-            if new_value.lower() == "/cancel":
-                del user_states[chat_id]; del temp_data[chat_id]
-                p = bot_settings["panels"][idx]
-                send_message(chat_id, render_body_text(f"⚙️ <b>Configure</b> <b>{p['name']}</b>"), reply_markup=panel_config_keyboard(idx))
-                return
-            if field in ["interval_sec", "records", "retry_count"]:
-                try: new_value = int(new_value)
-                except ValueError: send_message(chat_id, render_body_text("❌ <b>Please send a valid number.</b>")); return
-            elif field == "placeholder_config":
-                try: new_value = json.dumps(json.loads(new_value))
-                except:
-                    try:
-                        parts_x = [px.strip() for px in new_value.split(',')]
-                        np = {}
-                        for px in parts_x:
-                            if '=' in px:
-                                k, v = px.split('=', 1); np[k.strip()] = v.strip()
-                        new_value = json.dumps(np)
-                    except: send_message(chat_id, render_body_text("❌ <b>Invalid format.</b>")); return
-            bot_settings["panels"][idx][field] = new_value
-            save_db()
-            del user_states[chat_id]; del temp_data[chat_id]
-            p = bot_settings["panels"][idx]
-            send_message(chat_id, render_body_text(f"{PEM['ok']} <b>{field}</b> updated!"))
-            send_message(chat_id, render_body_text(f"⚙️ <b>Configure</b> <b>{p['name']}</b>"), reply_markup=panel_config_keyboard(idx))
-            return
-
-        # ==========================================
-        # User Management
-        # ==========================================
+        # ================== USER MANAGEMENT ==================
         elif state == "wait_for_um_bal_uid" and text:
             target_uid_str = text.strip()
             if not target_uid_str.isdigit():
-                send_message(chat_id, render_body_text("❌ <b>Invalid ID!</b>"), reply_markup=get_cancel_kb()); return
+                send_message(chat_id, render_body_text("❌ Invalid ID!"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
             if db:
-                try:
-                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)
-                    if not doc.exists:
-                        send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
-                    current_bal = doc.to_dict().get('balance', 0.0)
-                    temp_data[chat_id]["target_uid"] = target_uid
-                    user_states[chat_id] = "wait_for_um_bal_amt"
-                    send_message(chat_id, render_body_text(
-                        f"{PEM['ok']} <b>User found!</b>\n\n"
-                        f"💰 <b>Current Balance:</b> <b>{current_bal}</b>\n\n"
-                        f"📝 <b>Send amount to ADD/REMOVE:</b>"
-                    ), reply_markup=get_cancel_kb())
-                except Exception as e:
-                    send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {e}"), reply_markup=get_cancel_kb())
+                doc = db.collection('users').document(str(target_uid)).get()
+                if not doc.exists:
+                    send_message(chat_id, render_body_text("❌ User not found!"), reply_markup=get_cancel_kb()); return
+                current_bal = doc.to_dict().get('balance', 0.0)
+                temp_data[chat_id]["target_uid"] = target_uid
+                user_states[chat_id] = "wait_for_um_bal_amt"
+                send_message(chat_id, render_body_text(f"✅ User found!\n💰 Current Balance: {current_bal} ৳\n\n📝 Send amount (+/-):"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_um_bal_amt" and text:
             try:
-                amt = float(text.strip()); target_uid = temp_data[chat_id]["target_uid"]
+                amt = float(text.strip())
+                target_uid = temp_data[chat_id]["target_uid"]
                 update_balance(target_uid, amt)
-                send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Balance updated for</b> <b>{target_uid}!</b>"), reply_markup=main_menu(chat_id))
-                send_message(target_uid, render_body_text(f"🔔 <b>Your balance adjusted by</b> <b>{amt}</b>"))
+                send_message(chat_id, render_body_text(f"{PEM['ok']} Balance updated for {target_uid}!"), reply_markup=main_menu(chat_id))
+                send_message(target_uid, render_body_text(f"🔔 Balance adjusted by <b>{amt} ৳</b> by Admin."))
                 del user_states[chat_id]; del temp_data[chat_id]
             except ValueError:
-                send_message(chat_id, render_body_text("❌ <b>Invalid amount!</b>"), reply_markup=get_cancel_kb())
+                send_message(chat_id, render_body_text("❌ Invalid amount!"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_um_ban_uid" and text:
             target_uid_str = text.strip()
             if not target_uid_str.isdigit():
-                send_message(chat_id, render_body_text("❌ <b>Invalid ID!</b>"), reply_markup=get_cancel_kb()); return
+                send_message(chat_id, render_body_text("❌ Invalid ID!"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
             if db:
-                try:
-                    doc_ref = db.collection('users').document(str(target_uid))
-                    doc = doc_ref.get(timeout=5.0)
-                    if not doc.exists:
-                        send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
-                    current_status = doc.to_dict().get("banned", False)
-                    new_status = not current_status
-                    doc_ref.update({"banned": new_status}, timeout=5.0)
-                    user_banned_cache[target_uid] = {'banned': new_status, 'time': time.time()}
-                    status_str = "🚫 <b>BANNED</b>" if new_status else "✅ <b>UNBANNED</b>"
-                    send_message(chat_id, render_body_text(f"{PEM['ok']} <b>User</b> <b>{target_uid}</b> <b>→</b> {status_str}"), reply_markup=main_menu(chat_id))
-                    del user_states[chat_id]; del temp_data[chat_id]
-                except Exception as e:
-                    send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {e}"), reply_markup=get_cancel_kb())
+                doc_ref = db.collection('users').document(str(target_uid))
+                doc = doc_ref.get()
+                if not doc.exists:
+                    send_message(chat_id, render_body_text("❌ User not found!"), reply_markup=get_cancel_kb()); return
+                current_status = doc.to_dict().get("banned", False)
+                new_status = not current_status
+                doc_ref.update({"banned": new_status})
+                user_banned_cache[target_uid] = {'banned': new_status, 'time': time.time()}
+                status_text = "BANNED 🚫" if new_status else "UNBANNED ✅"
+                send_message(chat_id, render_body_text(f"✅ User {target_uid} → {status_text}!"), reply_markup=main_menu(chat_id))
+                del user_states[chat_id]; del temp_data[chat_id]
             return
         elif state == "wait_for_um_prof_uid" and text:
             target_uid_str = text.strip()
             if not target_uid_str.isdigit():
-                send_message(chat_id, render_body_text("❌ <b>Invalid ID!</b>"), reply_markup=get_cancel_kb()); return
+                send_message(chat_id, render_body_text("❌ Invalid ID!"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
             if db:
-                try:
-                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)
-                    if not doc.exists:
-                        send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
-                    data = doc.to_dict()
-                    prof_text = f"""➖➖➖➖➖➖➖➖
+                doc = db.collection('users').document(str(target_uid)).get()
+                if not doc.exists:
+                    send_message(chat_id, render_body_text("❌ User not found!"), reply_markup=get_cancel_kb()); return
+                data = doc.to_dict()
+                prof_text = f"""➖➖➖➖➖➖➖➖
 👤 <b>USER PROFILE</b>
 ➖➖➖➖➖➖➖➖
-🆔 <b>ID:</b> <code>{target_uid}</code>
-💰 <b>Balance:</b> <b>{data.get('balance', 0.0)}</b>
-🤝 <b>Refers:</b> <b>{data.get('total_refers', 0)}</b>
-🔐 <b>OTPs:</b> <b>{data.get('total_otps', 0)}</b>
-🚫 <b>Banned:</b> <b>{data.get('banned', False)}</b>
+🆔 ID: <code>{target_uid}</code>
+💰 Balance: {data.get('balance', 0.0)} ৳
+🤝 Refers: {data.get('total_refers', 0)}
+🔐 OTPs: {data.get('total_otps', 0)}
+🚫 Banned: {data.get('banned', False)}
 ➖➖➖➖➖➖➖➖"""
-                    kb = {"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "user_management", "style": "primary"}]]}
-                    send_message(chat_id, render_body_text(prof_text), reply_markup=kb)
-                    del user_states[chat_id]; del temp_data[chat_id]
-                except Exception as e:
-                    send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {e}"), reply_markup=get_cancel_kb())
+                kb = {"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "user_management", "style": "primary"}]]}
+                send_message(chat_id, render_body_text(prof_text), reply_markup=kb)
+                del user_states[chat_id]; del temp_data[chat_id]
             return
 
-        # ==========================================
-        # Menu Design Flow
-        # ==========================================
+        # ================== MENU DESIGN ==================
         elif state == "wait_for_menu_text" and text:
             try:
                 menu_key = temp_data[chat_id]["menu_key"]
@@ -2515,10 +2199,10 @@ def handle_message(msg):
                 save_db()
                 delete_message(chat_id, msg["message_id"])
                 preview_text = render_body_text(formatted_html_text)
-                success_text = f"{PEM['ok']} <b>Updated!</b>\n\n🎨 <b>{menu_key.upper()}</b>\n\n<b>Preview:</b>\n{preview_text}"
+                success_text = f"{PEM['ok']} <b>Updated!</b>\n\n🎨 <b>{menu_key.upper()}</b>\n\n{preview_text}"
                 edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(success_text), reply_markup=menu_edit_options_keyboard(menu_key))
             except Exception as e:
-                send_message(chat_id, f"❌ <b>Error:</b> {e}")
+                send_message(chat_id, f"❌ Error: {e}")
             finally:
                 if chat_id in user_states: del user_states[chat_id]
                 if chat_id in temp_data: del temp_data[chat_id]
@@ -2528,47 +2212,45 @@ def handle_message(msg):
                 menu_key = temp_data[chat_id]["menu_key"]
                 if "-" in text:
                     parts = text.split("-", 1)
-                    btn_text = parts[0].strip(); btn_url = parts[1].strip()
-                    emoji_id = None; emoji_char = ""
+                    btn_text = parts[0].strip()
+                    btn_url = parts[1].strip()
+                    emoji_id = None
+                    emoji_char = ""
                     for ent in msg.get("entities", []):
                         if ent.get("type") == "custom_emoji":
                             emoji_id = ent.get("custom_emoji_id")
                             offset = ent.get("offset", 0); length = ent.get("length", 0)
                             b_text = text.encode('utf-16-le')
-                            emoji_char = b_text[offset*2:(offset+length)*2].decode('utf-16-le'); break
+                            emoji_char = b_text[offset*2:(offset+length)*2].decode('utf-16-le')
+                            break
                     if emoji_char: btn_text = btn_text.replace(emoji_char, "").strip()
                     btn_data = {"text": btn_text, "url": btn_url, "style": "primary"}
                     if emoji_id: btn_data["icon_custom_emoji_id"] = emoji_id
                     bot_settings["custom_messages"][menu_key]["buttons"].append(btn_data)
                     save_db()
                     delete_message(chat_id, msg["message_id"])
-                    edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(f"{PEM['gear']} <b>Edit Buttons:</b> <b>{menu_key.upper()}</b>"), reply_markup=menu_buttons_list_keyboard(menu_key))
+                    edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(f"{PEM['gear']} <b>Edit Buttons: {menu_key.upper()}</b>"), reply_markup=menu_buttons_list_keyboard(menu_key))
                 else:
-                    send_message(chat_id, render_body_text(f"{PEM['no']} <b>Invalid format.</b>"))
+                    send_message(chat_id, render_body_text(f"{PEM['no']} Invalid format."))
             except: pass
             finally:
                 if chat_id in user_states: del user_states[chat_id]
                 if chat_id in temp_data: del temp_data[chat_id]
             return
 
-        # ==========================================
-        # Test flow
-        # ==========================================
+        # ================== TEST FLOW ==================
         elif state == "wait_for_test_service" and text:
             temp_data[chat_id]["service"] = text.strip()
             user_states[chat_id] = "wait_for_test_number"
-            send_message(chat_id, render_body_text("📝 <b>Send the Number:</b>"), reply_markup=get_cancel_kb())
-            return
+            send_message(chat_id, render_body_text("📝 Send the Number:"), reply_markup=get_cancel_kb()); return
         elif state == "wait_for_test_number" and text:
             temp_data[chat_id]["number"] = text.strip()
             user_states[chat_id] = "wait_for_test_otp"
-            send_message(chat_id, render_body_text("📝 <b>Send the OTP:</b>"), reply_markup=get_cancel_kb())
-            return
+            send_message(chat_id, render_body_text("📝 Send the OTP:"), reply_markup=get_cancel_kb()); return
         elif state == "wait_for_test_otp" and text:
             temp_data[chat_id]["otp"] = text.strip()
             user_states[chat_id] = "wait_for_test_lang"
-            send_message(chat_id, render_body_text("📝 <b>Send the Language (EN, AR):</b>"), reply_markup=get_cancel_kb())
-            return
+            send_message(chat_id, render_body_text("📝 Send the Language (EN, AR):"), reply_markup=get_cancel_kb()); return
         elif state == "wait_for_test_lang" and text:
             lang = text.strip().upper()
             if not lang.startswith("#"): lang = "#" + lang
@@ -2576,265 +2258,215 @@ def handle_message(msg):
             app_full_name, _ = get_service_info_html(srv)
             msg_text = render_body_text(format_otp_display(num, app_full_name, lang, masked=True))
             for fw in bot_settings["fw_groups"]:
-                kb = [[{"text": f"{otp}", "icon_custom_emoji_id": COPY_EMOJI, "copy_text": {"text": otp}, "style": "success"}]]
-                kb.append([{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI, "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}])
-                ch_link = bot_settings.get("main_channel_link", "")
-                if ch_link: kb.append([{"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI, "url": ch_link, "style": "primary"}])
+                kb = [[{"text": f"{otp}", "icon_custom_emoji_id": "5353022963132174959", "copy_text": {"text": otp}, "style": "success"}]]
+                for btn in fw.get("buttons", []):
+                    b_obj = {"text": btn["text"], "url": btn["url"], "style": "primary"}
+                    if "icon_custom_emoji_id" in btn: b_obj["icon_custom_emoji_id"] = btn["icon_custom_emoji_id"]
+                    kb.append([b_obj])
                 send_message(fw["chat_id"], msg_text, reply_markup={"inline_keyboard": kb})
-            send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Test message sent!</b>"), reply_markup=main_menu(chat_id))
+            send_message(chat_id, render_body_text(f"{PEM['ok']} Test sent!"), reply_markup=main_menu(chat_id))
             del user_states[chat_id]; del temp_data[chat_id]
             return
 
-        # ==========================================
-        # Broadcast
-        # ==========================================
+        # ================== EMOJI MANAGEMENT ==================
+        elif state == "wait_for_emoji_extract":
+            entities = msg.get("entities", [])
+            custom_emoji_id = None
+            emoji_text = ""
+            for ent in entities:
+                if ent.get("type") == "custom_emoji":
+                    custom_emoji_id = ent.get("custom_emoji_id")
+                    offset = ent.get("offset", 0); length = ent.get("length", 0)
+                    b_text = msg.get("text", "").encode('utf-16-le')
+                    emoji_text = b_text[offset*2:(offset+length)*2].decode('utf-16-le')
+                    break
+            if custom_emoji_id:
+                temp_data[chat_id] = {"id": custom_emoji_id, "char": emoji_text}
+                user_states[chat_id] = "wait_for_emoji_details"
+                send_message(chat_id, render_body_text(f"{PEM['ok']} Emoji ID: <code>{custom_emoji_id}</code>\n\n<b>ফরমেট:</b>\n`FLAG | 880 | BD | Bangladesh`\nঅথবা\n`APP | WhatsApp`"), reply_markup=get_cancel_kb())
+            else:
+                send_message(chat_id, render_body_text(f"{PEM['no']} Premium Emoji পাওয়া যায়নি!"), reply_markup=get_cancel_kb())
+            return
+        elif state == "wait_for_emoji_details" and text:
+            parts = [p.strip() for p in text.split("|")]
+            mode = parts[0].upper()
+            eid = temp_data[chat_id]["id"]; char = temp_data[chat_id]["char"]
+            if mode == "FLAG" and len(parts) == 4:
+                code, iso, name = parts[1], parts[2], parts[3]
+                bot_settings["premium_flags"][code] = {"char": char, "iso": iso.upper(), "name": name, "id": eid}
+                save_db()
+                send_message(chat_id, render_body_text(f"{PEM['ok']} Flag saved!"), reply_markup=emoji_settings_keyboard())
+            elif mode == "APP" and len(parts) == 2:
+                name = parts[1]
+                bot_settings["premium_apps"][name.upper()] = {"char": char, "id": eid, "name": name.title()}
+                save_db()
+                send_message(chat_id, render_body_text(f"{PEM['ok']} App Emoji saved!"), reply_markup=emoji_settings_keyboard())
+            else:
+                send_message(chat_id, render_body_text(f"{PEM['no']} ফরম্যাট ভুল!"))
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
+        elif state in ["wait_for_flag_txt", "wait_for_app_txt"] and "document" in msg:
+            doc = msg["document"]
+            if not doc["file_name"].endswith(".txt"):
+                send_message(chat_id, render_body_text(f"{PEM['no']} .txt only.")); return
+            file_id = doc["file_id"]
+            file_info = requests.get(f"{BASE_URL}/getFile?file_id={file_id}").json()
+            file_path = file_info["result"]["file_path"]
+            content = requests.get(f"{FILE_URL}{file_path}").text
+            mode = "flags" if state == "wait_for_flag_txt" else "apps"
+            count = 0
+            if mode == "flags":
+                for line in content.splitlines():
+                    json_match = re.search(r'(\{.*\})', line)
+                    if json_match:
+                        try:
+                            data = json.loads(json_match.group(1))
+                            char = data.get("emoji"); eid = data.get("id")
+                            prefix_str = line[:json_match.start()].strip()
+                            code_match = re.search(r'\((\d+)\)', prefix_str)
+                            iso_match = re.search(r'\(([A-Za-z]+)\)', prefix_str)
+                            if code_match and iso_match and char and eid:
+                                code = code_match.group(1); iso = iso_match.group(1).upper()
+                                name = prefix_str.replace(f"({code})", "").replace(f"({iso_match.group(1)})", "").replace(char, "").strip()
+                                bot_settings["premium_flags"][code] = {"char": char, "iso": iso, "name": name, "id": eid}
+                                count += 1
+                        except: pass
+            else:
+                for line in content.splitlines():
+                    json_match = re.search(r'(\{.*\})', line)
+                    if json_match:
+                        try:
+                            data = json.loads(json_match.group(1))
+                            char = data.get("emoji"); eid = data.get("id")
+                            name_part = line[:json_match.start()].strip()
+                            name = name_part.replace(char, '').strip() if char else name_part
+                            if char and eid and name:
+                                bot_settings["premium_apps"][name.upper()] = {"char": char, "id": eid, "name": name}
+                                count += 1
+                        except: pass
+            save_db()
+            send_message(chat_id, render_body_text(f"{PEM['ok']} Loaded {count} Emojis!"), reply_markup=emoji_settings_keyboard())
+            del user_states[chat_id]
+            return
+
+        # ================== BROADCAST ==================
         elif state == "wait_for_broadcast":
             msg_id = msg["message_id"]
-            send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Broadcast started...</b>"))
+            send_message(chat_id, render_body_text(f"{PEM['ok']} Broadcast started..."))
             threading.Thread(target=broadcast_copymessage, args=(chat_id, msg_id)).start()
             del user_states[chat_id]
             return
 
-        # ==========================================
-        # Upload Number
-        # ==========================================
+        # ================== UPLOAD NUMBER ==================
         elif state == "wait_for_txt" and "document" in msg:
             doc = msg["document"]
             if not doc["file_name"].endswith(".txt"):
-                send_message(chat_id, render_body_text(f"{PEM['no']} <b>Please upload a .txt file only.</b>")); return
+                send_message(chat_id, render_body_text(f"{PEM['no']} Please upload a .txt file only."))
+                return
             file_id = doc["file_id"]
             file_info = requests.get(f"{BASE_URL}/getFile?file_id={file_id}").json()
             file_path = file_info["result"]["file_path"]
             file_content = requests.get(f"{FILE_URL}{file_path}").text
-            lines = [l.strip() for l in file_content.splitlines() if l.strip()]
-            clean_list = []
-            for n in lines:
-                nn = n if n.startswith('+') else '+' + n
-                clean_list.append(nn)
-            raw_filename = doc["file_name"]
-            fname_clean = raw_filename.rsplit('.', 1)[0].strip()
-            detected_country_from_file = fname_clean
-            file_service_hint = ""
-            if "_" in fname_clean:
-                parts_f = fname_clean.split("_")
-                detected_country_from_file = parts_f[0].strip()
-                if len(parts_f) > 1:
-                    file_service_hint = " ".join(parts_f[1:]).strip()
-            elif "-" in fname_clean:
-                parts_f = fname_clean.split("-")
-                detected_country_from_file = parts_f[0].strip()
-                if len(parts_f) > 1:
-                    file_service_hint = " ".join(parts_f[1:]).strip()
-            detected_country = ""
-            detected_iso = ""
-            if clean_list:
-                first_num = clean_list[0].replace('+', '')
-                dial_code, src = _find_dial_code(first_num)
-                if src == "premium":
-                    detected_country = bot_settings["premium_flags"][dial_code].get("name", "")
-                    detected_iso = bot_settings["premium_flags"][dial_code].get("iso", "")
-                elif src == "db":
-                    detected_country = COUNTRY_DB[dial_code].get("name", "")
-                    detected_iso = COUNTRY_DB[dial_code].get("iso", "")
-                else:
-                    for code, info in sorted(COUNTRY_DB.items(), key=lambda x: len(x[0]), reverse=True):
-                        if first_num.startswith(code):
-                            detected_country = info.get("name", "")
-                            detected_iso = info.get("iso", "")
-                            break
-            temp_data[chat_id] = {
-                "numbers": clean_list,
-                "filename": raw_filename,
-                "file_country": detected_country_from_file,
-                "file_service_hint": file_service_hint,
-                "detected_country": detected_country,
-                "detected_iso": detected_iso
-            }
+            temp_data[chat_id] = {"numbers": file_content.splitlines(), "filename": doc["file_name"]}
             user_states[chat_id] = "wait_for_service"
-            file_hint = f"📁 <b>Country from filename:</b> <b>{html.escape(detected_country_from_file)}</b>"
-            svc_hint = f"\n🔧 <b>Service hint:</b> <b>{html.escape(file_service_hint)}</b>" if file_service_hint else ""
-            flag_from_num = f" {get_flag_info_html(detected_iso)}" if detected_iso else ""
-            send_message(chat_id, render_body_text(
-                f"{PEM['ok']} <b>File received</b>\n\n"
-                f"📁 <code>{raw_filename}</code>\n"
-                f"📊 <b>Numbers:</b> <b>{len(clean_list)}</b>\n"
-                f"{file_hint}{flag_from_num}{svc_hint}\n\n"
-                f"📌 <b>Enter the service name:</b>"
-            ), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text(f"{PEM['ok']} File received.\n\n📌 Enter the service name:"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_service" and text:
-            temp_data[chat_id]["service"] = text.upper().strip()
-            file_country = temp_data[chat_id].get("file_country", "")
-            detected_iso = temp_data[chat_id].get("detected_iso", "")
-            if file_country:
-                temp_data[chat_id]["country_name"] = file_country
-                temp_data[chat_id]["country_iso"] = detected_iso
-                user_states[chat_id] = "wait_for_payout"
-                svc = temp_data[chat_id]["service"]
-                flag_preview = f" {get_flag_info_html(detected_iso)}" if detected_iso else ""
-                send_message(chat_id, render_body_text(
-                    f"{PEM['ok']} <b>Country:</b> <b>{file_country}</b>{flag_preview}\n"
-                    f"🔧 <b>Service:</b> <b>{svc}</b>\n\n"
-                    f"💰 <b>Enter payout per OTP in USD</b>"
-                ), reply_markup=get_cancel_kb())
-                return
+            temp_data[chat_id]["service"] = text.upper()
             user_states[chat_id] = "wait_for_country"
-            send_message(chat_id, render_body_text(
-                f"{PEM['ok']} <b>Service:</b> <b>{temp_data[chat_id]['service']}</b>\n\n"
-                f"🌍 <b>Enter the country name:</b>"
-            ), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text(f"{PEM['ok']} Service set.\n\n🌍 Enter the country name:"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_country" and text:
-            t = text.strip()
-            detected_iso = temp_data[chat_id].get("detected_iso", "")
-            file_country = temp_data[chat_id].get("file_country", "")
-            if t.lower() == "/skip" and file_country:
-                country_name = file_country
-                country_iso = detected_iso
-            else:
-                country_name = t
-                country_iso = detected_iso
-                if not country_iso:
-                    for cname, cinfo in COUNTRIES_DATA.items():
-                        if cname.lower() == t.lower():
-                            country_iso = cinfo.get("iso", ""); break
-                if not country_iso:
-                    for ccode, cinfo in COUNTRY_DB.items():
-                        if cinfo["name"].lower() == t.lower():
-                            country_iso = cinfo["iso"]; break
-                if not country_iso:
-                    for fcode, finfo in bot_settings.get("premium_flags", {}).items():
-                        if finfo.get("name", "").lower() == t.lower() or finfo.get("iso", "").upper() == t.upper():
-                            country_iso = finfo.get("iso", ""); break
-            temp_data[chat_id]["country_name"] = country_name
-            temp_data[chat_id]["country_iso"] = country_iso
-            user_states[chat_id] = "wait_for_payout"
-            svc = temp_data[chat_id]["service"]
-            flag_preview = f" {get_flag_info_html(country_iso)}" if country_iso else ""
-            send_message(chat_id, render_body_text(
-                f"{PEM['ok']} <b>Country:</b> <b>{country_name}</b>{flag_preview}\n"
-                f"🔧 <b>Service:</b> <b>{svc}</b>\n\n"
-                f"💰 <b>Enter payout per OTP in USD</b>"
-            ), reply_markup=get_cancel_kb())
-            return
-        elif state == "wait_for_payout" and text:
-            try:
-                payout_val = float(text.strip())
-                if payout_val < 0: raise ValueError()
-                if payout_val > 1000: send_message(chat_id, render_body_text("❌ <b>Max $1000.</b>")); return
-            except:
-                send_message(chat_id, render_body_text("❌ <b>Invalid amount.</b>")); return
-            country_name = temp_data[chat_id]["country_name"]
-            country_iso = temp_data[chat_id]["country_iso"]
+            country = text.upper()
             service = temp_data[chat_id]["service"]
             raw_numbers = temp_data[chat_id]["numbers"]
-            filename = temp_data[chat_id].get("filename", "upload.txt")
-            bcast_key = f"{country_name}|{service}|{len(raw_numbers)}|{filename}"
-            now_ts = time.time()
-            if bcast_key in _last_upload_bcast and now_ts - _last_upload_bcast[bcast_key] < 30:
-                send_message(chat_id, render_body_text("⚠️ <b>Duplicate upload blocked.</b>"))
-                del user_states[chat_id]; del temp_data[chat_id]; return
-            _last_upload_bcast[bcast_key] = now_ts
-            if "otp_pair_rates" not in bot_settings: bot_settings["otp_pair_rates"] = {}
-            pair_key = f"{country_name.upper()}|{service.upper()}"
-            bot_settings["otp_pair_rates"][pair_key] = payout_val
+            clean_nums = []
+            for num in raw_numbers:
+                num = num.strip()
+                if num:
+                    if not num.startswith('+'): num = '+' + num
+                    clean_nums.append(num)
+            country_iso = ""
+            if clean_nums:
+                _, iso_x, _ = get_country_from_num(clean_nums[0])
+                if iso_x and iso_x != "XX": country_iso = iso_x
             batch_id = str(uuid.uuid4())[:8]
             number_batches[batch_id] = {
-                "filename": filename, "service": service.upper(),
-                "country": country_name.upper(), "country_iso": country_iso,
-                "payout": payout_val,
-                "numbers": [{"num": n, "shares": 0, "used_by": []} for n in raw_numbers]
+                "filename": temp_data[chat_id]["filename"],
+                "service": service,
+                "country": country,
+                "country_iso": country_iso,
+                "numbers": [{"num": n, "shares": 0, "used_by": []} for n in clean_nums]
             }
-            total_uploaded_stats += len(raw_numbers)
+            total_uploaded_stats += len(clean_nums)
             save_db()
-            flag_html = get_flag_info_html(country_name)
-            app_full, app_emoji_html = get_service_info_html(service)
-            broadcast_txt, broadcast_kb = build_stock_broadcast_new(country_name.upper(), service.upper(), len(raw_numbers), payout_val, flag_html, app_emoji_html)
+            app_full_name, prem_app_html = get_service_info_html(service)
+            prem_flag_html = get_flag_info_html(clean_nums[0]) if clean_nums else f"{PEM['world']}"
+            broadcast_txt = f"➖➖➖➖➖➖➖➖\n《 NEW NUMBERS 》\n➖➖➖➖➖➖➖➖\n{prem_flag_html} {country} {prem_app_html} {service}\n➖➖➖➖➖➖➖➖\n📤 Total Added: <b>{len(clean_nums)}</b>\n➖➖➖➖➖➖➖➖\nUse /start to get your numbers!"
             broadcast_txt = render_body_text(broadcast_txt)
-            send_message(chat_id, render_body_text(
-                f"{PEM['ok']} <b>Numbers added!</b>\n\n"
-                f"🌍 <b>Country:</b> <b>{country_name.upper()}</b>\n"
-                f"🏳️ <b>Flag:</b> {flag_html}\n"
-                f"🔧 <b>Service:</b> <b>{service.upper()}</b>\n"
-                f"💰 <b>Payout:</b> <b>${fmt_payout(payout_val)}/OTP</b>\n"
-                f"📤 <b>Count:</b> <b>{len(raw_numbers)}</b>"
-            ))
-            def sb(txt, kb):
+            send_message(chat_id, render_body_text(f"{PEM['ok']} Numbers added! Starting broadcast..."))
+            def simple_broadcast(txt):
                 b_session = requests.Session()
-                sent_ok = 0; sent_fail = 0; last_err = ""
-                sent_to = set()
-                txt_no_premium = re.sub(r'<tg-emoji[^>]*>([^<]*)</tg-emoji>', r'\1', txt)
-                txt_plain = re.sub(r'<[^>]+>', '', txt)
-                kb_no_icons = {"inline_keyboard": [[{k: v for k, v in btn.items() if k != "icon_custom_emoji_id"} for btn in row] for row in kb.get("inline_keyboard", [])]}
-                for u_id in list(all_known_users):
-                    if u_id in sent_to: continue
-                    sent_to.add(u_id)
-                    ok = False
+                url = f"{BASE_URL}/sendMessage"
+                with _users_lock:
+                    users_copy = list(all_known_users)
+                for u_id in users_copy:
                     try:
-                        rr = b_session.post(f"{BASE_URL}/sendMessage", json={"chat_id": u_id, "text": txt, "parse_mode": "HTML", "reply_markup": kb}, timeout=8)
-                        j = rr.json()
-                        if j.get("ok"): ok = True
-                        else:
-                            rr2 = b_session.post(f"{BASE_URL}/sendMessage", json={"chat_id": u_id, "text": txt_no_premium, "parse_mode": "HTML", "reply_markup": kb_no_icons}, timeout=8)
-                            if rr2.json().get("ok"): ok = True
-                            else:
-                                rr3 = b_session.post(f"{BASE_URL}/sendMessage", json={"chat_id": u_id, "text": txt_plain, "reply_markup": kb_no_icons}, timeout=8)
-                                if rr3.json().get("ok"): ok = True
-                                else:
-                                    rr4 = b_session.post(f"{BASE_URL}/sendMessage", json={"chat_id": u_id, "text": txt_plain}, timeout=8)
-                                    if rr4.json().get("ok"): ok = True
-                                    else: last_err = str(rr4.json().get("description", "?"))[:100]
-                        if ok: sent_ok += 1
-                        else: sent_fail += 1
-                    except Exception as e:
-                        sent_fail += 1; last_err = str(e)[:100]
-                    time.sleep(0.05)
-                try: send_message(chat_id, f"📢 <b>Broadcast: OK</b> {sent_ok} / <b>FAIL</b> {sent_fail}\n⚠️ <b>Last:</b> {last_err}")
-                except: pass
-            threading.Thread(target=sb, args=(broadcast_txt, broadcast_kb), daemon=True).start()
+                        b_session.post(url, json={"chat_id": u_id, "text": txt, "parse_mode": "HTML", "disable_web_page_preview": True}, timeout=5)
+                    except: pass
+                    time.sleep(0.035)
+            threading.Thread(target=simple_broadcast, args=(broadcast_txt,)).start()
             del user_states[chat_id]; del temp_data[chat_id]
             return
 
-        # ==========================================
-        # Stex/Voltx Keys & Services
-        # ==========================================
+        # ================== STEX/VOLTX KEYS ==================
         elif state == "wait_for_add_stex_key" and text:
-            bot_settings["stex_keys"].append(text.strip()); save_db()
+            bot_settings["stex_keys"].append(text.strip())
+            save_db()
             delete_message(chat_id, msg["message_id"])
-            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(f"{PEM['ok']} <b>StexSMS Key Added! Total:</b> <b>{len(bot_settings.get('stex_keys', []))}</b>"), reply_markup=stex_control_keyboard())
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(f"✅ StexSMS Key Added!"), reply_markup=stex_control_keyboard())
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
         elif state == "wait_for_add_voltx_key" and text:
-            bot_settings["voltx_keys"].append(text.strip()); save_db()
+            bot_settings["voltx_keys"].append(text.strip())
+            save_db()
             delete_message(chat_id, msg["message_id"])
-            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(f"{PEM['ok']} <b>Voltx Key Added! Total:</b> <b>{len(bot_settings.get('voltx_keys', []))}</b>"), reply_markup=voltx_control_keyboard())
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(f"✅ Voltx Key Added!"), reply_markup=voltx_control_keyboard())
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
         elif state == "wait_for_add_sc" and text:
             code = text.strip().replace("+", "")
             if "search_countries" not in bot_settings: bot_settings["search_countries"] = []
-            bot_settings["search_countries"].append(code); save_db()
+            bot_settings["search_countries"].append(code)
+            save_db()
             delete_message(chat_id, msg["message_id"])
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": "stex_search_country", "id": "internal"})
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
         elif state == "wait_for_add_vsc" and text:
             code = text.strip().replace("+", "")
             if "voltx_search_countries" not in bot_settings: bot_settings["voltx_search_countries"] = []
-            bot_settings["voltx_search_countries"].append(code); save_db()
+            bot_settings["voltx_search_countries"].append(code)
+            save_db()
             delete_message(chat_id, msg["message_id"])
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": "voltx_search_country", "id": "internal"})
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
         elif state == "wait_nx_srv_name" and text:
             srv = text.strip().upper()
             if "stex_services" not in bot_settings: bot_settings["stex_services"] = {}
             if srv not in bot_settings["stex_services"]: bot_settings["stex_services"][srv] = {}
             save_db(); delete_message(chat_id, msg["message_id"])
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": "manage_stex_srv", "id": "internal"})
-            del user_states[chat_id]; return
+            del user_states[chat_id]
+            return
         elif state == "wait_nx_cnt_name" and text:
             cnt = text.strip(); srv = temp_data[chat_id]["srv"]
             if cnt not in bot_settings["stex_services"][srv]: bot_settings["stex_services"][srv][cnt] = []
             save_db(); delete_message(chat_id, msg["message_id"])
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": f"nx_srv_{srv}", "id": "internal"})
-            del user_states[chat_id]; return
+            del user_states[chat_id]
+            return
         elif state == "wait_nx_addr" and text:
             srv, cnt = temp_data[chat_id]["srv"], temp_data[chat_id]["cnt"]
             new_range = text.strip().replace("+", "")
@@ -2845,20 +2477,23 @@ def handle_message(msg):
                 save_db()
             delete_message(chat_id, msg["message_id"])
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": f"nx_cnt_{srv}_{cnt}", "id": "internal"})
-            del user_states[chat_id]; return
+            del user_states[chat_id]
+            return
         elif state == "wait_vx_srv_name" and text:
             srv = text.strip().upper()
             if "voltx_services" not in bot_settings: bot_settings["voltx_services"] = {}
             if srv not in bot_settings["voltx_services"]: bot_settings["voltx_services"][srv] = {}
             save_db(); delete_message(chat_id, msg["message_id"])
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": "manage_voltx_srv", "id": "internal"})
-            del user_states[chat_id]; return
+            del user_states[chat_id]
+            return
         elif state == "wait_vx_cnt_name" and text:
             cnt = text.strip(); srv = temp_data[chat_id]["srv"]
             if cnt not in bot_settings["voltx_services"][srv]: bot_settings["voltx_services"][srv][cnt] = []
             save_db(); delete_message(chat_id, msg["message_id"])
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": f"vx_srv_{srv}", "id": "internal"})
-            del user_states[chat_id]; return
+            del user_states[chat_id]
+            return
         elif state == "wait_vx_addr" and text:
             srv, cnt = temp_data[chat_id]["srv"], temp_data[chat_id]["cnt"]
             new_range = text.strip().replace("+", "")
@@ -2869,32 +2504,48 @@ def handle_message(msg):
                 save_db()
             delete_message(chat_id, msg["message_id"])
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": f"vx_cnt_{srv}_{cnt}", "id": "internal"})
-            del user_states[chat_id]; return
+            del user_states[chat_id]
+            return
 
-        # ==========================================
-        # Withdraw Method / FJ / Admin / OTP Group
-        # ==========================================
+        # ================== WITHDRAW METHOD / FJ / ADMIN / OTP GROUP ==================
         elif state == "wait_for_add_wm" and text:
-            bot_settings["w_methods"].append(text.strip()); save_db()
+            raw = text.strip()
+            if "|" in raw:
+                parts = raw.split("|", 1)
+                m_name = parts[0].strip()
+                m_eid = parts[1].strip()
+                m_char = "💳"
+                method_obj = {"name": m_name, "emoji_id": m_eid, "char": m_char}
+                bot_settings["w_methods"].append(method_obj)
+            else:
+                bot_settings["w_methods"].append(raw)
+            save_db()
             delete_message(chat_id, msg["message_id"])
             edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("💳 <b>WITHDRAWAL METHODS</b>"), reply_markup=w_methods_keyboard())
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
         elif state == "wait_for_add_fj" and text:
-            bot_settings["fj_channels"].append(parse_chat_id(text)); save_db()
+            bot_settings["fj_channels"].append(parse_chat_id(text))
+            save_db()
             delete_message(chat_id, msg["message_id"])
-            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🔗 <b>FORCE JOIN SYSTEM</b>"), reply_markup=fj_settings_keyboard())
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🔗 <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
         elif state == "wait_for_add_adm" and text:
             if text.isdigit():
-                bot_settings["admins"].append(int(text)); save_db()
+                bot_settings["admins"].append(int(text))
+                save_db()
             delete_message(chat_id, msg["message_id"])
             edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("👥 <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
         elif state == "wait_for_add_fw_id" and text:
-            bot_settings["fw_groups"].append({"chat_id": text.strip(), "buttons": []}); save_db()
+            bot_settings["fw_groups"].append({"chat_id": text.strip(), "buttons": []})
+            save_db()
             delete_message(chat_id, msg["message_id"])
-            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🛡 <b>OTP GROUP</b>"), reply_markup=otp_groups_list_keyboard())
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
         elif state == "wait_for_add_fw_btn" and text:
             fw_idx = temp_data[chat_id]["fw_idx"]
             if "-" in text:
@@ -2906,31 +2557,26 @@ def handle_message(msg):
                         emoji_id = ent.get("custom_emoji_id")
                         offset = ent.get("offset", 0); length = ent.get("length", 0)
                         b_text = text.encode('utf-16-le')
-                        emoji_char = b_text[offset*2:(offset+length)*2].decode('utf-16-le'); break
+                        emoji_char = b_text[offset*2:(offset+length)*2].decode('utf-16-le')
+                        break
                 if emoji_char: btn_text = btn_text.replace(emoji_char, "").strip()
                 btn_data = {"text": btn_text, "url": btn_url}
                 if emoji_id: btn_data["icon_custom_emoji_id"] = emoji_id
-                bot_settings["fw_groups"][fw_idx]["buttons"].append(btn_data); save_db()
+                bot_settings["fw_groups"][fw_idx]["buttons"].append(btn_data)
+                save_db()
             delete_message(chat_id, msg["message_id"])
-            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(f"🛡 <b>Manage Group:</b> <b>{bot_settings['fw_groups'][fw_idx]['chat_id']}</b>"), reply_markup=specific_fw_group_keyboard(fw_idx))
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(f"🛡 <b>Group:</b> {bot_settings['fw_groups'][fw_idx]['chat_id']}"), reply_markup=specific_fw_group_keyboard(fw_idx))
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
         elif state == "wait_for_otp_link" and text:
-            bot_settings["otp_link"] = text.strip(); save_db()
+            bot_settings["otp_link"] = text.strip()
+            save_db()
             delete_message(chat_id, msg["message_id"])
-            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
-            del user_states[chat_id]; del temp_data[chat_id]; return
-        elif state == "wait_for_main_channel_link" and text:
-            new_link = text.strip()
-            if not new_link.startswith("http"):
-                send_message(chat_id, render_body_text("❌ <b>Link must start with http://</b>"), reply_markup=get_cancel_kb()); return
-            bot_settings["main_channel_link"] = new_link; save_db()
-            delete_message(chat_id, msg["message_id"])
-            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🛡 <b>OTP GROUP</b>"), reply_markup=otp_groups_list_keyboard())
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
 
-        # ==========================================
-        # Panel Add
-        # ==========================================
+        # ================== PANEL ADD ==================
         elif state == "wait_for_panel_name" and text:
             p_name = text.strip()
             t_key = temp_data[chat_id].get("add_type", "api")
@@ -2939,34 +2585,88 @@ def handle_message(msg):
             if t_key == "logc":
                 user_states[chat_id] = "wait_for_cpanel_url"
                 temp_data[chat_id] = {"msg_id": msg_id, "p_data": {
-                    "name": p_name, "type": "Auto Captcha Panel", "status": "ON", "records": 0,
-                    "login_status": "Pending First Login"
+                    "name": p_name, "type": "Auto Captcha Panel", "status": "ON", "records": 0, "login_status": "⏳ Pending First Login"
                 }}
-                edit_message(chat_id, msg_id, render_body_text(
-                    "1️⃣ <b>Login URL</b>\n"
-                    "➡️ <i>Panel এর Login Link দিন:</i>"
-                ), reply_markup=get_cancel_kb())
+                edit_message(chat_id, msg_id, render_body_text("1️⃣ <b>Login URL</b>"), reply_markup=get_cancel_kb())
                 return
             else:
                 bot_settings["panels"].append({
                     "name": p_name, "type": "API Panel", "status": "OFF",
-                    "api_url": "", "full_api_url": "", "curl_command": "",
+                    "api_url": "", "curl_command": "",
                     "endpoint": "/", "token": "", "method": "GET",
-                    "interval_sec": 30, "records": 0, "retry_count": 3,
+                    "interval_sec": 30, "records": 0,
                     "otp_list_path": "data", "number_path": "number", "message_path": "message",
-                    "country_path": "", "service_path": "service", "timestamp_path": "",
-                    "success_path": "status", "success_value": "success", "placeholder_config": "{}"
+                    "service_path": "service"
                 })
                 save_db()
                 handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": "manage_api_panels", "id": "internal"})
                 if chat_id in user_states: del user_states[chat_id]
                 if chat_id in temp_data: del temp_data[chat_id]
                 return
+        elif state == "wait_for_api_pf_value" and text:
+            idx = temp_data[chat_id]["p_idx"]; field = temp_data[chat_id]["p_field"]
+            new_value = text.strip()
+            if new_value.lower() == "/cancel":
+                del user_states[chat_id]; del temp_data[chat_id]
+                p = bot_settings["panels"][idx]
+                send_message(chat_id, render_body_text(f"⚙️ <b>Configure</b> <b>{p['name']}</b>"), reply_markup=panel_config_keyboard(idx))
+                return
+            if field in ["interval_sec", "records"]:
+                try: new_value = int(new_value)
+                except ValueError: send_message(chat_id, render_body_text("❌ <b>Please send a valid number.</b>")); return
+            bot_settings["panels"][idx][field] = new_value
+            save_db()
+            del user_states[chat_id]; del temp_data[chat_id]
+            p = bot_settings["panels"][idx]
+            send_message(chat_id, render_body_text(f"{PEM['ok']} <b>{field}</b> updated!"))
+            send_message(chat_id, render_body_text(f"⚙️ <b>Configure</b> <b>{p['name']}</b>"), reply_markup=panel_config_keyboard(idx))
+            return
+        elif state == "wait_for_p_api" and text:
+            idx = temp_data[chat_id]["p_idx"]
+            bot_settings["panels"][idx]["api_url"] = text.strip()
+            save_db()
+            delete_message(chat_id, msg["message_id"])
+            p = bot_settings["panels"][idx]
+            ui_text = f"⚙️ <b>Configure {p['name']}</b>\n\n<b>API URL:</b> <code>{p.get('api_url', 'None')}</code>"
+            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(ui_text), reply_markup=panel_config_keyboard(idx))
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
+        elif state == "wait_for_p_tok" and text:
+            idx = temp_data[chat_id]["p_idx"]
+            bot_settings["panels"][idx]["token"] = text.strip()
+            save_db()
+            delete_message(chat_id, msg["message_id"])
+            p = bot_settings["panels"][idx]
+            ui_text = f"⚙️ <b>Configure {p['name']}</b>\n\n<b>Token:</b> <code>{p.get('token', 'None')}</code>"
+            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(ui_text), reply_markup=panel_config_keyboard(idx))
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
+        elif state == "wait_for_p_fapi" and text:
+            idx = temp_data[chat_id]["p_idx"]
+            bot_settings["panels"][idx]["full_api_url"] = text.strip()
+            save_db()
+            delete_message(chat_id, msg["message_id"])
+            p = bot_settings["panels"][idx]
+            ui_text = f"⚙️ <b>Configure {p['name']}</b>\n\n<b>Full API:</b> <code>{p.get('full_api_url', 'None')}</code>"
+            edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(ui_text), reply_markup=panel_config_keyboard(idx))
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
+        elif state == "wait_for_p_rec" and text:
+            if text.isdigit():
+                idx = temp_data[chat_id]["p_idx"]
+                bot_settings["panels"][idx]["records"] = int(text)
+                save_db()
+                delete_message(chat_id, msg["message_id"])
+                p = bot_settings["panels"][idx]
+                ui_text = f"⚙️ <b>Configure {p['name']}</b>\n\n<b>Records:</b> {p.get('records')}"
+                edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(ui_text), reply_markup=panel_config_keyboard(idx))
+            else:
+                send_message(chat_id, render_body_text("❌ Invalid number!"), reply_markup=get_cancel_kb())
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
 
-        # ==========================================
-        # DXA Edit
-        # ==========================================
-        elif state == "set_dxa":
+        # ================== STRM EDIT ==================
+        elif state == "set_STRM":
             msg_id = temp_data[chat_id]["msg_id"]; key = temp_data[chat_id]["key"]
             try:
                 if key in ["min_withdraw", "otp_reward", "refer_reward"]: bot_settings[key] = float(text)
@@ -2974,19 +2674,64 @@ def handle_message(msg):
                 else: bot_settings[key] = text
                 save_db()
                 delete_message(chat_id, msg["message_id"])
-                edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
+                edit_message(chat_id, msg_id, render_body_text("🕹 <b>STRM CONTROL PANEL</b>"), reply_markup=STRM_control_keyboard())
             except:
                 delete_message(chat_id, msg["message_id"])
-                edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA</b>\n\n❌ <b>Invalid!</b>"), reply_markup=dxa_control_keyboard())
-            del user_states[chat_id]; del temp_data[chat_id]; return
+                edit_message(chat_id, msg_id, render_body_text("🕹 <b>STRM</b>\n\n❌ Invalid!"), reply_markup=STRM_control_keyboard())
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
 
-        # ==========================================
-        # Search Number
-        # ==========================================
+        # ================== CHANGE PAYOUT - Country new value ==================
+        elif state == "set_payout_value" and text:
+            msg_id = temp_data[chat_id]["msg_id"]
+            service = temp_data[chat_id]["service"]
+            country = temp_data[chat_id]["country"]
+            try:
+                new_val = float(text.strip())
+                if new_val < 0: raise ValueError()
+                if "otp_pair_rates" not in bot_settings: bot_settings["otp_pair_rates"] = {}
+                key = f"{str(country).upper()}|{str(service).upper()}"
+                bot_settings["otp_pair_rates"][key] = new_val
+                save_db()
+                country_flag = get_flag_info_html(country)
+                delete_message(chat_id, msg["message_id"])
+                ok_txt = (
+                    f"{PEM['ok']} <b>Payout Updated Successfully!</b>\n\n"
+                    f"🌍 <b>Country:</b> <code>{country}</code> {country_flag}\n"
+                    f"🔧 <b>Service:</b> <code>{service}</code>\n"
+                    f"💰 <b>New Payout:</b> <code>${new_val}</code>"
+                )
+                edit_message(chat_id, msg_id, render_body_text(ok_txt), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
+            except ValueError:
+                send_message(chat_id, render_body_text("❌ <b>Invalid value!</b> Please send a number."), reply_markup=get_cancel_kb())
+            del user_states[chat_id]; del temp_data[chat_id]
+            return
+
+        # ================== DATABASE RESTORE ==================
+        elif state == "wait_for_data_zip" and "document" in msg:
+            doc = msg["document"]
+            if doc["file_name"] != "STRM_BOT_DATA.zip":
+                send_message(chat_id, render_body_text(f"{PEM['no']} <b>File name must be exactly</b> <code>STRM_BOT_DATA.zip</code>"))
+                return
+            file_id = doc["file_id"]
+            file_info = requests.get(f"{BASE_URL}/getFile?file_id={file_id}").json()
+            file_path = file_info["result"]["file_path"]
+            raw_bytes = requests.get(f"{FILE_URL}{file_path}").content
+            try:
+                with zipfile.ZipFile(io.BytesIO(raw_bytes), 'r') as zf:
+                    zf.extractall(".")
+                load_db()
+                send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Data restored successfully!</b>"), reply_markup=main_menu(chat_id))
+            except Exception as e:
+                send_message(chat_id, render_body_text(f"❌ <b>Restore failed:</b> {html.escape(str(e))}"))
+            if chat_id in user_states: del user_states[chat_id]
+            return
+
+        # ================== SEARCH NUMBER ==================
         elif state == "wait_for_search" and text:
             query = text.strip().replace("+", "")
             if not query.isdigit() or len(query) < 3 or len(query) > 9:
-                send_message(chat_id, render_body_text("❌ <b>3-9 digit number required!</b>")); return
+                send_message(chat_id, render_body_text("❌ 3-9 digit number required!")); return
             wait_msg = send_message(chat_id, render_body_text("⌛ <i>Processing...</i>"))
             wait_msg_id = wait_msg.get("result", {}).get("message_id")
             found_indices = []
@@ -3002,60 +2747,82 @@ def handle_message(msg):
                 is_voltx_allowed = any(query.startswith(c) for c in voltx_allowed) if voltx_allowed else False
                 if not is_stex_allowed and not is_voltx_allowed:
                     if wait_msg_id: delete_message(chat_id, wait_msg_id)
-                    send_message(chat_id, render_body_text("❌ <b>Country not allowed!</b>"), reply_markup=main_menu(chat_id))
+                    send_message(chat_id, render_body_text("❌ Country not allowed!"), reply_markup=main_menu(chat_id))
                     del user_states[chat_id]; return
                 if wait_msg_id: edit_message(chat_id, wait_msg_id, render_body_text("⌛ <i>Fetching via API...</i>"))
                 is_voltx_used = False
                 req_count = bot_settings.get("num_req", 1)
                 if is_voltx_allowed:
+                    voltx_keys = bot_settings.get("voltx_keys", [])
                     for _ in range(req_count):
                         if len(fetched_nums) >= req_count: break
-                        for api_key in bot_settings.get("voltx_keys", []):
+                        for api_key in voltx_keys:
                             try:
                                 res = requests.post(f"{VOLTX_BASE_URL}/getnum", json={"rid": query}, headers={"mauthapi": api_key}, timeout=10)
                                 resp_data = res.json()
                                 if resp_data.get("meta", {}).get("code") == 200 and resp_data.get("data"):
                                     num_str = str(resp_data["data"].get("no_plus_number", "")).replace("+", "")
                                     if not num_str: num_str = str(resp_data["data"].get("national_number", ""))
-                                    fetched_nums.append(num_str); voltx_assigned_numbers[num_str] = chat_id
-                                    is_voltx_used = True; total_assigned_stats += 1; break
+                                    fetched_nums.append(num_str)
+                                    voltx_assigned_numbers[num_str] = chat_id
+                                    is_voltx_used = True
+                                    total_assigned_stats += 1
+                                    break
                             except: continue
                 if len(fetched_nums) < req_count and is_stex_allowed:
+                    stex_keys = bot_settings.get("stex_keys", [])
                     for _ in range(req_count - len(fetched_nums)):
-                        for api_key in bot_settings.get("stex_keys", []):
+                        for api_key in stex_keys:
                             try:
                                 res = requests.post(f"{STEX_BASE_URL}/getnum", json={"rid": query}, headers={"mauthapi": api_key}, timeout=10)
                                 data = res.json()
                                 if data.get("meta", {}).get("code") == 200 and data.get("data"):
                                     num_str = str(data["data"].get("no_plus_number", "")).replace("+", "")
                                     if not num_str: num_str = str(data["data"].get("national_number", ""))
-                                    fetched_nums.append(num_str); stex_assigned_numbers[num_str] = chat_id
-                                    total_assigned_stats += 1; break
+                                    fetched_nums.append(num_str)
+                                    stex_assigned_numbers[num_str] = chat_id
+                                    total_assigned_stats += 1
+                                    break
                             except: continue
                 if not fetched_nums:
                     if wait_msg_id: delete_message(chat_id, wait_msg_id)
-                    send_message(chat_id, render_body_text("❌ <b>Out of stock!</b>"), reply_markup=main_menu(chat_id))
+                    send_message(chat_id, render_body_text("❌ Out of stock!"), reply_markup=main_menu(chat_id))
                     del user_states[chat_id]; return
+                for n in fetched_nums:
+                    cn_x = str(n).replace("+", "").strip()
+                    _, iso_x, _ = get_country_from_num(n)
+                    country_name_x = ""
+                    for _c, fdata in bot_settings.get("premium_flags", {}).items():
+                        if fdata.get("iso") == iso_x: country_name_x = fdata.get("name", ""); break
+                    if not country_name_x and iso_x and iso_x != "XX":
+                        for _c, cinfo in COUNTRY_DB.items():
+                            if cinfo["iso"] == iso_x: country_name_x = cinfo["name"]; break
+                    assigned_number_meta[cn_x] = {"country": country_name_x, "service": "", "iso": iso_x}
                 save_db()
             else:
                 random.shuffle(found_indices)
                 for b_id, idx in found_indices:
                     if len(fetched_nums) >= bot_settings.get("num_req", 1): break
                     n_obj = number_batches[b_id]["numbers"][idx]
-                    num_str = n_obj["num"]; fetched_nums.append(num_str)
-                    n_obj["shares"] += 1; n_obj["used_by"].append(chat_id)
+                    num_str = n_obj["num"]
+                    fetched_nums.append(num_str)
+                    n_obj["shares"] += 1
+                    n_obj["used_by"].append(chat_id)
                     total_assigned_stats += 1
                     cn = num_str.replace("+", "").strip()
-                    bd_country = number_batches[b_id]["country"]; bd_service = number_batches[b_id]["service"]
+                    bd_country = number_batches[b_id]["country"]
+                    bd_service = number_batches[b_id]["service"]
                     bd_iso = number_batches[b_id].get("country_iso", "")
                     _pv = float(bot_settings.get("otp_reward", 0.0))
-                    _pr = bot_settings.get("otp_pair_rates", {}); _pk = f"{str(bd_country).upper()}|{str(bd_service).upper()}"
+                    _pr = bot_settings.get("otp_pair_rates", {})
+                    _pk = f"{str(bd_country).upper()}|{str(bd_service).upper()}"
                     if _pk in _pr:
                         try: _pv = float(_pr[_pk])
                         except: pass
                     assigned_number_meta[cn] = {"country": bd_country, "service": bd_service, "iso": bd_iso, "payout": _pv}
                     if n_obj["shares"] >= bot_settings.get("num_share", 1):
-                        n_obj["to_remove"] = True; used_numbers_list.append(num_str)
+                        n_obj["to_remove"] = True
+                        used_numbers_list.append(num_str)
                 for b_id in number_batches:
                     number_batches[b_id]["numbers"] = [n for n in number_batches[b_id]["numbers"] if not n.get("to_remove")]
                 save_db()
@@ -3065,65 +2832,73 @@ def handle_message(msg):
             for num in fetched_nums:
                 _, iso = get_flag_and_code(num)
                 display_num = f"+{num}" if not num.startswith("+") else num
-                emoji_id = "5780471598932337683"
+                emoji_id = "5780471598922337683"
                 for flag_code, flag_data in flags_db.items():
                     if iso == flag_data.get("iso"):
                         if "id" in flag_data: emoji_id = flag_data["id"]
                         break
                 kb.append([{"text": f"{display_num}", "icon_custom_emoji_id": emoji_id, "copy_text": {"text": display_num}, "style": "primary"}])
-            vtx_field = "vtx" if 'is_voltx_used' in locals() and is_voltx_used else ""
-            kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_s|{query}||{vtx_field}", "style": "danger"},
+            vtx_ext = "_vtx" if 'is_voltx_used' in locals() and is_voltx_used else ""
+            kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_s_{query}{vtx_ext}", "style": "danger"},
                        {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
+            c_btns = bot_settings["custom_messages"].get("search_number", {}).get("buttons", [])
+            for c_b in c_btns:
+                b_copy = c_b.copy()
+                if "style" not in b_copy: b_copy["style"] = "primary"
+                kb.append([b_copy])
             kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
-            hdr_country = ""
+            hdr_country = query
             if fetched_nums:
                 try:
                     _, iso_x, _ = get_country_from_num(fetched_nums[0])
                     if iso_x and iso_x != "XX":
                         for cn2, ci2 in COUNTRY_DB.items():
                             if ci2["iso"] == iso_x: hdr_country = ci2["name"]; break
-                    else: hdr_country = query
-                except: hdr_country = query
-            else: hdr_country = query
-            text_numbers = build_numbers_header(hdr_country)
+                except: pass
+            header_txt = build_numbers_header(hdr_country)
             if wait_msg_id:
-                edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
+                edit_message(chat_id, wait_msg_id, header_txt, reply_markup={"inline_keyboard": kb})
                 user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
+            else:
+                msg_res = send_message(chat_id, header_txt, reply_markup={"inline_keyboard": kb})
+                if msg_res and "result" in msg_res:
+                    user_active_sessions[chat_id] = {"msg_id": msg_res["result"]["message_id"], "nums": fetched_nums}
             return
 
-        # ==========================================
-        # Withdraw flows
-        # ==========================================
+        # ================== WITHDRAW AMOUNT ==================
         elif state == "wait_for_withdraw_amount" and text:
             msg_id_to_edit = temp_data[chat_id].get("msg_id")
             try:
                 amount = float(text.strip())
-                bal = temp_data[chat_id]["balance"]; min_w = bot_settings['min_withdraw']
+                bal = temp_data[chat_id]["balance"]
+                min_w = bot_settings['min_withdraw']
                 if amount < min_w:
-                    if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(f"❌ <b>Min</b> <b>{min_w}!</b>\n💰 <b>Balance:</b> <b>{bal}</b>"), reply_markup=get_cancel_kb())
+                    if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(f"❌ Min {min_w} ৳!\n💰 Balance: {bal} ৳"), reply_markup=get_cancel_kb())
                     return
                 if amount > bal:
-                    if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(f"❌ <b>Insufficient!</b>\n💰 <b>Balance:</b> <b>{bal}</b>"), reply_markup=get_cancel_kb())
+                    if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(f"❌ Insufficient balance!\n💰 {bal} ৳"), reply_markup=get_cancel_kb())
                     return
                 temp_data[chat_id]["amount"] = amount
                 user_states[chat_id] = "wait_for_withdraw_number"
                 if msg_id_to_edit:
-                    edit_message(chat_id, msg_id_to_edit, render_body_text(f"{PEM['ok']} <b>Amount:</b> <b>{amount}</b>\n\n📱 <b>Send</b> <b>{temp_data[chat_id]['method']}</b> <b>number:</b>"), reply_markup=get_cancel_kb())
+                    edit_message(chat_id, msg_id_to_edit, render_body_text(f"✅ Amount: {amount} ৳\n\n📱 Send your <b>{temp_data[chat_id]['method']}</b> number:"), reply_markup=get_cancel_kb())
             except ValueError:
-                if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text("❌ <b>Invalid amount!</b>"), reply_markup=get_cancel_kb())
+                if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text("❌ Invalid amount!"), reply_markup=get_cancel_kb())
             return
+
+        # ================== 2FA ==================
         elif state == "wait_for_2fa_key" and text:
             msg_id_to_edit = temp_data.get(chat_id, {}).get("msg_id")
             delete_message(chat_id, msg.get("message_id"))
             if not msg_id_to_edit:
-                send_message(chat_id, render_body_text("❌ <b>Error.</b>")); del user_states[chat_id]; return
+                send_message(chat_id, render_body_text("❌ Error.")); del user_states[chat_id]; return
             try:
                 secret = text.strip().replace(" ", "")
                 totp = pyotp.TOTP(secret); code = totp.now()
                 remaining_time = 30 - (int(time.time()) % 30)
                 success_txt = (f"━━━━━━━━━━━━━━━\n《 🔐 <b>2FA CODE</b> 》\n━━━━━━━━━━━━━━━\n"
                               f"🔐 <b>CODE:</b> <code>{code}</code>\n━━━━━━━━━━━━━━━\n"
-                              f"🕓 <b>EXPIRES IN:</b> <b>{remaining_time}s</b>\n━━━━━━━━━━━━━━━")
+                              f"🕓 <b>EXPIRES IN:</b> {remaining_time}s\n━━━━━━━━━━━━━━━")
                 kb = [[{"text": f"Click to copy {code}", "icon_custom_emoji_id": "5353022963132174959", "copy_text": {"text": code}, "style": "success"}],
                       [{"text": "Refresh", "icon_custom_emoji_id": "5420155432272438703", "callback_data": f"ref_2fa_{secret}", "style": "primary"},
                        {"text": "New Code", "icon_custom_emoji_id": "5352552689983067014", "callback_data": "gen_2fa", "style": "danger"}],
@@ -3136,31 +2911,45 @@ def handle_message(msg):
                 cancel_kb = {"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_2fa", "style": "danger"}]]}
                 edit_message(chat_id, msg_id_to_edit, render_body_text(error_txt), reply_markup=cancel_kb)
             return
+
+        # ================== WITHDRAW NUMBER ==================
         elif state == "wait_for_withdraw_number":
             msg_id_to_edit = temp_data[chat_id].get("msg_id")
-            method = temp_data[chat_id]["method"]; amount = temp_data[chat_id]["amount"]
-            number = text; req_id = f"W_{str(uuid.uuid4())[:6].upper()}"
+            method = temp_data[chat_id]["method"]
+            amount = temp_data[chat_id]["amount"]
+            number = text
+            req_id = f"W_{str(uuid.uuid4())[:6].upper()}"
             first_name = msg.get("from", {}).get("first_name", "User")
             last_name = msg.get("from", {}).get("last_name", "")
             full_name = f"{first_name} {last_name}".strip()
-            update_balance(chat_id, -amount)
-            pending_withdrawals[req_id] = {"user_id": chat_id, "amount": amount, "method": method, "number": number, "full_name": full_name}
+            # Balance কাটা হবে না — শুধু Approve হলে কাটা হবে
+            pending_withdrawals[req_id] = {
+                "user_id": chat_id, "amount": amount, "method": method,
+                "number": number, "full_name": full_name
+            }
             if db:
                 try:
                     db.collection('withdrawals').document(req_id).set({
                         "user_id": str(chat_id), "amount": amount, "method": method,
                         "status": "pending", "timestamp": firestore.SERVER_TIMESTAMP
-                    }, timeout=5.0)
+                    })
                 except: pass
             if bot_settings["w_group"]:
-                admin_msg = f"🎙 <b>NEW WITHDRAWAL</b>\n\n👤 <a href='tg://user?id={chat_id}'>{full_name}</a>\n💳 <b>{amount}</b>\n🍏 <code>{number}</code>\n🏦 <b>{method}</b>\n\n🧾 <b>{req_id}</b>"
-                kb = {"inline_keyboard": [[{"text": "APPROVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"wapp_{req_id}", "style": "success"}, {"text": "REJECT", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"wrej_{req_id}", "style": "danger"}]]}
-                send_message(bot_settings["w_group"], render_body_text(admin_msg), reply_markup=kb)
+                admin_msg = build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id)
+                kb = {"inline_keyboard": [[
+                    {"text": "APPROVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"wapp_{req_id}", "style": "success"},
+                    {"text": "REJECT", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"wrej_{req_id}", "style": "danger"}
+                ]]}
+                send_message(bot_settings["w_group"], admin_msg, reply_markup=kb)
             kb = {"inline_keyboard": [[{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}]]}
-            success_text = f"{PEM['ok']} <b>Submitted!</b>\n\n🧾 <b>{req_id}</b>\n💰 <b>{amount}</b>\n🏦 <b>{method}</b>\n📱 <code>{number}</code>"
-            if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(success_text), reply_markup=kb)
-            else: send_message(chat_id, render_body_text(success_text), reply_markup=kb)
-            del user_states[chat_id]; del temp_data[chat_id]; return
+            success_text = f"{PEM['ok']} Withdrawal submitted!\n\n🧾 <b>Req ID:</b> {req_id}\n💰 <b>Amount:</b> {amount} ৳\n🏦 <b>Method:</b> {method}\n📱 <b>Number:</b> <code>{number}</code>"
+            if msg_id_to_edit:
+                edit_message(chat_id, msg_id_to_edit, render_body_text(success_text), reply_markup=kb)
+            else:
+                send_message(chat_id, render_body_text(success_text), reply_markup=kb)
+            del user_states[chat_id]
+            del temp_data[chat_id]
+            return
 
     # ==========================================
     # Regular Commands
@@ -3168,103 +2957,210 @@ def handle_message(msg):
     if text.startswith("/start"):
         get_user(chat_id)
         if db:
-            try:
-                doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
-                if doc.exists:
-                    u_data = doc.to_dict()
-                    if u_data.get("referred_by") and not u_data.get("ref_paid"):
-                        inviter = u_data["referred_by"]
-                        db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)
-                        reward = bot_settings.get("refer_reward", 0.2)
-                        update_balance(inviter, reward)
-                        db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
-                        send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+{reward} TK</b>\n👤 <code>{chat_id}</code>"))
-            except: pass
+            doc = db.collection('users').document(str(chat_id)).get()
+            if doc.exists:
+                u_data = doc.to_dict()
+                if u_data.get("referred_by") and not u_data.get("ref_paid"):
+                    inviter = u_data["referred_by"]
+                    db.collection('users').document(str(chat_id)).update({"ref_paid": True})
+                    reward = bot_settings.get("refer_reward", 0.2)
+                    update_balance(inviter, reward)
+                    db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)})
+                    ref_msg = (f"{PEM['gift']} <b>New Referral !</b>\n------------------\n🔥 <b>You Received {reward} TK</b>\n------------------\n{PEM['user']} <b>From User ID:</b> <code>{chat_id}</code>")
+                    send_message(inviter, render_body_text(ref_msg))
         c_msg = bot_settings["custom_messages"].get("start", {})
-        start_text = c_msg.get("text", "").strip()
-        if not start_text or "WELCOME" not in start_text.upper():
-            start_text = "<blockquote>👋 <b>WELCOME TO 𝐒𝐓𝐎𝐑𝐌 𝐗 𝐎𝐍𝐄</b> 🤔</blockquote>\n\n📩 <b>RECEIVE OTP'S AND START EARNING MONEY</b> 🤑"
-        txt = render_body_text(start_text)
+        txt = render_body_text(c_msg.get("text", f"{PEM['hi']} Welcome!"))
         kb = []
         for b in c_msg.get("buttons", []):
             b_copy = b.copy()
             if "style" not in b_copy: b_copy["style"] = "primary"
             kb.append([b_copy])
         if kb:
-            res_welcome = send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
+            send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
+            send_message(chat_id, render_body_text(f"{PEM['gear']} Navigation:"), reply_markup=main_menu(chat_id))
         else:
-            res_welcome = send_message(chat_id, txt, reply_markup=main_menu(chat_id))
-        if not res_welcome or not res_welcome.get("ok"):
-            plain_txt = "👋 WELCOME TO 𝐒𝐓𝐎𝐑𝐌 𝐗 𝐎𝐍𝐄 🤔\n\n📩 RECEIVE OTP'S AND START EARNING MONEY 🤑"
-            send_message(chat_id, plain_txt, reply_markup=main_menu(chat_id))
+            send_message(chat_id, txt, reply_markup=main_menu(chat_id))
 
     elif text == "TRAFFIC":
         txt, markup = build_traffic_ui()
         send_message(chat_id, txt, reply_markup=markup)
-    elif text == "REFER":
+
+    elif text == "Refer":
         u_data = get_user(chat_id)
         ref_link = f"https://t.me/{BOT_USERNAME}?start={chat_id}"
         c_msg = bot_settings["custom_messages"].get("refer", {})
-        raw_txt = c_msg.get("text", "").replace("{ref_link}", ref_link).replace("{total_ref}", str(u_data.get('total_refers', 0))).replace("{ref_reward}", str(bot_settings['refer_reward']))
+        raw_txt = c_msg.get("text", f"{PEM['gift']} Refer").replace("{ref_link}", ref_link).replace("{total_ref}", str(u_data.get('total_refers', 0))).replace("{ref_reward}", str(bot_settings['refer_reward']))
         txt = render_body_text(raw_txt)
         kb = [[{"text": "COPY LINK", "icon_custom_emoji_id": "5192739271886282680", "copy_text": {"text": ref_link}, "style": "success"}]]
+        for b in c_msg.get("buttons", []):
+            b_copy = b.copy()
+            if "style" not in b_copy: b_copy["style"] = "primary"
+            kb.append([b_copy])
         kb.append([{"text": "CLOSE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
-    elif text == "BALANCE":
+
+    elif text == "WITHDRAWAL":
         if not bot_settings["withdraw_on"]:
-            send_message(chat_id, render_body_text(f"{PEM['no']} <b>Withdrawals disabled.</b>")); return
-        u_data = get_user(chat_id); bal = u_data.get('balance', 0.0)
+            send_message(chat_id, render_body_text(f"{PEM['no']} Withdrawals disabled."))
+            return
+        u_data = get_user(chat_id)
+        bal = u_data.get('balance', 0.0)
         c_msg = bot_settings["custom_messages"].get("withdrawal", {})
-        raw_txt = (c_msg.get("text", "").replace("{user_id}", str(chat_id)).replace("{bal}", f"{float(bal):.2f}")
-                   .replace("{total_otp}", str(u_data.get('total_otps', 0))).replace("{total_ref}", str(u_data.get('total_refers', 0)))
+        raw_txt = (c_msg.get("text", "Withdrawal")
+                   .replace("{user_id}", str(chat_id))
+                   .replace("{bal}", f"{float(bal):.2f}")
+                   .replace("{total_otp}", str(u_data.get('total_otps', 0)))
+                   .replace("{total_ref}", str(u_data.get('total_refers', 0)))
                    .replace("{min_w}", f"{float(bot_settings['min_withdraw']):.2f}"))
         txt = render_body_text(raw_txt)
         kb = []
-        for m in bot_settings["w_methods"]:
-            kb.append([{"text": m.strip(), "icon_custom_emoji_id": "5190899075968441286", "callback_data": f"sel_wm_{m.strip()}", "style": "primary"}])
+        for m_name, m_emoji in get_wmethod_display_list():
+            kb.append([{"text": m_name.strip(), "icon_custom_emoji_id": "5190899075968441286", "callback_data": f"sel_wm_{m_name.strip()}", "style": "primary"}])
+        for b in c_msg.get("buttons", []):
+            b_copy = b.copy()
+            if "style" not in b_copy: b_copy["style"] = "primary"
+            kb.append([b_copy])
         kb.append([{"text": "Cancel", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
+
     elif text == "Admin Panel" and is_admin(chat_id):
         send_message(chat_id, get_admin_text(), reply_markup=admin_panel_keyboard())
+
     elif text == "GET NUMBER":
         local_srvs = set([b["service"] for b in number_batches.values() if b["numbers"]])
         stex_srvs = set(bot_settings.get("stex_services", {}).keys())
         voltx_srvs = set(bot_settings.get("voltx_services", {}).keys())
         all_services = local_srvs.union(stex_srvs).union(voltx_srvs)
         if not all_services:
-            send_message(chat_id, render_body_text(f"{PEM['no']} <b>No services!</b>"))
+            send_message(chat_id, render_body_text(f"{PEM['no']} No services!"))
         else:
             c_msg = bot_settings["custom_messages"].get("get_number", {})
-            txt = render_body_text(c_msg.get("text", f"{PEM['pin']} <b>Select Service</b>"))
+            txt = render_body_text(c_msg.get("text", f"{PEM['pin']} Select Service"))
             apps_db = bot_settings.get("premium_apps", {})
             kb = []
             for s in all_services:
                 emoji_id = "5352694861990501856"
                 for app_key, app_data in apps_db.items():
                     if s.upper() == app_key or s.upper() in app_key or app_key in s.upper():
-                        if "id" in app_data: emoji_id = app_data["id"]; break
-                kb.append([{"text": f"{s}", "icon_custom_emoji_id": emoji_id, "callback_data": f"g_s|{s}", "style": "primary"}])
+                        if "id" in app_data:
+                            emoji_id = app_data["id"]
+                            break
+                kb.append([{"text": f"{s}", "icon_custom_emoji_id": emoji_id, "callback_data": f"g_s_{s}", "style": "primary"}])
+            for b in c_msg.get("buttons", []):
+                b_copy = b.copy()
+                if "style" not in b_copy: b_copy["style"] = "primary"
+                kb.append([b_copy])
             kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
             send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
-    elif text == "SEARCH NUMBER":
+
+    elif text == "Search Number":
         user_states[chat_id] = "wait_for_search"
         c_msg = bot_settings["custom_messages"].get("search_number", {})
-        txt = render_body_text(c_msg.get("text", f"{PEM['num']} <b>Search</b>"))
+        txt = render_body_text(c_msg.get("text", f"{PEM['num']} Search Number"))
         kb = [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_state", "style": "danger"}]]
+        for b in c_msg.get("buttons", []):
+            b_copy = b.copy()
+            if "style" not in b_copy: b_copy["style"] = "primary"
+            kb.append([b_copy])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
+
     elif text == "2FA ONLINE" or text == "🔐 2FA ONLINE":
-        txt = "━━━━━━━━━━━━━━━\n《 🔐 <b>2FA ONLINE</b> 》\n━━━━━━━━━━━━━━━\n<i>Generate 2FA code instantly.</i>\n━━━━━━━━━━━━━━━"
+        txt = "━━━━━━━━━━━━━━━\n《 🔐 <b>2FA ONLINE</b> 》\n━━━━━━━━━━━━━━━\n<i>Generate 2FA code.</i>\n━━━━━━━━━━━━━━━"
         kb = [[{"text": "Generate 2fa code", "icon_custom_emoji_id": "5353022963132174959", "callback_data": "gen_2fa", "style": "success"}],
               [{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}]]
         send_message(chat_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
+
     elif text == "SUPPORT":
         c_msg = bot_settings["custom_messages"].get("support", {})
-        txt = render_body_text(c_msg.get("text", f"{PEM['msg']} <b>Support</b>"))
+        txt = render_body_text(c_msg.get("text", f"{PEM['msg']} Support"))
+        if not txt.strip(): txt = render_body_text(f"{PEM['msg']} Support")
         kb = []
+        for b in c_msg.get("buttons", []):
+            b_copy = b.copy()
+            if "style" not in b_copy: b_copy["style"] = "primary"
+            kb.append([b_copy])
         sup_link = bot_settings.get("support_link", "")
-        if sup_link: kb.insert(0, [{"text": "Contact Support", "icon_custom_emoji_id": "5337302974806922068", "url": sup_link, "style": "success"}])
+        if sup_link:
+            kb.insert(0, [{"text": "Contact Support", "icon_custom_emoji_id": "5337302974806922068", "url": sup_link, "style": "success"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb} if kb else None)
+        # ==========================================
+# Database Helpers
+# ==========================================
+def build_data_zip():
+    """সব ডেটা (Firestore + Local) একটি zip এ প্যাক করে bytes রিটার্ন করবে"""
+    mem = io.BytesIO()
+    try:
+        with zipfile.ZipFile(mem, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # Local DB
+            if os.path.exists(DB_FILE):
+                zf.write(DB_FILE, DB_FILE)
+            # Users list
+            if os.path.exists("users_list.json"):
+                zf.write("users_list.json", "users_list.json")
+            # Firestore: users collection
+            if db:
+                try:
+                    all_users_data = {}
+                    for doc in db.collection('users').stream():
+                        all_users_data[doc.id] = doc.to_dict()
+                    zf.writestr("firestore_users.json", json.dumps(all_users_data, default=str, indent=2))
+                except: pass
+                # Firestore: withdrawals
+                try:
+                    all_wd = {}
+                    for doc in db.collection('withdrawals').stream():
+                        all_wd[doc.id] = doc.to_dict()
+                    zf.writestr("firestore_withdrawals.json", json.dumps(all_wd, default=str, indent=2))
+                except: pass
+                # Firestore: settings
+                try:
+                    stg = db.collection('settings').document('bot_config').get()
+                    if stg.exists:
+                        zf.writestr("firestore_settings.json", json.dumps(stg.to_dict(), default=str, indent=2))
+                except: pass
+        mem.seek(0)
+        return mem.getvalue()
+    except Exception as e:
+        print(f"ZIP build error: {e}")
+        return None
+
+
+def delete_all_data():
+    """সব ডেটা ডিলিট করে দেবে — Firestore users/withdrawals + Local DB"""
+    global number_batches, used_numbers_list, stex_assigned_numbers, voltx_assigned_numbers
+    global total_uploaded_stats, total_assigned_stats, recent_traffic, assigned_number_meta
+    global all_known_users
+    # Firestore delete
+    if db:
+        try:
+            for doc in db.collection('users').stream():
+                try: doc.reference.delete()
+                except: pass
+        except: pass
+        try:
+            for doc in db.collection('withdrawals').stream():
+                try: doc.reference.delete()
+                except: pass
+        except: pass
+    # Local
+    number_batches = {}
+    used_numbers_list = []
+    stex_assigned_numbers = {}
+    voltx_assigned_numbers = {}
+    total_uploaded_stats = 0
+    total_assigned_stats = 0
+    recent_traffic = []
+    assigned_number_meta = {}
+    with _users_lock:
+        all_known_users = set()
+    try:
+        if os.path.exists(DB_FILE): os.remove(DB_FILE)
+        if os.path.exists("users_list.json"): os.remove("users_list.json")
+    except: pass
+    save_local_db()
+
+
 # ==========================================
 # Callback Query Handler
 # ==========================================
@@ -3274,7 +3170,7 @@ def handle_callback(call):
     chat_type = call["message"]["chat"].get("type", "private")
     data = call.get("data", "")
 
-    if not data.startswith("test_p_conn_") and not data.startswith("c_n") and not data.startswith("g_c|") and not data.startswith("g_bs|"):
+    if not data.startswith("test_p_conn_") and not data.startswith("c_n_") and not data.startswith("g_c_"):
         try: threading.Thread(target=answer_callback, args=(call["id"],)).start()
         except: pass
 
@@ -3285,8 +3181,21 @@ def handle_callback(call):
 
     if chat_type == "private":
         if is_user_banned(chat_id):
-            answer_callback(call["id"], "🚫 Banned!", show_alert=True)
+            answer_callback(call["id"], "🚫 You are banned!", show_alert=True)
             return
+
+        # MAINTENANCE CHECK (admin bypass)
+        if bot_settings.get("maintenance", False) and not is_admin(chat_id):
+            allowed_cb = ["close_msg", "check_fj", "cancel_state", "ignore"]
+            if data not in allowed_cb:
+                maint_msg = (
+                    f'<tg-emoji emoji-id="6267262260243076354">㊙️</tg-emoji> <b>The Bot Is On Under MENTENENCE.</b>\n\n'
+                    f'Wait Some Time <tg-emoji emoji-id="5226560988291019577">🦕</tg-emoji> <b>Bot Will Available Soon</b> '
+                    f'<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>'
+                )
+                send_message(chat_id, render_body_text(maint_msg))
+                return
+
         if not check_force_join(chat_id) and data != "check_fj":
             send_force_join_msg(chat_id)
             return
@@ -3294,30 +3203,31 @@ def handle_callback(call):
     if data == "check_fj":
         if check_force_join(chat_id):
             delete_message(chat_id, msg_id)
-            send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Thanks for joining!</b>"), reply_markup=main_menu(chat_id))
+            send_message(chat_id, render_body_text(f"{PEM['ok']} Thanks for joining!"), reply_markup=main_menu(chat_id))
             if db:
-                try:
-                    doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
-                    if doc.exists:
-                        u_data = doc.to_dict()
-                        if u_data.get("referred_by") and not u_data.get("ref_paid"):
-                            inviter = u_data["referred_by"]
-                            db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)
-                            reward = bot_settings.get("refer_reward", 0.2)
-                            update_balance(inviter, reward)
-                            db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
-                            send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+{reward} TK</b>\n👤 <code>{chat_id}</code>"))
-                except: pass
+                doc = db.collection('users').document(str(chat_id)).get()
+                if doc.exists:
+                    u_data = doc.to_dict()
+                    if u_data.get("referred_by") and not u_data.get("ref_paid"):
+                        inviter = u_data["referred_by"]
+                        db.collection('users').document(str(chat_id)).update({"ref_paid": True})
+                        reward = bot_settings.get("refer_reward", 0.2)
+                        update_balance(inviter, reward)
+                        db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)})
+                        ref_msg = (f"{PEM['gift']} <b>New Referral !</b>\n------------------\n🔥 <b>You Received {reward} TK</b>\n------------------\n{PEM['user']} <b>From User ID:</b> <code>{chat_id}</code>")
+                        send_message(inviter, render_body_text(ref_msg))
         else:
-            answer_callback(call["id"], "❌ Join all channels first!", show_alert=True)
+            answer_callback(call["id"], "❌ You haven't joined all channels!", show_alert=True)
         return
 
     if data == "close_msg":
         delete_message(chat_id, msg_id)
+
     elif data == "cancel_state":
         if chat_id in user_states: del user_states[chat_id]
         if chat_id in temp_data: del temp_data[chat_id]
         delete_message(chat_id, msg_id)
+
     elif data == "cancel_2fa":
         if chat_id in user_states: del user_states[chat_id]
         if chat_id in temp_data: del temp_data[chat_id]
@@ -3326,6 +3236,7 @@ def handle_callback(call):
               [{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}]]
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
         answer_callback(call["id"])
+
     elif data == "gen_2fa":
         user_states[chat_id] = "wait_for_2fa_key"
         temp_data[chat_id] = {"msg_id": msg_id}
@@ -3333,6 +3244,7 @@ def handle_callback(call):
         kb = {"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_2fa", "style": "danger"}]]}
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
         answer_callback(call["id"])
+
     elif data.startswith("ref_2fa_"):
         secret = data.replace("ref_2fa_", "")
         try:
@@ -3340,7 +3252,7 @@ def handle_callback(call):
             remaining_time = 30 - (int(time.time()) % 30)
             success_txt = (f"━━━━━━━━━━━━━━━\n《 🔐 <b>2FA CODE</b> 》\n━━━━━━━━━━━━━━━\n"
                           f"🔐 <b>CODE:</b> <code>{code}</code>\n━━━━━━━━━━━━━━━\n"
-                          f"🕓 <b>EXPIRES IN:</b> <b>{remaining_time}s</b>\n━━━━━━━━━━━━━━━")
+                          f"🕓 <b>EXPIRES IN:</b> {remaining_time}s\n━━━━━━━━━━━━━━━")
             kb = [[{"text": f"Click to copy {code}", "icon_custom_emoji_id": "5353022963132174959", "copy_text": {"text": code}, "style": "success"}],
                   [{"text": "Refresh", "icon_custom_emoji_id": "5420155432272438703", "callback_data": f"ref_2fa_{secret}", "style": "primary"},
                    {"text": "New Code", "icon_custom_emoji_id": "5352552689983067014", "callback_data": "gen_2fa", "style": "danger"}],
@@ -3348,118 +3260,19 @@ def handle_callback(call):
             edit_message(chat_id, msg_id, render_body_text(success_txt), reply_markup={"inline_keyboard": kb})
         except:
             answer_callback(call["id"], "❌ Error!", show_alert=True)
-    elif data == "cancel_dxa_edit":
+
+    elif data == "cancel_STRM_edit":
         if chat_id in user_states: del user_states[chat_id]
         if chat_id in temp_data: del temp_data[chat_id]
-        edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
+        edit_message(chat_id, msg_id, render_body_text("🕹 <b>STRM CONTROL PANEL</b>"), reply_markup=STRM_control_keyboard())
+
     elif data == "dummy_alert":
         answer_callback(call["id"], "Coming soon!", show_alert=True)
+
     elif data == "refresh_traffic":
         txt, markup = build_traffic_ui()
         edit_message(chat_id, msg_id, txt, reply_markup=markup)
         answer_callback(call["id"], "✅ Refreshed!", show_alert=False)
-
-    # ==========================================
-    # Get Numbers from broadcast
-    # ==========================================
-    elif data.startswith("g_bs|"):
-        user_states.pop(chat_id, None)
-        temp_data.pop(chat_id, None)
-        try:
-            parts = data.split("|", 2)
-            service = parts[1]; country = parts[2]
-        except:
-            answer_callback(call["id"], "❌ Invalid!", show_alert=True); return
-        now = time.time()
-        if now - user_cooldowns.get(chat_id, 0) < bot_settings["cooldown"]:
-            answer_callback(call["id"], f"⌛ Wait {int(bot_settings['cooldown'] - (now - user_cooldowns.get(chat_id, 0)))}s", show_alert=True)
-            return
-        user_cooldowns[chat_id] = now
-        expire_previous_number(chat_id)
-        available = []
-        for bid, bd in number_batches.items():
-            if bd["service"] == service and bd["country"] == country:
-                for i, no in enumerate(bd["numbers"]):
-                    if chat_id not in no.get("used_by", []):
-                        available.append((bid, i))
-        if not available:
-            sd = bot_settings.get("stex_services", {}).get(service, {}).get(country)
-            vd = bot_settings.get("voltx_services", {}).get(service, {}).get(country)
-            target = None; is_vtx = False
-            if sd: target = random.choice(sd)
-            elif vd: target = random.choice(vd); is_vtx = True
-            if target:
-                user_cooldowns[chat_id] = 0
-                vf = "vtx" if is_vtx else ""
-                new_call = dict(call)
-                new_call["data"] = f"c_n_s|{target}|{service}|{vf}"
-                if "_edit_in_place" in call: new_call["_edit_in_place"] = call["_edit_in_place"]
-                handle_callback(new_call); return
-            else:
-                answer_callback(call["id"], "❌ Out of stock!", show_alert=True); return
-        random.shuffle(available)
-        fetched = []
-        for bid, i in available:
-            if len(fetched) >= bot_settings["num_req"]: break
-            no = number_batches[bid]["numbers"][i]
-            fetched.append(no["num"]); no["shares"] += 1; no["used_by"].append(chat_id)
-            total_assigned_stats += 1
-            cn = no["num"].replace("+", "").strip()
-            bd_country = number_batches[bid]["country"]; bd_service = number_batches[bid]["service"]
-            bd_iso = number_batches[bid].get("country_iso", "")
-            _pv = float(bot_settings.get("otp_reward", 0.0))
-            _pr = bot_settings.get("otp_pair_rates", {}); _pk = f"{str(bd_country).upper()}|{str(bd_service).upper()}"
-            if _pk in _pr:
-                try: _pv = float(_pr[_pk])
-                except: pass
-            if "payout" in number_batches[bid]:
-                try: _pv = float(number_batches[bid]["payout"])
-                except: pass
-            assigned_number_meta[cn] = {"country": bd_country, "service": bd_service, "iso": bd_iso, "payout": _pv}
-            if no["shares"] >= bot_settings.get("num_share", 1):
-                no["to_remove"] = True; used_numbers_list.append(no["num"])
-        for bid in number_batches:
-            number_batches[bid]["numbers"] = [n for n in number_batches[bid]["numbers"] if not n.get("to_remove")]
-        save_db()
-        af = get_premium_app(service)["name"]
-        eid_srv = "5337302974806922068"
-        for ak, ad in bot_settings.get("premium_apps", {}).items():
-            if service.upper() == ak or service.upper() in ak or ak in service.upper():
-                if "id" in ad: eid_srv = ad["id"]; break
-        kb = [[{"text": af, "icon_custom_emoji_id": eid_srv, "callback_data": "ignore", "style": "success"}]]
-        for num in fetched:
-            dn = f"+{num}" if not str(num).startswith("+") else str(num)
-            _, iso, _ = get_country_from_num(num)
-            eid2 = "5780471598932337683"
-            for fc, fd in bot_settings.get("premium_flags", {}).items():
-                if iso == fd.get("iso"):
-                    if "id" in fd: eid2 = fd["id"]; break
-            kb.append([{"text": dn, "icon_custom_emoji_id": eid2, "copy_text": {"text": dn}, "style": "primary"}])
-        kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_bs|{service}|{country}", "style": "danger"},
-                   {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
-        kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
-        text_numbers = build_numbers_header(country, service)
-        edit_target = call.get("_edit_in_place")
-        if edit_target:
-            try:
-                edit_message(chat_id, edit_target, text_numbers, reply_markup={"inline_keyboard": kb})
-                user_active_sessions[chat_id] = {"msg_id": edit_target, "nums": fetched}
-            except:
-                msg_res = send_message(chat_id, text_numbers, reply_markup={"inline_keyboard": kb})
-                if msg_res and "result" in msg_res: user_active_sessions[chat_id] = {"msg_id": msg_res["result"]["message_id"], "nums": fetched}
-        else:
-            msg_res = send_message(chat_id, text_numbers, reply_markup={"inline_keyboard": kb})
-            if msg_res and "result" in msg_res: user_active_sessions[chat_id] = {"msg_id": msg_res["result"]["message_id"], "nums": fetched}
-        return
-    elif data.startswith("c_n_bs|"):
-        try:
-            parts = data.split("|", 2); service = parts[1]; country = parts[2]
-        except:
-            answer_callback(call["id"], "❌ Invalid!", show_alert=True); return
-        new_call = dict(call)
-        new_call["data"] = f"g_bs|{service}|{country}"
-        new_call["_edit_in_place"] = msg_id
-        handle_callback(new_call); return
 
     elif data.startswith("exp_rng_"):
         srv_query = data.replace("exp_rng_", "")
@@ -3476,7 +3289,7 @@ def handle_callback(call):
         kb = []
         for iso, c_data in sorted(country_stats.items(), key=lambda x: x[1]["count"], reverse=True):
             count = c_data["count"]; c_name = iso
-            emoji_id = "5780471598932337683"
+            emoji_id = "5780471598922337683"
             for code, fdata in bot_settings.get("premium_flags", {}).items():
                 if fdata.get("iso") == iso:
                     c_name = fdata.get("name", iso)
@@ -3487,6 +3300,7 @@ def handle_callback(call):
         app_full_name, prem_app_html = get_service_info_html(srv_query)
         edit_message(chat_id, msg_id, render_body_text(f"📊 <b>Explore:</b> {prem_app_html} <b>{app_full_name}</b>"), reply_markup={"inline_keyboard": kb})
         answer_callback(call["id"])
+
     elif data.startswith("exp_c_"):
         parts = data.split("_")
         srv_query = parts[2]; iso_query = parts[3]
@@ -3530,21 +3344,21 @@ def handle_callback(call):
     elif data == "um_manage_balance":
         user_states[chat_id] = "wait_for_um_bal_uid"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Send User ID:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text("📝 Send User ID:"), reply_markup=get_cancel_kb())
     elif data == "um_ban_unban":
         user_states[chat_id] = "wait_for_um_ban_uid"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Send User ID:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text("📝 Send User ID:"), reply_markup=get_cancel_kb())
     elif data == "um_user_profile":
         user_states[chat_id] = "wait_for_um_prof_uid"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Send User ID:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text("📝 Send User ID:"), reply_markup=get_cancel_kb())
 
     # ==========================================
     # Menu Design
     # ==========================================
     elif data == "menu_design_list":
-        edit_message(chat_id, msg_id, render_body_text("🎨 <b>Menu Design Editor</b>"), reply_markup=menu_design_list_keyboard())
+        edit_message(chat_id, msg_id, render_body_text(f"🎨 <b>Menu Design Editor</b>"), reply_markup=menu_design_list_keyboard())
     elif data == "md_reset_defaults":
         bot_settings["custom_messages"] = DEFAULT_CUSTOM_MESSAGES.copy()
         save_db()
@@ -3562,7 +3376,7 @@ def handle_callback(call):
         key = data.replace("md_text_", "")
         user_states[chat_id] = "wait_for_menu_text"
         temp_data[chat_id] = {"msg_id": msg_id, "menu_key": key}
-        edit_message(chat_id, msg_id, render_body_text(f"📝 <b>Send new text for</b> <b>{key.upper()}:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"md_edit_{key}", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text(f"📝 <b>Edit Body: {key.upper()}</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"md_edit_{key}", "style": "danger"}]]})
     elif data.startswith("md_btns_"):
         answer_callback(call["id"])
         if chat_id in user_states: del user_states[chat_id]
@@ -3584,53 +3398,88 @@ def handle_callback(call):
             edit_message(chat_id, msg_id, render_body_text(f"⚙️ <b>Buttons:</b> <b>{key.upper()}</b>"), reply_markup=menu_buttons_list_keyboard(key))
 
     # ==========================================
-    # Withdraw method
+    # Withdraw method selection
     # ==========================================
     elif data.startswith("sel_wm_"):
         method = data.replace("sel_wm_", "")
         bal = get_user(chat_id).get('balance', 0.0)
         min_w = bot_settings['min_withdraw']
         if bal < min_w:
-            answer_callback(call["id"], f"❌ Min {min_w} required!", show_alert=True); return
+            answer_callback(call["id"], f"❌ Min {min_w} ৳ required!", show_alert=True); return
         temp_data[chat_id] = {"method": method, "balance": bal, "msg_id": msg_id}
         user_states[chat_id] = "wait_for_withdraw_amount"
-        edit_message(chat_id, msg_id, render_body_text(f"{PEM['ok']} <b>{method}</b>\n💰 <b>{bal}</b>\n\n<b>Enter amount:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text(f"{PEM['ok']} <b>{method}</b>\n💰 <b>{bal}</b> ৳\n\nEnter amount:"), reply_markup=get_cancel_kb())
         answer_callback(call["id"])
 
     elif data == "test_message_flow":
         user_states[chat_id] = "wait_for_test_service"
         temp_data[chat_id] = {}
-        edit_message(chat_id, msg_id, render_body_text("🧪 <b>Send Service:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("🧪 <b>Test Mode</b>\n\n📝 Send Service Name (e.g., IG):"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "danger"}]]})
+
+    # ==========================================
+    # Emoji Management
+    # ==========================================
+    elif data == "manage_emojis":
+        edit_message(chat_id, msg_id, render_body_text(f"{PEM['star']} <b>Premium Emoji Management</b>"), reply_markup=emoji_settings_keyboard())
+    elif data == "up_flags_txt":
+        user_states[chat_id] = "wait_for_flag_txt"
+        edit_message(chat_id, msg_id, render_body_text("📂 Upload Flag Emojis <code>.txt</code> file."), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_emojis", "style": "danger"}]]})
+    elif data == "up_apps_txt":
+        user_states[chat_id] = "wait_for_app_txt"
+        edit_message(chat_id, msg_id, render_body_text("📂 Upload Service Apps <code>.txt</code> file."), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_emojis", "style": "danger"}]]})
+    elif data == "add_single_emoji":
+        user_states[chat_id] = "wait_for_emoji_extract"
+        edit_message(chat_id, msg_id, render_body_text("📝 Send any Premium Emoji (e.g., 🇧🇩 or 🚫):"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_emojis", "style": "danger"}]]})
+    elif data == "dl_flags_txt":
+        content = generate_emoji_txt("flags")
+        if content:
+            send_document(chat_id, "Flag_Emojis.txt", content)
+            answer_callback(call["id"], "✅ Downloaded!")
+        else:
+            answer_callback(call["id"], "❌ Empty!", show_alert=True)
+    elif data == "dl_apps_txt":
+        content = generate_emoji_txt("apps")
+        if content:
+            send_document(chat_id, "Service_Apps.txt", content)
+            answer_callback(call["id"], "✅ Downloaded!")
+        else:
+            answer_callback(call["id"], "❌ Empty!", show_alert=True)
+    elif data == "del_all_flags":
+        bot_settings["premium_flags"] = {}
+        save_db()
+        answer_callback(call["id"], "✅ All Flags Deleted!", show_alert=True)
 
     # ==========================================
     # Broadcast / Upload / Delete
     # ==========================================
     elif data == "broadcast_msg":
         user_states[chat_id] = "wait_for_broadcast"
-        edit_message(chat_id, msg_id, render_body_text("📢 <b>Send message to broadcast:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📢 <b>Broadcast Mode</b>\n\nSend the message to broadcast."), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
     elif data == "upload_num":
         user_states[chat_id] = "wait_for_txt"
-        edit_message(chat_id, msg_id, render_body_text("📂 <b>Upload a</b> <b>.txt</b> <b>file:</b>"), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📂 Upload numbers in <b>.txt</b> file."), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
     elif data == "delete_files":
         kb = []
         for b_id, b_data in number_batches.items():
             kb.append([{"text": f"{b_data['filename']} ({len(b_data['numbers'])})", "icon_custom_emoji_id": "5422557736330106570", "callback_data": f"del_b_{b_id}", "style": "danger"}])
         kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "primary"}])
-        edit_message(chat_id, msg_id, render_body_text("🗑 <b>Select:</b>" if len(kb) > 1 else "❌ <b>No files.</b>"), reply_markup={"inline_keyboard": kb})
+        txt = "🗑 Select a file to delete:" if len(kb) > 1 else f"{PEM['no']} No files."
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
     elif data.startswith("del_b_"):
         b_id = data.split("del_b_")[1]
         if b_id in number_batches:
-            del number_batches[b_id]; save_db()
-            answer_callback(call["id"], "✅ Deleted!", show_alert=True)
+            del number_batches[b_id]
+            save_db()
+            answer_callback(call["id"], "✅ File deleted!", show_alert=True)
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": "delete_files", "id": call["id"]})
 
     elif data == "show_used":
         kb = {"inline_keyboard": [[{"text": "Download TXT", "icon_custom_emoji_id": "5257969839313526622", "callback_data": "dl_used", "style": "primary"}], [{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]}
-        edit_message(chat_id, msg_id, render_body_text(f"{PEM['ok']} <b>Used:</b> <b>{len(used_numbers_list)}</b>"), reply_markup=kb)
+        edit_message(chat_id, msg_id, render_body_text(f"{PEM['ok']} <b>Used:</b> {len(used_numbers_list)}"), reply_markup=kb)
     elif data == "show_unused":
         unused_count = sum(len(b["numbers"]) for b in number_batches.values())
         kb = {"inline_keyboard": [[{"text": "Download TXT", "icon_custom_emoji_id": "5257969839313526622", "callback_data": "dl_unused", "style": "primary"}], [{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]}
-        edit_message(chat_id, msg_id, render_body_text(f"{PEM['rocket']} <b>Unused:</b> <b>{unused_count}</b>"), reply_markup=kb)
+        edit_message(chat_id, msg_id, render_body_text(f"{PEM['rocket']} <b>Unused:</b> {unused_count}"), reply_markup=kb)
     elif data == "dl_used":
         if not used_numbers_list:
             answer_callback(call["id"], "❌ None!", show_alert=True); return
@@ -3647,7 +3496,7 @@ def handle_callback(call):
     # Leaderboard
     # ==========================================
     elif data == "lb_main":
-        txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
+        txt = f"━━━━━━━━━━━━━━━\n《 {PEM['admin']} <b>LEADER BOARD MENU</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
             [{"text": "Top Referrers", "icon_custom_emoji_id": "5420145051336485498", "callback_data": "lb_top_refs", "style": "primary"}],
             [{"text": "Top OTP Receivers", "icon_custom_emoji_id": "5353001161878182134", "callback_data": "lb_top_otps", "style": "primary"}],
@@ -3658,43 +3507,45 @@ def handle_callback(call):
     elif data.startswith("lb_"):
         sub = data.replace("lb_", "")
         edit_message(chat_id, msg_id, render_body_text("⌛ <i>Fetching...</i>"))
+        num_map = {"1": "1️⃣", "2": "2️⃣", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣", "9": "9️⃣", "0": "0️⃣"}
+        def get_p_num(n): return "".join([num_map.get(c, c) for c in str(n)])
         try:
-            if not db:
-                edit_message(chat_id, msg_id, render_body_text("❌ <b>Firebase disabled.</b>"), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]})
-                return
             if sub == "top_refs":
-                title, field, limit = "TOP 5 REFERRERS", "total_refers", 5
+                title, field, limit, icon = "TOP 5 REFERRERS", "total_refers", 5, PEM.get('user', '👥')
                 users = db.collection('users').order_by(field, direction="DESCENDING").limit(limit).stream()
                 res_txt = ""; count = 1
                 for u in users:
                     d = u.to_dict()
                     if d.get(field, 0) > 0:
-                        res_txt += f"| {count} <a href='tg://user?id={u.id}'>{u.id}</a> → <b>{d.get(field,0)}</b>\n"
+                        p = "└" if count == limit else "├"
+                        res_txt += f"{p} {get_p_num(count)} <a href='tg://user?id={u.id}'>{u.id}</a> ➔ <b>{d.get(field,0)}</b>\n"
                         count += 1
-                if not res_txt: res_txt = "No data.\n"
+                if not res_txt: res_txt = "└ <i>No data.</i>\n"
             elif sub == "top_otps":
-                title, field, limit = "TOP 5 OTP RECEIVERS", "total_otps", 5
+                title, field, limit, icon = "TOP 5 OTP RECEIVERS", "total_otps", 5, PEM.get('msg', '📩')
                 users = db.collection('users').order_by(field, direction="DESCENDING").limit(limit).stream()
                 res_txt = ""; count = 1
                 for u in users:
                     d = u.to_dict()
                     if d.get(field, 0) > 0:
-                        res_txt += f"| {count} <a href='tg://user?id={u.id}'>{u.id}</a> → <b>{d.get(field,0)}</b>\n"
+                        p = "└" if count == limit else "├"
+                        res_txt += f"{p} {get_p_num(count)} <a href='tg://user?id={u.id}'>{u.id}</a> ➔ <b>{d.get(field,0)}</b>\n"
                         count += 1
-                if not res_txt: res_txt = "No data.\n"
+                if not res_txt: res_txt = "└ <i>No data.</i>\n"
             elif sub == "w_history":
-                title, limit = "LAST 10 WITHDRAWALS", 10
+                title, limit, icon = "LAST 10 WITHDRAWALS", 10, PEM.get('money', '💸')
                 ws = db.collection('withdrawals').order_by('timestamp', direction="DESCENDING").limit(limit).stream()
                 res_txt = ""; count = 1
                 for w in ws:
                     d = w.to_dict()
                     s = str(d.get('status','Pending')).lower()
-                    stat_icon = "✅" if s in ["approved","success"] else "❌" if s=="rejected" else "⏳"
+                    stat_icon = PEM.get('ok','✅') if s in ["approved","success"] else PEM.get('no','❌') if s=="rejected" else "⏳"
                     uid = d.get('user_id','User')
-                    res_txt += f"| {count} <a href='tg://user?id={uid}'>{uid}</a> → <b>{d.get('amount',0)}</b> {stat_icon}\n"
+                    p = "└" if count == limit else "├"
+                    res_txt += f"{p} {get_p_num(count)} <a href='tg://user?id={uid}'>{uid}</a> ➔ <b>{d.get('amount',0)}৳</b> {stat_icon}\n"
                     count += 1
-                if not res_txt: res_txt = "No history.\n"
-            final_msg = f"━━━━━━━━━━━━━━━\n📊 <b>{title}</b>\n━━━━━━━━━━━━━━━\n{res_txt}━━━━━━━━━━━━━━━"
+                if not res_txt: res_txt = "└ <i>No history.</i>\n"
+            final_msg = f"━━━━━━━━━━━━━━━\n{icon} <b>{title}</b>\n━━━━━━━━━━━━━━━\n{res_txt}━━━━━━━━━━━━━━━"
             kb = [[{"text": "Refresh", "icon_custom_emoji_id": "5420155432272438703", "callback_data": data, "style": "success"}, {"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]
             edit_message(chat_id, msg_id, render_body_text(final_msg), reply_markup={"inline_keyboard": kb})
         except Exception as e:
@@ -3707,25 +3558,184 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['gear']} <b>System Settings</b>"), reply_markup=system_settings_keyboard())
 
     # ==========================================
+    # MAINTENANCE TOGGLE
+    # ==========================================
+    elif data == "toggle_maintenance":
+        current = bot_settings.get("maintenance", False)
+        bot_settings["maintenance"] = not current
+        save_db()
+        if bot_settings["maintenance"]:
+            edit_message(chat_id, msg_id, get_admin_text(), reply_markup=admin_panel_keyboard())
+            answer_callback(call["id"], "🔴 Maintenance Mode: ON", show_alert=True)
+        else:
+            edit_message(chat_id, msg_id, get_admin_text(), reply_markup=admin_panel_keyboard())
+            answer_callback(call["id"], "🟢 Maintenance Mode: OFF", show_alert=True)
+            thanks_msg = (
+                f'<tg-emoji emoji-id="6204104220694550861">🐷</tg-emoji> <b>Thanks For Qopareting With Us</b> '
+                f'<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>\n'
+                f'Now You Can Use The Bot Properly '
+                f'<tg-emoji emoji-id="6267107057304868214">🪲</tg-emoji>'
+            )
+            threading.Thread(target=broadcast_text_all, args=(render_body_text(thanks_msg),), daemon=True).start()
+
+    # ==========================================
+    # DATABASE MENU
+    # ==========================================
+    elif data == "database_menu":
+        txt = (
+            f'{PEM["file"]} <b>DATABASE MANAGEMENT</b>\n'
+            f'━━━━━━━━━━━━━━━\n'
+            f'<i>Choose an option below:</i>'
+        )
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=database_menu_keyboard())
+
+    elif data == "db_download":
+        wait = send_message(chat_id, render_body_text("⏳ <i>Preparing database zip...</i>"))
+        wait_id = wait.get("result", {}).get("message_id")
+        try:
+            raw = build_data_zip()
+            if wait_id: delete_message(chat_id, wait_id)
+            if raw:
+                send_document_bytes(chat_id, "STRM_BOT_DATA.zip", raw)
+                send_message(chat_id, render_body_text(f'{PEM["ok"]} <b>Database Downloaded!</b>'), reply_markup=database_menu_keyboard())
+            else:
+                send_message(chat_id, render_body_text(f'{PEM["no"]} <b>Failed to build zip!</b>'))
+        except Exception as e:
+            if wait_id: delete_message(chat_id, wait_id)
+            send_message(chat_id, render_body_text(f'❌ Error: {html.escape(str(e))}'))
+
+    elif data == "db_upload":
+        user_states[chat_id] = "wait_for_data_zip"
+        edit_message(chat_id, msg_id, render_body_text("📂 Send the <code>STRM_BOT_DATA.zip</code> file to restore:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "database_menu", "style": "danger"}]]})
+
+    elif data == "db_delete_confirm":
+        txt = (
+            f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> '
+            f'<b>DO YOU REALY WANT TO REMOVE ALL THE DATA\'S ?</b>'
+        )
+        kb = {"inline_keyboard": [
+            [{"text": "✅YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
+            [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
+        ]}
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
+
+    elif data == "db_delete_yes":
+        delete_all_data()
+        edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>All data has been removed successfully!</b>'), reply_markup=database_menu_keyboard())
+
+    elif data == "db_delete_no":
+        edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>Cancelled.</b>'), reply_markup=database_menu_keyboard())
+
+    # ==========================================
+    # CHANGE PAYOUT Flow
+    # ==========================================
+    elif data == "change_payout_menu":
+        local_srvs = set([b["service"] for b in number_batches.values() if b["numbers"]])
+        stex_srvs = set(bot_settings.get("stex_services", {}).keys())
+        voltx_srvs = set(bot_settings.get("voltx_services", {}).keys())
+        all_services = sorted(local_srvs.union(stex_srvs).union(voltx_srvs))
+        if not all_services:
+            edit_message(chat_id, msg_id, render_body_text(f'{PEM["no"]} <b>No services available!</b>'), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "primary"}]]})
+            return
+        apps_db = bot_settings.get("premium_apps", {})
+        kb = []; row = []
+        for s in all_services:
+            emoji_id = "5352694861990501856"
+            for ak, ad in apps_db.items():
+                if s.upper() == ak or s.upper() in ak or ak in s.upper():
+                    if "id" in ad: emoji_id = ad["id"]; break
+            row.append({"text": f"{s}", "icon_custom_emoji_id": emoji_id, "callback_data": f"cp_srv|{s}", "style": "primary"})
+            if len(row) == 2:
+                kb.append(row); row = []
+        if row: kb.append(row)
+        kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "primary"}])
+        txt = (
+            f'<tg-emoji emoji-id="5190899075968441286">💳</tg-emoji> '
+            f'<b>CHANGE PAYOUT</b>\n'
+            f'━━━━━━━━━━━━━━━\n'
+            f'📌 <b>Select a Service</b> to change its payout:'
+        )
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
+
+    elif data.startswith("cp_srv|"):
+        srv = data.replace("cp_srv|", "")
+        local_cnts = set()
+        for b in number_batches.values():
+            if b["service"] == srv and b["numbers"]:
+                local_cnts.add(b["country"])
+        stex_cnts = set(bot_settings.get("stex_services", {}).get(srv, {}).keys())
+        voltx_cnts = set(bot_settings.get("voltx_services", {}).get(srv, {}).keys())
+        all_countries = sorted(local_cnts.union(stex_cnts).union(voltx_cnts))
+        if not all_countries:
+            edit_message(chat_id, msg_id, render_body_text(f'{PEM["no"]} <b>No countries found for {srv}!</b>'), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
+            return
+        flags_db = bot_settings.get("premium_flags", {})
+        kb = []
+        for c in all_countries:
+            emoji_id = "5780471598922337683"
+            for fc, fd in flags_db.items():
+                iso = fd.get("iso", "").upper(); name = fd.get("name", "").upper()
+                if c.upper() == iso or c.upper() == name or c.upper() in name or name in c.upper():
+                    if "id" in fd: emoji_id = fd["id"]; break
+            kb.append([{"text": f"{c}", "icon_custom_emoji_id": emoji_id, "callback_data": f"cp_cnt|{srv}|{c}", "style": "primary"}])
+        kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "danger"}])
+        txt = (
+            f'<tg-emoji emoji-id="5336972142066047577">🌐</tg-emoji> '
+            f'<b>Select a Country for {srv}:</b>'
+        )
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
+
+    elif data.startswith("cp_cnt|"):
+        parts = data.split("|", 2)
+        srv = parts[1]; country = parts[2]
+        pr = bot_settings.get("otp_pair_rates", {})
+        key = f"{country.upper()}|{srv.upper()}"
+        if key in pr:
+            try: current_payout = float(pr[key])
+            except: current_payout = float(bot_settings.get("otp_reward", 0.0))
+        else:
+            current_payout = None
+            for k, v in pr.items():
+                try:
+                    if k.split("|")[0] == country.upper():
+                        current_payout = float(v); break
+                except: pass
+            if current_payout is None:
+                current_payout = float(bot_settings.get("otp_reward", 0.0))
+
+        country_flag = get_flag_info_html(country)
+
+        user_states[chat_id] = "set_payout_value"
+        temp_data[chat_id] = {"msg_id": msg_id, "service": srv, "country": country}
+
+        txt = (
+            f'<b>{country}</b>{country_flag} <b>Payout :</b> <code>{current_payout}</code>\n\n'
+            f'<b>Send The New Value</b> <code>country_payout</code> :'
+        )
+        edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=get_cancel_kb())
+        answer_callback(call["id"])
+
+    # ==========================================
     # Stex Control
     # ==========================================
     elif data == "stex_control":
-        edit_message(chat_id, msg_id, render_body_text(f"🌐 <b>StexSMS Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('stex_keys', []))}</b>"), reply_markup=stex_control_keyboard())
+        edit_message(chat_id, msg_id, render_body_text(f"🌐 <b>StexSMS Control</b>\n\nKeys: {len(bot_settings.get('stex_keys', []))}"), reply_markup=stex_control_keyboard())
     elif data == "add_stex_key":
         user_states[chat_id] = "wait_for_add_stex_key"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Send StexSMS API Key:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "stex_control", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 Send StexSMS API Key:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "stex_control", "style": "danger"}]]})
     elif data == "view_stex_keys":
         kb = []
         for idx, key in enumerate(bot_settings.get("stex_keys", [])):
-            safe_name = key[:10] + "..." if len(key) > 10 else key
+            safe_name = key[:10] + "..." if len(key)>10 else key
             kb.append([{"text": f"Delete {safe_name}", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"del_nxa_{idx}", "style": "danger"}])
         kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "stex_control", "style": "primary"}])
-        edit_message(chat_id, msg_id, render_body_text("🗑 <b>Select:</b>"), reply_markup={"inline_keyboard": kb})
+        edit_message(chat_id, msg_id, render_body_text("🗑 <b>Select Key:</b>"), reply_markup={"inline_keyboard": kb})
     elif data.startswith("del_nxa_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings.get("stex_keys", [])):
-            del bot_settings["stex_keys"][idx]; save_db()
+            del bot_settings["stex_keys"][idx]
+            save_db()
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": "view_stex_keys", "id": call["id"]})
     elif data == "stex_search_country":
@@ -3738,11 +3748,12 @@ def handle_callback(call):
     elif data == "add_search_country":
         user_states[chat_id] = "wait_for_add_sc"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Country Code:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "stex_search_country", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 Country Code:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "stex_search_country", "style": "danger"}]]})
     elif data.startswith("del_sc_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings.get("search_countries", [])):
-            del bot_settings["search_countries"][idx]; save_db()
+            del bot_settings["search_countries"][idx]
+            save_db()
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": "stex_search_country", "id": call["id"]})
     elif data == "manage_stex_srv":
@@ -3761,14 +3772,14 @@ def handle_callback(call):
     elif data == "nx_add_srv":
         user_states[chat_id] = "wait_nx_srv_name"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Service Name:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text("📝 Service Name:"), reply_markup=get_cancel_kb())
     elif data.startswith("nx_srv_"):
         srv = data.replace("nx_srv_", "")
         kb = []
         countries = bot_settings["stex_services"].get(srv, {})
         flags_db = bot_settings.get("premium_flags", {})
         for c in countries:
-            emoji_id = "5780471598932337683"
+            emoji_id = "5780471598922337683"
             for flag_code, flag_data in flags_db.items():
                 iso = flag_data.get("iso", "").upper(); name = flag_data.get("name", "").upper()
                 if c.upper() == iso or c.upper() == name or c.upper() in name or name in c.upper():
@@ -3782,7 +3793,7 @@ def handle_callback(call):
         srv = data.replace("nx_add_cnt_", "")
         user_states[chat_id] = "wait_nx_cnt_name"
         temp_data[chat_id] = {"msg_id": msg_id, "srv": srv}
-        edit_message(chat_id, msg_id, render_body_text(f"🌍 <b>Country for</b> <b>{srv}:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text(f"🌍 Country for <b>{srv}</b>:"), reply_markup=get_cancel_kb())
     elif data.startswith("nx_cnt_"):
         parts = data.split("_"); srv, cnt = parts[2], parts[3]
         ranges = bot_settings["stex_services"][srv].get(cnt, [])
@@ -3794,12 +3805,12 @@ def handle_callback(call):
         kb.append([{"text": "Add Range", "icon_custom_emoji_id": "5420323438508155202", "callback_data": f"nx_addr_{srv}_{cnt}", "style": "success"}])
         kb.append([{"text": "Delete Country", "icon_custom_emoji_id": "5422557736330106570", "callback_data": f"nx_del_cnt_{srv}_{cnt}", "style": "danger"}])
         kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"nx_srv_{srv}", "style": "primary"}])
-        edit_message(chat_id, msg_id, render_body_text(f"📍 <b>{srv} | {cnt}</b>\n<b>Ranges:</b> <b>{len(ranges)}</b>"), reply_markup={"inline_keyboard": kb})
+        edit_message(chat_id, msg_id, render_body_text(f"📍 <b>{srv} | {cnt}</b>\nRanges: {len(ranges)}"), reply_markup={"inline_keyboard": kb})
     elif data.startswith("nx_addr_"):
         parts = data.split("_"); srv, cnt = parts[2], parts[3]
         user_states[chat_id] = "wait_nx_addr"
         temp_data[chat_id] = {"msg_id": msg_id, "srv": srv, "cnt": cnt}
-        edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New Range for</b> <b>{cnt}:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"nx_cnt_{srv}_{cnt}", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text(f"📝 New Range for <b>{cnt}</b>:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"nx_cnt_{srv}_{cnt}", "style": "danger"}]]})
     elif data.startswith("nx_dr_"):
         parts = data.split("_"); srv, cnt, rng = parts[2], parts[3], parts[4]
         if rng in bot_settings["stex_services"].get(srv, {}).get(cnt, []):
@@ -3821,22 +3832,23 @@ def handle_callback(call):
     # Voltx Control
     # ==========================================
     elif data == "voltx_control":
-        edit_message(chat_id, msg_id, render_body_text(f"⚡ <b>Voltx Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('voltx_keys', []))}</b>"), reply_markup=voltx_control_keyboard())
+        edit_message(chat_id, msg_id, render_body_text(f"⚡ <b>Voltx Control</b>\n\nKeys: {len(bot_settings.get('voltx_keys', []))}"), reply_markup=voltx_control_keyboard())
     elif data == "add_voltx_key":
         user_states[chat_id] = "wait_for_add_voltx_key"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Send Voltx API Key:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "voltx_control", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 Send Voltx API Key:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "voltx_control", "style": "danger"}]]})
     elif data == "view_voltx_keys":
         kb = []
         for idx, key in enumerate(bot_settings.get("voltx_keys", [])):
-            safe_name = key[:10] + "..." if len(key) > 10 else key
+            safe_name = key[:10] + "..." if len(key)>10 else key
             kb.append([{"text": f"Delete {safe_name}", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"del_vtx_{idx}", "style": "danger"}])
         kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "voltx_control", "style": "primary"}])
-        edit_message(chat_id, msg_id, render_body_text("🗑 <b>Select:</b>"), reply_markup={"inline_keyboard": kb})
+        edit_message(chat_id, msg_id, render_body_text("🗑 <b>Select Key:</b>"), reply_markup={"inline_keyboard": kb})
     elif data.startswith("del_vtx_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings.get("voltx_keys", [])):
-            del bot_settings["voltx_keys"][idx]; save_db()
+            del bot_settings["voltx_keys"][idx]
+            save_db()
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": "view_voltx_keys", "id": call["id"]})
     elif data == "voltx_search_country":
@@ -3849,11 +3861,12 @@ def handle_callback(call):
     elif data == "add_voltx_search_country":
         user_states[chat_id] = "wait_for_add_vsc"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Range Code:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "voltx_search_country", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 Range Code:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "voltx_search_country", "style": "danger"}]]})
     elif data.startswith("del_vsc_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings.get("voltx_search_countries", [])):
-            del bot_settings["voltx_search_countries"][idx]; save_db()
+            del bot_settings["voltx_search_countries"][idx]
+            save_db()
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": "voltx_search_country", "id": call["id"]})
     elif data == "manage_voltx_srv":
@@ -3872,14 +3885,14 @@ def handle_callback(call):
     elif data == "vx_add_srv":
         user_states[chat_id] = "wait_vx_srv_name"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Service Name:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text("📝 Service Name:"), reply_markup=get_cancel_kb())
     elif data.startswith("vx_srv_"):
         srv = data.replace("vx_srv_", "")
         kb = []
         countries = bot_settings["voltx_services"].get(srv, {})
         flags_db = bot_settings.get("premium_flags", {})
         for c in countries:
-            emoji_id = "5780471598932337683"
+            emoji_id = "5780471598922337683"
             for flag_code, flag_data in flags_db.items():
                 iso = flag_data.get("iso", "").upper(); name = flag_data.get("name", "").upper()
                 if c.upper() == iso or c.upper() == name or c.upper() in name or name in c.upper():
@@ -3893,7 +3906,7 @@ def handle_callback(call):
         srv = data.replace("vx_add_cnt_", "")
         user_states[chat_id] = "wait_vx_cnt_name"
         temp_data[chat_id] = {"msg_id": msg_id, "srv": srv}
-        edit_message(chat_id, msg_id, render_body_text(f"🌍 <b>Country for</b> <b>{srv}:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text(f"🌍 Country for <b>{srv}</b>:"), reply_markup=get_cancel_kb())
     elif data.startswith("vx_cnt_"):
         parts = data.split("_"); srv, cnt = parts[2], parts[3]
         ranges = bot_settings["voltx_services"][srv].get(cnt, [])
@@ -3905,12 +3918,12 @@ def handle_callback(call):
         kb.append([{"text": "Add Range", "icon_custom_emoji_id": "5420323438508155202", "callback_data": f"vx_addr_{srv}_{cnt}", "style": "success"}])
         kb.append([{"text": "Delete Country", "icon_custom_emoji_id": "5422557736330106570", "callback_data": f"vx_del_cnt_{srv}_{cnt}", "style": "danger"}])
         kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"vx_srv_{srv}", "style": "primary"}])
-        edit_message(chat_id, msg_id, render_body_text(f"📍 <b>{srv} | {cnt}</b>\n<b>Ranges:</b> <b>{len(ranges)}</b>"), reply_markup={"inline_keyboard": kb})
+        edit_message(chat_id, msg_id, render_body_text(f"📍 <b>{srv} | {cnt}</b>\nRanges: {len(ranges)}"), reply_markup={"inline_keyboard": kb})
     elif data.startswith("vx_addr_"):
         parts = data.split("_"); srv, cnt = parts[2], parts[3]
         user_states[chat_id] = "wait_vx_addr"
         temp_data[chat_id] = {"msg_id": msg_id, "srv": srv, "cnt": cnt}
-        edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New Range for</b> <b>{cnt}:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"vx_cnt_{srv}_{cnt}", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text(f"📝 New Range for <b>{cnt}</b>:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"vx_cnt_{srv}_{cnt}", "style": "danger"}]]})
     elif data.startswith("vx_dr_"):
         parts = data.split("_"); srv, cnt, rng = parts[2], parts[3], parts[4]
         if rng in bot_settings["voltx_services"].get(srv, {}).get(cnt, []):
@@ -3934,16 +3947,18 @@ def handle_callback(call):
     elif data == "manage_fj":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
     elif data == "toggle_fj":
-        bot_settings["fj_on"] = not bot_settings["fj_on"]; save_db()
+        bot_settings["fj_on"] = not bot_settings["fj_on"]
+        save_db()
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
     elif data == "add_fj":
         user_states[chat_id] = "wait_for_add_fj"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Channel @ or ID:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_fj", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 Channel @ or ID:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_fj", "style": "danger"}]]})
     elif data.startswith("del_fj_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings["fj_channels"]):
-            del bot_settings["fj_channels"][idx]; save_db()
+            del bot_settings["fj_channels"][idx]
+            save_db()
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
 
@@ -3955,11 +3970,12 @@ def handle_callback(call):
     elif data == "add_adm":
         user_states[chat_id] = "wait_for_add_adm"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>User ID:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_admins", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 User ID:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_admins", "style": "danger"}]]})
     elif data.startswith("del_adm_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings["admins"]):
-            del bot_settings["admins"][idx]; save_db()
+            del bot_settings["admins"][idx]
+            save_db()
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['user']} <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
 
@@ -3967,21 +3983,16 @@ def handle_callback(call):
     # OTP Group
     # ==========================================
     elif data == "manage_otp_groups":
-        edit_message(chat_id, msg_id, render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
-    elif data == "edit_main_channel_link":
-        user_states[chat_id] = "wait_for_main_channel_link"
-        temp_data[chat_id] = {"msg_id": msg_id}
-        cur = bot_settings.get("main_channel_link", "") or "Not Set"
-        edit_message(chat_id, msg_id, render_body_text(f"📢 <b>Channel Link</b>\n\n<b>Current:</b> <code>{html.escape(cur)}</code>\n\n<b>Send new URL:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("🛡 <b>OTP GROUP</b>"), reply_markup=otp_groups_list_keyboard())
     elif data == "add_fw":
         user_states[chat_id] = "wait_for_add_fw_id"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Group ID/Username:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 Group ID/Username:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "danger"}]]})
     elif data.startswith("manage_fw_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings["fw_groups"]):
             grp_id = bot_settings["fw_groups"][idx]["chat_id"]
-            edit_message(chat_id, msg_id, render_body_text(f"🛡 <b>Group:</b> <b>{grp_id}</b>"), reply_markup=specific_fw_group_keyboard(idx))
+            edit_message(chat_id, msg_id, render_body_text(f"🛡 <b>Group:</b> {grp_id}"), reply_markup=specific_fw_group_keyboard(idx))
     elif data.startswith("add_fwbtn_"):
         idx = int(data.split("_")[2])
         user_states[chat_id] = "wait_for_add_fw_btn"
@@ -3991,19 +4002,21 @@ def handle_callback(call):
         parts = data.split("_"); idx, b_idx = int(parts[2]), int(parts[3])
         if 0 <= idx < len(bot_settings["fw_groups"]):
             if 0 <= b_idx < len(bot_settings["fw_groups"][idx]["buttons"]):
-                del bot_settings["fw_groups"][idx]["buttons"][b_idx]; save_db()
+                del bot_settings["fw_groups"][idx]["buttons"][b_idx]
+                save_db()
                 answer_callback(call["id"], "✅ Deleted!", show_alert=True)
-                edit_message(chat_id, msg_id, render_body_text(f"🛡 <b>Group:</b> <b>{bot_settings['fw_groups'][idx]['chat_id']}</b>"), reply_markup=specific_fw_group_keyboard(idx))
+                edit_message(chat_id, msg_id, render_body_text(f"🛡 <b>Group:</b> {bot_settings['fw_groups'][idx]['chat_id']}"), reply_markup=specific_fw_group_keyboard(idx))
     elif data.startswith("del_fw_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings["fw_groups"]):
-            del bot_settings["fw_groups"][idx]; save_db()
+            del bot_settings["fw_groups"][idx]
+            save_db()
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
-            edit_message(chat_id, msg_id, render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
+            edit_message(chat_id, msg_id, render_body_text("🛡 <b>OTP GROUP</b>"), reply_markup=otp_groups_list_keyboard())
     elif data == "edit_otp_link":
         user_states[chat_id] = "wait_for_otp_link"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>OTP Group Link:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 OTP Group Link:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "danger"}]]})
 
     # ==========================================
     # Panel Management
@@ -4021,29 +4034,22 @@ def handle_callback(call):
     elif data in ["manage_api_panels", "manage_cpt_panels"]:
         p_type = "API Panel" if data == "manage_api_panels" else "Auto Captcha Panel"
         p_list = [p for p in bot_settings["panels"] if p.get("type", "API Panel") == p_type]
-        icon = f"{PEM['world']} <b>API</b>" if p_type == 'API Panel' else f"{PEM['lock']} <b>Auto Captcha</b>"
-        text = f"{icon} <b>{p_type}s</b>\n\n"
-        text += f"👀 <b>Active Monitors:</b> <b>{len(p_list)}</b>\n\n"
-        text += f"🟢 <b>Available Providers:</b>\n"
+        icon = f"{PEM['world']} API" if p_type == 'API Panel' else f"{PEM['lock']} Auto Captcha"
+        text = f"{icon} <b>{p_type}s</b>\n\n👀 Active: {len(p_list)}\n\n"
         for p in p_list:
-            status_icon = "🟢" if p['status'] == 'ON' else "🔴"
+            status = "Monitoring" if p['status'] == 'ON' else "Stopped"
             login_state = p.get('login_status', '')
             if p['type'] == 'Auto Captcha Panel':
-                if "Active" in login_state:
-                    conf = f"✅ <b>{login_state}</b>"
-                elif login_state:
-                    conf = f"⏳ <b>{login_state}</b>"
-                else:
-                    conf = f"⚙️ <b>Configured</b>"
+                conf = f" {login_state}" if login_state else f"{PEM['ok']} Configured"
             else:
-                conf = f"✅ <b>Configured</b>" if (p.get('api_url') or p.get('curl_command')) else f"❌ <b>Not Configured</b>"
-            text += f"• <b>{p['name']}</b>: {status_icon} {conf}\n"
+                conf = f"{PEM['ok']} Configured" if p.get('api_url') else f"{PEM['no']} Not Configured"
+            text += f"• {p['name']}: {PEM['ok'] if p['status']=='ON' else PEM['no']} {status} | {conf}\n"
         edit_message(chat_id, msg_id, render_body_text(text), reply_markup=typed_panels_list_keyboard(p_type))
     elif data in ["add_api_panel", "add_cpt_panel"]:
         user_states[chat_id] = "wait_for_panel_name"
         p_type = "api" if data == "add_api_panel" else "logc"
         temp_data[chat_id] = {"msg_id": msg_id, "add_type": p_type}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Provider name:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"manage_{'api' if p_type=='api' else 'cpt'}_panels", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 New Provider Name:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"manage_{'api' if p_type=='api' else 'cpt'}_panels", "style": "danger"}]]})
     elif data in ["list_del_api", "list_del_cpt"]:
         p_type = "API Panel" if data == "list_del_api" else "Auto Captcha Panel"
         kb = []
@@ -4056,7 +4062,8 @@ def handle_callback(call):
         idx = int(data.split("_")[3])
         if 0 <= idx < len(bot_settings["panels"]):
             p_type = bot_settings["panels"][idx].get("type", "API Panel")
-            del bot_settings["panels"][idx]; save_db()
+            del bot_settings["panels"][idx]
+            save_db()
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": f"manage_{'api' if p_type=='API Panel' else 'cpt'}_panels", "id": "internal"})
     elif data.startswith("tog_pnl_"):
@@ -4066,58 +4073,24 @@ def handle_callback(call):
             p["status"] = "ON" if p["status"] == "OFF" else "OFF"
             save_db()
             if p["type"] == "Auto Captcha Panel":
-                status_icon = "🟢" if p['status'] == 'ON' else "🔴"
-                login_icon = "✅" if "Active" in str(p.get('login_status', '')) else "⏳"
-                text = (f"{PEM['gear']} <b>Configure {p['name']}</b>\n\n"
-                        f"📌 <b>Type:</b> <b>{p['type']}</b>\n"
-                        f"{status_icon} <b>Status:</b> <b>{p['status']}</b>\n"
-                        f"{login_icon} <b>Login:</b> <b>{p.get('login_status', '?')}</b>\n"
-                        f"🔗 <b>URL:</b> <code>{p.get('login_url', 'None')}</code>")
+                text = f"⚙️ <b>Configure {p['name']}</b>\n\nStatus: {'🟢 Monitoring' if p['status'] == 'ON' else '🔴 Stopped'}\nLogin: {p.get('login_status', 'Unknown')}\nURL: <code>{p.get('login_url', 'None')}</code>"
             else:
-                status_icon = "🟢" if p['status'] == 'ON' else "🔴"
-                text = (f"{PEM['gear']} <b>Configure {p['name']}</b>\n\n"
-                        f"📌 <b>Type:</b> <b>{p['type']}</b>\n"
-                        f"{status_icon} <b>Status:</b> <b>{p['status']}</b>\n"
-                        f"🌐 <b>API:</b> <code>{p.get('api_url', 'None')}</code>\n"
-                        f"🔐 <b>Token:</b> <code>{p.get('token', 'None')}</code>")
+                text = f"⚙️ <b>Configure {p['name']}</b>\n\nStatus: {'🟢 Monitoring' if p['status'] == 'ON' else '🔴 Stopped'}\nAPI: <code>{p.get('api_url', 'None')}</code>\nToken: <code>{p.get('token', 'None')}</code>"
             edit_message(chat_id, msg_id, render_body_text(text), reply_markup=panel_config_keyboard(idx))
     elif data.startswith("conf_pnl_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings["panels"]):
             p = bot_settings["panels"][idx]
             if p["type"] == "Auto Captcha Panel":
-                status_icon = "🟢" if p['status'] == 'ON' else "🔴"
-                login_icon = "✅" if "Active" in str(p.get('login_status', '')) else "⏳"
-                text = (f"{PEM['gear']} <b>Configure {p['name']}</b>\n\n"
-                        f"📌 <b>Type:</b> <b>{p['type']}</b>\n"
-                        f"{status_icon} <b>Status:</b> <b>{p['status']}</b>\n"
-                        f"{login_icon} <b>Login:</b> <b>{p.get('login_status', '?')}</b>\n"
-                        f"🔗 <b>URL:</b> <code>{p.get('login_url', 'None')}</code>\n"
-                        f"👤 <b>User:</b> <code>{p.get('username', 'None')}</code>\n"
-                        f"🔢 <b>Num Col:</b> <b>{p.get('num_col_name')}</b> (Idx: <code>{p.get('num_col_idx')}</code>)\n"
-                        f"✉️ <b>Msg Col:</b> <b>{p.get('msg_col_name')}</b> (Idx: <code>{p.get('msg_col_idx')}</code>)\n"
-                        f"🔧 <b>Svc Col:</b> <b>{p.get('service_col_name', 'None')}</b> (Idx: <code>{p.get('service_col_idx', 'None')}</code>)")
+                text = f"⚙️ <b>Configure {p['name']}</b>\n\nStatus: {'🟢' if p['status'] == 'ON' else '🔴'}\nLogin: {p.get('login_status', 'Unknown')}\nURL: <code>{p.get('login_url', 'None')}</code>"
             else:
-                status_icon = "🟢" if p['status'] == 'ON' else "🔴"
-                text = (f"{PEM['gear']} <b>Configure {p['name']}</b>\n\n"
-                        f"📌 <b>Type:</b> <b>{p['type']}</b>\n"
-                        f"{status_icon} <b>Status:</b> <b>{p['status']}</b>\n"
-                        f"🌐 <b>API:</b> <code>{p.get('api_url', 'None')}</code>\n"
-                        f"🔐 <b>Token:</b> <code>{p.get('token', 'None')}</code>\n"
-                        f"🔗 <b>Full API:</b> <code>{p.get('full_api_url', 'None')}</code>")
+                text = f"⚙️ <b>Configure {p['name']}</b>\n\nStatus: {'🟢' if p['status'] == 'ON' else '🔴'}\nAPI: <code>{p.get('api_url', 'None')}</code>\nToken: <code>{p.get('token', 'None')}</code>"
             edit_message(chat_id, msg_id, render_body_text(text), reply_markup=panel_config_keyboard(idx))
-
     elif data.startswith("api_pf|"):
         parts = data.split("|")
         idx = int(parts[1]); field = parts[2]
         p = bot_settings["panels"][idx]
-        if field == "placeholder_config":
-            current = p.get(field, "{}")
-            try:
-                parsed = json.loads(current) if current else {}
-                display = "\n".join([f"{k}: {v}" for k, v in parsed.items()]) if parsed else "None"
-            except: display = str(current)
-        elif field == "token":
+        if field == "token":
             val = p.get(field, ""); display = ('*' * len(str(val))) if val else "Not set"
         else:
             display = str(p.get(field, "")) or "Not set"
@@ -4127,48 +4100,41 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx, "p_field": field}
         user_states[chat_id] = "wait_for_api_pf_value"
         edit_message(chat_id, msg_id, render_body_text(f"✏️ <b>Edit {label}</b>\n\n<b>Current:</b>\n<code>{html.escape(display)}</code>\n\n<b>Send new value:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
-
     elif data.startswith("set_p_api_"):
         idx = int(data.split("_")[3])
         user_states[chat_id] = "wait_for_p_api"
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>API URL:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 API URL:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
     elif data.startswith("set_p_tok_"):
         idx = int(data.split("_")[3])
         user_states[chat_id] = "wait_for_p_tok"
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Token:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 Token:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
     elif data.startswith("set_p_fapi_"):
         idx = int(data.split("_")[3])
         user_states[chat_id] = "wait_for_p_fapi"
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Full API URL:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 Full API URL:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
     elif data.startswith("set_p_rec_"):
         idx = int(data.split("_")[3])
         user_states[chat_id] = "wait_for_p_rec"
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Records count (0=Unlimited):</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
-
-    # ==========================================
-    # Test Connection
-    # ==========================================
+        edit_message(chat_id, msg_id, render_body_text("📝 Records count (0=Unlimited):"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
     elif data.startswith("test_p_conn_"):
         idx = int(data.split("_")[3])
         p = bot_settings["panels"][idx]
-        wait_msg = send_message(chat_id, render_body_text("⌛ <i>Testing connection...</i>"))
+        wait_msg = send_message(chat_id, render_body_text("⏳ Testing connection..."))
         wait_msg_id = wait_msg.get("result", {}).get("message_id") if wait_msg else None
         answer_callback(call["id"])
-
         try:
-            parsed = []
-            raw_text = ""
+            parsed = []; raw_text = ""
             if p["type"] == "Auto Captcha Panel":
                 sess = panel_sessions.get(idx)
                 if not sess:
                     success = attempt_auto_login(p, idx)
                     if not success:
                         if wait_msg_id: delete_message(chat_id, wait_msg_id)
-                        send_message(chat_id, render_body_text(f"❌ <b>Login Failed!</b>\n{html.escape(str(p.get('login_status', 'Unknown')))}"))
+                        send_message(chat_id, render_body_text(f"❌ Login Failed!\n{p.get('login_status', 'Unknown')}"))
                         return
                     sess = panel_sessions.get(idx)
                 login_url = p.get("login_url", "").strip()
@@ -4178,9 +4144,16 @@ def handle_callback(call):
                 check_url = msg_link if msg_link else f"{login_url.split('/login')[0]}/client/SMSCDRStats"
                 parsed, raw_text = fetch_cpt_panel_cdrs(p, sess, check_url)
             else:
-                full_url = p.get("full_api_url", "").strip(); url = p.get("api_url", "").strip()
-                token = p.get("token", "").strip(); curl_cmd = p.get("curl_command", "").strip()
+                full_url = p.get("full_api_url", "").strip()
+                url = p.get("api_url", "").strip()
+                token = p.get("token", "").strip()
+                curl_cmd = p.get("curl_command", "").strip()
+                if not full_url and not url and not curl_cmd:
+                    if wait_msg_id: delete_message(chat_id, wait_msg_id)
+                    send_message(chat_id, render_body_text("❌ Set API URL or CURL first!")); return
+
                 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+                # Try CURL first
                 if curl_cmd:
                     try:
                         parsed_curl = parse_curl_command(curl_cmd)
@@ -4195,7 +4168,8 @@ def handle_callback(call):
                                 res = requests.get(curl_url, headers=curl_headers, timeout=15)
                             raw_text = res.text
                             parsed = parse_panel_response(raw_text, p)
-                    except Exception as _ce: print(f"Test CURL error: {_ce}")
+                    except Exception as _ce: pass
+                # Fallback URL
                 if not parsed and (full_url or url):
                     urls_to_try = []
                     if full_url: urls_to_try.append(full_url)
@@ -4214,23 +4188,22 @@ def handle_callback(call):
                             res = requests.get(try_url, headers=headers, timeout=10)
                             raw_text = res.text
                             parsed = parse_panel_response(raw_text, p)
-                            if parsed: break
+                            if parsed:
+                                if not full_url and try_url != url and token:
+                                    p["api_url"] = try_url.replace(token, "{token}")
+                                    save_db()
+                                break
                         except: pass
-                if not parsed and not curl_cmd and not full_url and not url:
-                    if wait_msg_id: delete_message(chat_id, wait_msg_id)
-                    send_message(chat_id, render_body_text("❌ <b>Set API URL first!</b>")); return
             if wait_msg_id: delete_message(chat_id, wait_msg_id)
             if parsed:
-                txt = f"{PEM['ok']} <b>Connection Successful!</b>\n\n<b>Sample (Max 3):</b>\n\n"
+                txt = f"✅ <b>Connection Successful!</b>\n\n<b>Sample (Max 3):</b>\n\n"
                 for i, sample in enumerate(parsed[:3]):
                     num = sample['number']; msg = sample['message']; otp = sample['otp']
-                    svc_name = sample.get('service_name', '').strip()
                     detected_app = detect_service(msg)
-                    app_name = detected_app if detected_app else (svc_name or p.get("name", "Unknown"))
+                    app_name = detected_app if detected_app else p.get("name", "Unknown")
                     app_full_name, prem_app_html = get_service_info_html(app_name, msg)
                     txt += f"<b>{i+1}.</b> {prem_app_html} <b>{app_full_name}</b>\n"
                     txt += f"📱 <code>{num}</code>\n📝 <code>{html.escape(msg[:120])}</code>\n🔐 <code>{otp}</code>\n"
-                    if svc_name: txt += f"🔧 <b>Raw Svc:</b> <code>{html.escape(svc_name)}</code>\n"
                     txt += "➖" * 12 + "\n"
                 send_message(chat_id, render_body_text(txt))
             else:
@@ -4249,101 +4222,72 @@ def handle_callback(call):
                                     full_table_data += f"Row {r_idx+1}: {' | '.join(col_texts)}\n"
                                 full_table_data += "\n" + "="*50 + "\n"
                             send_document(chat_id, f"Full_Panel_Data_{idx}.txt", full_table_data.encode('utf-8'))
-                            send_message(chat_id, render_body_text("⚠️ <b>Connected, but couldn't parse OTP!</b>"))
+                            send_message(chat_id, render_body_text("⚠️ Connected but couldn't parse OTP!"))
                         else:
-                            send_message(chat_id, render_body_text("⚠️ <b>Connected, no HTML Table!</b>"))
+                            send_message(chat_id, render_body_text("⚠️ Connected, no HTML Table!"))
                     except Exception as e:
-                        send_message(chat_id, render_body_text(f"❌ <b>HTML error:</b> {html.escape(str(e))}"))
+                        send_message(chat_id, render_body_text(f"❌ HTML error: {html.escape(str(e))}"))
                 else:
                     safe_html = html.escape(str(raw_text)[:300])
-                    send_message(chat_id, render_body_text(f"⚠️ <b>Connected, no OTP parsed.</b>\n\n<b>Raw:</b>\n<code>{safe_html}...</code>"))
+                    send_message(chat_id, render_body_text(f"⚠️ Connected, no OTP.\n\nRaw:\n<code>{safe_html}...</code>"))
         except Exception as e:
             if wait_msg_id: delete_message(chat_id, wait_msg_id)
-            send_message(chat_id, render_body_text(f"❌ <b>Failed!</b>\n{html.escape(str(e))}"))
+            send_message(chat_id, render_body_text(f"❌ Failed!\n{html.escape(str(e))}"))
 
     # ==========================================
-    # DXA Control
+    # STRM Control
     # ==========================================
-    elif data == "dxa_control":
+    elif data == "STRM_control":
         if chat_id in user_states: del user_states[chat_id]
-        edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
-    elif data == "dxa_toggle_w":
-        bot_settings["withdraw_on"] = not bot_settings["withdraw_on"]; save_db()
-        edit_message(chat_id, msg_id, render_body_text("🕹 <b>DXA CONTROL PANEL</b>"), reply_markup=dxa_control_keyboard())
+        edit_message(chat_id, msg_id, render_body_text("🕹 <b>STRM CONTROL PANEL</b>"), reply_markup=STRM_control_keyboard())
+    elif data == "STRM_toggle_w":
+        bot_settings["withdraw_on"] = not bot_settings["withdraw_on"]
+        save_db()
+        edit_message(chat_id, msg_id, render_body_text("🕹 <b>STRM CONTROL PANEL</b>"), reply_markup=STRM_control_keyboard())
     elif data == "manage_w_methods":
         edit_message(chat_id, msg_id, render_body_text("💳 <b>WITHDRAWAL METHODS</b>"), reply_markup=w_methods_keyboard())
     elif data == "add_wm":
         user_states[chat_id] = "wait_for_add_wm"
         temp_data[chat_id] = {"msg_id": msg_id}
-        edit_message(chat_id, msg_id, render_body_text("📝 <b>Method name:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_w_methods", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📝 Send in format:\n<code>{method_name} | {emoji_id}</code>\n\nExample:\n<code>Nagad | 5190899075968441286</code>\n\nOr just name for default emoji."), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_w_methods", "style": "danger"}]]})
     elif data.startswith("del_wm_"):
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings["w_methods"]):
-            del bot_settings["w_methods"][idx]; save_db()
+            del bot_settings["w_methods"][idx]
+            save_db()
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text("💳 <b>WITHDRAWAL METHODS</b>"), reply_markup=w_methods_keyboard())
-    elif data.startswith("dxa_"):
-        key = data.replace("dxa_", "")
+    elif data.startswith("STRM_"):
+        key = data.replace("STRM_", "")
         key_map = {"min_w": "min_withdraw", "otp_r": "otp_reward", "ref_r": "refer_reward", "cool": "cooldown", "num_req": "num_req", "num_share": "num_share", "sup_link": "support_link", "w_group": "w_group"}
         if key in key_map:
             temp_data[chat_id] = {"msg_id": msg_id, "key": key_map[key]}
-            user_states[chat_id] = "set_dxa"
-            edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New value for</b> <code>{key_map[key]}</code><b>:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_dxa_edit", "style": "danger"}]]})
+            user_states[chat_id] = "set_STRM"
+            cancel_kb = {"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_STRM_edit", "style": "danger"}]]}
+            edit_message(chat_id, msg_id, render_body_text(f"📝 New value for <code>{key_map[key]}</code>:"), reply_markup=cancel_kb)
             answer_callback(call["id"])
 
     # ==========================================
-    # Service -> Country list
+    # Service -> Country selection
     # ==========================================
-    elif data.startswith("g_s|"):
-        user_states.pop(chat_id, None); temp_data.pop(chat_id, None)
-        service = data.split("g_s|", 1)[1]
+    elif data.startswith("g_s_"):
+        service = data.split("g_s_")[1]
         local_cnts = set([b["country"] for b in number_batches.values() if b["service"] == service and b["numbers"]])
         stex_cnts = set(bot_settings.get("stex_services", {}).get(service, {}).keys())
         voltx_cnts = set(bot_settings.get("voltx_services", {}).get(service, {}).keys())
         all_countries = local_cnts.union(stex_cnts).union(voltx_cnts)
-        svc_app = get_premium_app(service)
-        svc_full_name = svc_app.get("name", service).upper()
-        svc_id = svc_app.get("id", ""); svc_char = svc_app.get("emoji", "📱")
-        if re.match(r'^[A-Za-z0-9#]{1,4}$', str(svc_char)):
-            svc_char = "📱"
-        if svc_id and str(svc_id).isdigit() and len(str(svc_id)) >= 10:
-            svc_html = f'<tg-emoji emoji-id="{svc_id}">{svc_char}</tg-emoji>'
-        else:
-            svc_html = svc_char
-        header_txt = f'📌 <b>Select a country for</b> {svc_html} <b>{html.escape(svc_full_name)}:</b>'
-        txt = render_body_text(header_txt)
+        c_msg = bot_settings["custom_messages"].get("select_country", {})
+        raw_txt = c_msg.get("text", "📌 Select country for {service}:").replace("{service}", service)
+        txt = render_body_text(raw_txt)
         flags_db = bot_settings.get("premium_flags", {})
         kb = []
-        for c in sorted(all_countries):
-            c_iso = ""
-            for b in number_batches.values():
-                if b.get("service") == service and b.get("country") == c:
-                    c_iso = b.get("country_iso", "")
-                    if c_iso: break
-            emoji_id = None
-            country_display_name = c
+        for c in all_countries:
+            emoji_id = "5780471598922337683"
             for flag_code, flag_data in flags_db.items():
                 iso = flag_data.get("iso", "").upper(); name = flag_data.get("name", "").upper()
-                if (c_iso and c_iso.upper() == iso) or c.upper() == iso or c.upper() == name or c.upper() in name or name in c.upper():
-                    if "id" in flag_data and flag_data["id"]: emoji_id = flag_data["id"]
-                    if not c_iso: country_display_name = flag_data.get("name", c)
-                    break
-            live_count = 0
-            for b in number_batches.values():
-                if b["service"] == service and b["country"] == c: live_count += len(b["numbers"])
-            live_count += len(bot_settings.get("stex_services", {}).get(service, {}).get(c, []))
-            live_count += len(bot_settings.get("voltx_services", {}).get(service, {}).get(c, []))
-            payout_val = float(bot_settings.get("otp_reward", 0.0))
-            pr = bot_settings.get("otp_pair_rates", {}); key = f"{c.upper()}|{service.upper()}"
-            if key in pr:
-                try: payout_val = float(pr[key])
-                except: pass
-            payout_str = f"${fmt_payout(payout_val)}"
-            btn_label = f"{country_display_name} | {live_count} | {payout_str}/OTP"
-            btn_obj = {"text": btn_label, "callback_data": f"g_c|{service}|{c}", "style": "success"}
-            if emoji_id: btn_obj["icon_custom_emoji_id"] = emoji_id
-            kb.append([btn_obj])
-        c_msg = bot_settings["custom_messages"].get("select_country", {})
+                if c.upper() == iso or c.upper() == name or c.upper() in name or name in c.upper():
+                    if "id" in flag_data: emoji_id = flag_data["id"]; break
+            kb.append([{"text": f"{c}", "icon_custom_emoji_id": emoji_id, "callback_data": f"g_c_{service}_{c}", "style": "success"}])
         for b in c_msg.get("buttons", []):
             b_copy = b.copy()
             if "style" not in b_copy: b_copy["style"] = "primary"
@@ -4351,18 +4295,19 @@ def handle_callback(call):
         kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "close_msg", "style": "danger"}])
         edit_message(chat_id, msg_id, txt, reply_markup={"inline_keyboard": kb})
 
-    elif data.startswith("g_c|") or data.startswith("c_n"):
+    elif data.startswith("g_c_") or data.startswith("c_n_"):
         now = time.time()
         if now - user_cooldowns.get(chat_id, 0) < bot_settings["cooldown"]:
             answer_callback(call["id"], f"⌛ Wait {int(bot_settings['cooldown'] - (now - user_cooldowns.get(chat_id, 0)))}s", show_alert=True); return
         user_cooldowns[chat_id] = now
         expire_previous_number(chat_id)
 
-        if data.startswith("c_n_s|"):
-            parts_s = data.split("|")
-            query = parts_s[1] if len(parts_s) > 1 else ""
-            service_from_cb = parts_s[2] if len(parts_s) > 2 and parts_s[2] else None
-            is_voltx_req = len(parts_s) > 3 and parts_s[3] == "vtx"
+        if data.startswith("c_n_s_"):
+            is_voltx_req = data.endswith("_vtx")
+            clean_data = data[:-4] if is_voltx_req else data
+            parts_s = clean_data.split("_", 4)
+            query = parts_s[3] if len(parts_s) > 3 else ""
+            service_from_cb = parts_s[4] if len(parts_s) > 4 else None
             allowed_countries = bot_settings.get("search_countries", [])
             voltx_allowed = bot_settings.get("voltx_search_countries", [])
             is_stex_allowed = any(query.startswith(c) for c in allowed_countries) if allowed_countries else False
@@ -4388,7 +4333,8 @@ def handle_callback(call):
                                 if resp_data.get("meta", {}).get("code") == 200 and resp_data.get("data"):
                                     num_str = str(resp_data["data"].get("no_plus_number", "")).replace("+", "")
                                     if not num_str: num_str = str(resp_data["data"].get("national_number", ""))
-                                    fetched_nums.append(num_str); voltx_assigned_numbers[num_str] = chat_id
+                                    fetched_nums.append(num_str)
+                                    voltx_assigned_numbers[num_str] = chat_id
                                     api_found = True; total_assigned_stats += 1; break
                             except: continue
                 else:
@@ -4400,12 +4346,32 @@ def handle_callback(call):
                                 if resp_data.get("meta", {}).get("code") == 200 and resp_data.get("data"):
                                     num_str = str(resp_data["data"].get("no_plus_number", "")).replace("+", "")
                                     if not num_str: num_str = str(resp_data["data"].get("national_number", ""))
-                                    fetched_nums.append(num_str); stex_assigned_numbers[num_str] = chat_id
+                                    fetched_nums.append(num_str)
+                                    stex_assigned_numbers[num_str] = chat_id
                                     api_found = True; total_assigned_stats += 1; break
                             except: continue
                 if not api_found:
                     answer_callback(call["id"], "❌ Out of stock!", show_alert=True)
                     delete_message(chat_id, wait_msg_id); return
+                for n in fetched_nums:
+                    cn_x = str(n).replace("+", "").strip()
+                    _, iso_x, _ = get_country_from_num(n)
+                    country_name_x = ""
+                    for _c, fdata in bot_settings.get("premium_flags", {}).items():
+                        if fdata.get("iso") == iso_x: country_name_x = fdata.get("name", ""); break
+                    if not country_name_x and iso_x and iso_x != "XX":
+                        for _c, cinfo in COUNTRY_DB.items():
+                            if cinfo["iso"] == iso_x: country_name_x = cinfo["name"]; break
+                    _pv = None
+                    if country_name_x and service_from_cb:
+                        _pr = bot_settings.get("otp_pair_rates", {})
+                        _pk = f"{country_name_x.upper()}|{str(service_from_cb).upper()}"
+                        if _pk in _pr:
+                            try: _pv = float(_pr[_pk])
+                            except: pass
+                    meta_entry = {"country": country_name_x, "service": service_from_cb or "", "iso": iso_x}
+                    if _pv is not None: meta_entry["payout"] = _pv
+                    assigned_number_meta[cn_x] = meta_entry
                 save_db()
             else:
                 random.shuffle(found_indices)
@@ -4419,8 +4385,9 @@ def handle_callback(call):
                     bd_country = number_batches[b_id]["country"]; bd_service = number_batches[b_id]["service"]
                     bd_iso = number_batches[b_id].get("country_iso", "")
                     _pv = float(bot_settings.get("otp_reward", 0.0))
-                    if "payout" in number_batches[b_id]:
-                        try: _pv = float(number_batches[b_id]["payout"])
+                    _pr = bot_settings.get("otp_pair_rates", {}); _pk = f"{str(bd_country).upper()}|{str(bd_service).upper()}"
+                    if _pk in _pr:
+                        try: _pv = float(_pr[_pk])
                         except: pass
                     assigned_number_meta[cn] = {"country": bd_country, "service": bd_service, "iso": bd_iso, "payout": _pv}
                     if n_obj["shares"] >= bot_settings.get("num_share", 1):
@@ -4440,33 +4407,36 @@ def handle_callback(call):
             for num in fetched_nums:
                 _, iso = get_flag_and_code(num)
                 display_num = f"+{num}" if not str(num).startswith("+") else str(num)
-                emoji_id = "5780471598932337683"
+                emoji_id = "5780471598922337683"
                 for flag_code, flag_data in flags_db.items():
                     if iso == flag_data.get("iso"):
                         if "id" in flag_data: emoji_id = flag_data["id"]; break
                 kb.append([{"text": f"{display_num}", "icon_custom_emoji_id": emoji_id, "copy_text": {"text": display_num}, "style": "primary"}])
-            vtx_field = "vtx" if is_voltx_req else ""
-            srv_field = service_from_cb or ""
-            kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_s|{query}|{srv_field}|{vtx_field}", "style": "danger"},
+            vtx_ext = "_vtx" if is_voltx_req else ""
+            srv_ext = f"_{service_from_cb}" if service_from_cb else ""
+            kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_s_{query}{srv_ext}{vtx_ext}", "style": "danger"},
                        {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
+            c_btns = bot_settings["custom_messages"].get("search_number", {}).get("buttons", [])
+            for c_b in c_btns:
+                b_copy = c_b.copy()
+                if "style" not in b_copy: b_copy["style"] = "primary"
+                kb.append([b_copy])
             kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
-            hdr_country = ""
-            if fetched_nums:
-                try:
+            hdr_country = query
+            try:
+                if fetched_nums:
                     _, iso_x, _ = get_country_from_num(fetched_nums[0])
                     if iso_x and iso_x != "XX":
                         for cn2, ci2 in COUNTRY_DB.items():
                             if ci2["iso"] == iso_x: hdr_country = ci2["name"]; break
-                    else: hdr_country = query
-                except: hdr_country = query
-            else: hdr_country = query
-            text_numbers = build_numbers_header(hdr_country)
-            edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
+            except: pass
+            header_txt = build_numbers_header(hdr_country, service_from_cb)
+            edit_message(chat_id, wait_msg_id, header_txt, reply_markup={"inline_keyboard": kb})
             user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
             return
 
-        parts = data.split("|")
-        service = parts[1]; country = parts[2]
+        parts = data.split("_")
+        service = parts[2]; country = parts[3]
         available_indices = []
         for b_id, b_data in number_batches.items():
             if b_data["service"] == service and b_data["country"] == country:
@@ -4481,19 +4451,20 @@ def handle_callback(call):
             elif voltx_srv_data and len(voltx_srv_data) > 0: target_range = random.choice(voltx_srv_data); is_voltx = True
             if target_range:
                 user_cooldowns[chat_id] = 0
-                vtx_flag = "vtx" if is_voltx else ""
-                handle_callback({"message": call["message"], "data": f"c_n_s|{target_range}|{service}|{vtx_flag}", "id": call["id"]})
+                vtx_flag = "_vtx" if is_voltx else ""
+                handle_callback({"message": call["message"], "data": f"c_n_s_{target_range}_{service}{vtx_flag}", "id": call["id"]})
                 return
             else:
                 answer_callback(call["id"], "❌ Out of stock!", show_alert=True)
-                if data.startswith("c_n"): delete_message(chat_id, msg_id)
+                if data.startswith("c_n_"): delete_message(chat_id, msg_id)
                 return
         random.shuffle(available_indices)
         fetched_nums = []
         for b_id, idx in available_indices:
             if len(fetched_nums) >= bot_settings["num_req"]: break
             n_obj = number_batches[b_id]["numbers"][idx]
-            fetched_nums.append(n_obj["num"]); n_obj["shares"] += 1; n_obj["used_by"].append(chat_id)
+            fetched_nums.append(n_obj["num"])
+            n_obj["shares"] += 1; n_obj["used_by"].append(chat_id)
             total_assigned_stats += 1
             cn = n_obj["num"].replace("+", "").strip()
             bd_country = number_batches[b_id]["country"]; bd_service = number_batches[b_id]["service"]
@@ -4510,12 +4481,11 @@ def handle_callback(call):
         save_db()
         if not fetched_nums:
             answer_callback(call["id"], "❌ All taken!", show_alert=True)
-            if data.startswith("c_n"): delete_message(chat_id, msg_id)
+            if data.startswith("c_n_"): delete_message(chat_id, msg_id)
             return
         app_full_name, _ = get_service_info_html(service)
         emoji_id = "5337302974806922068"
-        apps_db = bot_settings.get("premium_apps", {})
-        for app_key, app_data in apps_db.items():
+        for app_key, app_data in bot_settings.get("premium_apps", {}).items():
             if service.upper() == app_key or service.upper() in app_key or app_key in service.upper():
                 if "id" in app_data: emoji_id = app_data["id"]; break
         kb = [[{"text": f"{app_full_name}", "icon_custom_emoji_id": emoji_id, "callback_data": "ignore", "style": "success"}]]
@@ -4523,22 +4493,31 @@ def handle_callback(call):
         for num in fetched_nums:
             _, iso = get_flag_and_code(num)
             display_num = f"+{num}" if not num.startswith("+") else num
-            emoji_id = "5780471598932337683"
+            emoji_id = "5780471598922337683"
             for flag_code, flag_data in flags_db.items():
                 if iso == flag_data.get("iso"):
                     if "id" in flag_data: emoji_id = flag_data["id"]; break
             kb.append([{"text": f"{display_num}", "icon_custom_emoji_id": emoji_id, "copy_text": {"text": display_num}, "style": "primary"}])
-        kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n|{service}|{country}", "style": "danger"},
+        kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_{service}_{country}", "style": "danger"},
                    {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
+        c_btns = bot_settings["custom_messages"].get("get_number", {}).get("buttons", [])
+        for c_b in c_btns:
+            b_copy = c_b.copy()
+            if "style" not in b_copy: b_copy["style"] = "primary"
+            kb.append([b_copy])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
-        text_numbers = build_numbers_header(country, service)
+        header_txt = build_numbers_header(country, service)
         try:
-            edit_message(chat_id, msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
+            edit_message(chat_id, msg_id, header_txt, reply_markup={"inline_keyboard": kb})
             user_active_sessions[chat_id] = {"msg_id": msg_id, "nums": fetched_nums}
         except:
-            msg_res = send_message(chat_id, text_numbers, reply_markup={"inline_keyboard": kb})
-            if msg_res and "result" in msg_res: user_active_sessions[chat_id] = {"msg_id": msg_res["result"]["message_id"], "nums": fetched_nums}
+            msg_res = send_message(chat_id, header_txt, reply_markup={"inline_keyboard": kb})
+            if msg_res and "result" in msg_res:
+                user_active_sessions[chat_id] = {"msg_id": msg_res["result"]["message_id"], "nums": fetched_nums}
 
+    # ==========================================
+    # WITHDRAWAL APPROVE/REJECT
+    # ==========================================
     elif data.startswith("wapp_") or data.startswith("wrej_"):
         user_id_clicked = call["from"]["id"]
         if not is_admin(user_id_clicked):
@@ -4549,20 +4528,33 @@ def handle_callback(call):
             req_data = pending_withdrawals[req_id]
             u_id, amt = req_data["user_id"], req_data["amount"]
             num = req_data["number"]; full_name = req_data.get("full_name", u_id)
-            if action == "APPROVE" and len(num) >= 7: masked_num = f"{num[:4]}...{num[-3:]}"
-            else: masked_num = num
+            if action == "APPROVE" and len(num) >= 7:
+                masked_num = f"{num[:4]}❖STRM❖{num[-3:]}"
+            else:
+                masked_num = num
             status_text = "APPROVED" if action == "APPROVE" else "REJECTED"
             emoji_icon_id = "5352694861990501856" if action == "APPROVE" else "5420130255174145507"
-            new_text = f"🎙 <b>WITHDRAWAL {status_text}</b>\n\n👤 <a href='tg://user?id={u_id}'>{full_name}</a>\n💳 <b>{amt}</b>\n🍏 <code>{masked_num}</code>\n🏦 <b>{req_data['method']}</b>\n\n🧾 <b>{req_id}</b>"
+            frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
+            web_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>'
+            method_icon = get_wmethod_emoji_html(req_data['method'])
+            new_text = (
+                f"🎙 <b>WITHDRAWAL {status_text}</b> {web_emoji}\n"
+                f"{frog_emoji} <b>USER ID :</b><code>{u_id}</code>\n"
+                f"👤 <b>User :</b> <a href='tg://user?id={u_id}'>{full_name}</a>\n"
+                f"💸 <b>BALANCE:</b> <code>{amt}</code>\n"
+                f"🍏 <b>NUMBER :</b> <code>{masked_num}</code>\n"
+                f"🏦 <b>METHOD :</b> {method_icon} <b>{req_data['method']}</b>\n\n"
+                f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>"
+            )
             kb = {"inline_keyboard": [[{"text": status_text, "icon_custom_emoji_id": emoji_icon_id, "callback_data": "ignore", "style": "success" if action == "APPROVE" else "danger"}]]}
             edit_message(chat_id, msg_id, render_body_text(new_text), reply_markup=kb)
-            if action == "REJECT":
-                update_balance(u_id, amt)
-                send_message(u_id, render_body_text(f"❌ <b>Your</b> <b>{amt}</b> <b>withdrawal rejected. Balance refunded.</b>"))
+            if action == "APPROVE":
+                update_balance(u_id, -amt)
+                send_message(u_id, render_body_text(f"{PEM['ok']} Your {amt} ৳ withdrawal has been paid successfully!"))
             else:
-                send_message(u_id, render_body_text(f"{PEM['ok']} <b>Your</b> <b>{amt}</b> <b>withdrawal paid!</b>"))
+                send_message(u_id, render_body_text(f"❌ Your {amt} ৳ withdrawal request was rejected."))
             if db:
-                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"}, timeout=5.0)
+                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"})
                 except: pass
             del pending_withdrawals[req_id]
         else:
@@ -4576,7 +4568,8 @@ def voltx_sms_listener():
     global processed_otps, recent_traffic, voltx_assigned_numbers
     while True:
         try:
-            for api_key in bot_settings.get("voltx_keys", []):
+            voltx_keys = bot_settings.get("voltx_keys", [])
+            for api_key in voltx_keys:
                 try:
                     res = requests.get(f"{VOLTX_BASE_URL}/success-otp", headers={"mauthapi": api_key}, timeout=10)
                     resp_data = res.json()
@@ -4594,7 +4587,7 @@ def voltx_sms_listener():
                                 processed_otps.add(unique_id)
                                 if len(processed_otps) > 5000: processed_otps.clear()
                                 char, iso = get_flag_and_code(num)
-                                app_full_name, _ = get_service_info_html(app_name, msg_text)
+                                app_full_name, prem_app_html = get_service_info_html(app_name, msg_text)
                                 current_time = time.time()
                                 recent_traffic = [t for t in recent_traffic if current_time - t.get("time", 0) <= 3600]
                                 recent_traffic.append({"service": app_full_name, "iso": iso, "flag": char, "number": num, "time": current_time})
@@ -4603,10 +4596,7 @@ def voltx_sms_listener():
                                 lang = detect_language(msg_text)
                                 display_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=True))
                                 for fw in bot_settings.get("fw_groups", []):
-                                    kb = [[{"text": f"{otp}", "icon_custom_emoji_id": COPY_EMOJI, "copy_text": {"text": otp}, "style": "success"}]]
-                                    kb.append([{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI, "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}])
-                                    ch_link = bot_settings.get("main_channel_link", "")
-                                    if ch_link: kb.append([{"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI, "url": ch_link, "style": "primary"}])
+                                    kb = [[{"text": f"{otp}", "icon_custom_emoji_id": "5353022963132174959", "copy_text": {"text": otp}, "style": "success"}]]
                                     for btn in fw.get("buttons", []):
                                         b_obj = {"text": btn["text"], "url": btn["url"], "style": "primary"}
                                         if "icon_custom_emoji_id" in btn: b_obj["icon_custom_emoji_id"] = btn["icon_custom_emoji_id"]
@@ -4626,25 +4616,16 @@ def voltx_sms_listener():
                                         if clean_vtx == clean_api_num or (len(clean_vtx) >= 8 and clean_vtx.endswith(clean_api_num[-8:])) or (len(clean_api_num) >= 8 and clean_api_num.endswith(clean_vtx[-8:])):
                                             owner_id = n_owner; break
                                 if owner_id:
-                                    reward = float(bot_settings.get("otp_reward", 0.0))
-                                    meta = assigned_number_meta.get(clean_api_num, {})
-                                    if "payout" in meta:
-                                        try: reward = float(meta["payout"])
-                                        except: pass
-                                    else:
-                                        oc = meta.get("country", ""); osvc = meta.get("service", "")
-                                        if oc and osvc:
-                                            pr = bot_settings.get("otp_pair_rates", {}); k = f"{oc.upper()}|{osvc.upper()}"
-                                            if k in pr:
-                                                try: reward = float(pr[k])
-                                                except: pass
+                                    reward = get_payout_for_number(clean_api_num, app_full_name)
                                     if reward > 0: update_balance(owner_id, reward)
                                     new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
-                                    it, ik = deliver_to_inbox(owner_id, app_full_name, display_num, msg_text, new_bal, reward, lang)
-                                    it = render_body_text(it)
-                                    send_message(owner_id, it, reply_markup=ik)
+                                    inbox_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=False))
+                                    inbox_kb = [[{"text": f"{otp}", "icon_custom_emoji_id": "5353022963132174959", "copy_text": {"text": otp}, "style": "success"}]]
+                                    if reward > 0:
+                                        inbox_kb.append([{"text": f"Added {reward} tk", "icon_custom_emoji_id": "5420396762189831222", "callback_data": "ignore", "style": "primary"}])
+                                    send_message(owner_id, inbox_msg, reply_markup={"inline_keyboard": inbox_kb})
                                     if db:
-                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)}, timeout=5.0)
+                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)})
                                         except: pass
                 except: pass
         except: pass
@@ -4658,7 +4639,8 @@ def global_sms_listener():
     global processed_otps, recent_traffic, stex_assigned_numbers
     while True:
         try:
-            for api_key in bot_settings.get("stex_keys", []):
+            stex_keys = bot_settings.get("stex_keys", [])
+            for api_key in stex_keys:
                 try:
                     res = requests.get(f"{STEX_BASE_URL}/success-otp", headers={"mauthapi": api_key}, timeout=10)
                     resp_data = res.json()
@@ -4676,7 +4658,7 @@ def global_sms_listener():
                                 processed_otps.add(unique_id)
                                 if len(processed_otps) > 5000: processed_otps.clear()
                                 char, iso = get_flag_and_code(num)
-                                app_full_name, _ = get_service_info_html(app_name, msg_text)
+                                app_full_name, prem_app_html = get_service_info_html(app_name, msg_text)
                                 current_time = time.time()
                                 recent_traffic = [t for t in recent_traffic if current_time - t.get("time", 0) <= 3600]
                                 recent_traffic.append({"service": app_full_name, "iso": iso, "flag": char, "number": num, "time": current_time})
@@ -4685,10 +4667,7 @@ def global_sms_listener():
                                 lang = detect_language(msg_text)
                                 display_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=True))
                                 for fw in bot_settings.get("fw_groups", []):
-                                    kb = [[{"text": f"{otp}", "icon_custom_emoji_id": COPY_EMOJI, "copy_text": {"text": otp}, "style": "success"}]]
-                                    kb.append([{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI, "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}])
-                                    ch_link = bot_settings.get("main_channel_link", "")
-                                    if ch_link: kb.append([{"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI, "url": ch_link, "style": "primary"}])
+                                    kb = [[{"text": f"{otp}", "icon_custom_emoji_id": "5353022963132174959", "copy_text": {"text": otp}, "style": "success"}]]
                                     for btn in fw.get("buttons", []):
                                         b_obj = {"text": btn["text"], "url": btn["url"], "style": "primary"}
                                         if "icon_custom_emoji_id" in btn: b_obj["icon_custom_emoji_id"] = btn["icon_custom_emoji_id"]
@@ -4708,25 +4687,16 @@ def global_sms_listener():
                                         if clean_stex == clean_api_num or (len(clean_stex) >= 8 and clean_stex.endswith(clean_api_num[-8:])) or (len(clean_api_num) >= 8 and clean_api_num.endswith(clean_stex[-8:])):
                                             owner_id = n_owner; break
                                 if owner_id:
-                                    reward = float(bot_settings.get("otp_reward", 0.0))
-                                    meta = assigned_number_meta.get(clean_api_num, {})
-                                    if "payout" in meta:
-                                        try: reward = float(meta["payout"])
-                                        except: pass
-                                    else:
-                                        oc = meta.get("country", ""); osvc = meta.get("service", "")
-                                        if oc and osvc:
-                                            pr = bot_settings.get("otp_pair_rates", {}); k = f"{oc.upper()}|{osvc.upper()}"
-                                            if k in pr:
-                                                try: reward = float(pr[k])
-                                                except: pass
+                                    reward = get_payout_for_number(clean_api_num, app_full_name)
                                     if reward > 0: update_balance(owner_id, reward)
                                     new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
-                                    it, ik = deliver_to_inbox(owner_id, app_full_name, display_num, msg_text, new_bal, reward, lang)
-                                    it = render_body_text(it)
-                                    send_message(owner_id, it, reply_markup=ik)
+                                    inbox_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=False))
+                                    inbox_kb = [[{"text": f"{otp}", "icon_custom_emoji_id": "5353022963132174959", "copy_text": {"text": otp}, "style": "success"}]]
+                                    if reward > 0:
+                                        inbox_kb.append([{"text": f"Added {reward} tk", "icon_custom_emoji_id": "5420396762189831222", "callback_data": "ignore", "style": "primary"}])
+                                    send_message(owner_id, inbox_msg, reply_markup={"inline_keyboard": inbox_kb})
                                     if db:
-                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)}, timeout=5.0)
+                                        try: db.collection('users').document(str(owner_id)).update({"total_otps": firestore.Increment(1)})
                                         except: pass
                 except: pass
         except: pass
@@ -4734,19 +4704,45 @@ def global_sms_listener():
 
 
 # ==========================================
-# Main
+# Helper: Emoji TXT Generator
+# ==========================================
+def generate_emoji_txt(mode="flags"):
+    lines = []
+    if mode == "flags":
+        lines.append("# flag.txt - Format: CountryName (calling_code) (ISO) { \"emoji\": \"🇧🇩\", \"id\": \"5911365056594973179\" }")
+        for code, data in bot_settings.get("premium_flags", {}).items():
+            char = data.get("char", "")
+            iso = data.get("iso", "")
+            name = data.get("name", "")
+            eid = data.get("id", "")
+            if char and eid:
+                lines.append(f'{name} ({code}) ({iso}) {{ "emoji": "{char}", "id": "{eid}" }}')
+    else:
+        lines.append("# service.txt - Format: ServiceName { \"emoji\": \"📱\", \"id\": \"5334807341109908955\" }")
+        for name, data in bot_settings.get("premium_apps", {}).items():
+            char = data.get("char", "")
+            eid = data.get("id", "")
+            if char and eid:
+                lines.append(f'{name} {{ "emoji": "{char}", "id": "{eid}" }}')
+    if len(lines) <= 1:
+        return None
+    return "\n".join(lines).encode('utf-8')
+
+
+# ==========================================
+# Polling Loop / Main
 # ==========================================
 def main():
     global BOT_USERNAME
     res = api_call("getMe")
     if res.get("ok"): BOT_USERNAME = res["result"]["username"]
     print(f"🤖 Bot is starting... @{BOT_USERNAME}")
-    api_call("deleteWebhook", {"drop_pending_updates": True})
-    print("🔗 Webhook cleared")
+
     threading.Thread(target=panel_monitor_thread, daemon=True).start()
     threading.Thread(target=global_sms_listener, daemon=True).start()
     threading.Thread(target=voltx_sms_listener, daemon=True).start()
-    print("📡 Background APIs & Global SMS Listener Started!")
+    print("📡 Background APIs & SMS Listeners Started!")
+
     executor = ThreadPoolExecutor(max_workers=500)
     offset = None
     while True:
@@ -4761,7 +4757,6 @@ def main():
                         executor.submit(handle_callback, update["callback_query"])
         except Exception as e:
             time.sleep(2)
-
 
 if __name__ == "__main__":
     main()
