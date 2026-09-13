@@ -1,9 +1,12 @@
+import os
+os.environ["GRPC_DNS_RESOLVER"] = "native"
+
 import requests
 import time
 import json
-import os
 import zipfile
 import io
+import glob
 import firebase_admin
 from firebase_admin import credentials, firestore
 import uuid
@@ -427,34 +430,60 @@ DEFAULT_CUSTOM_MESSAGES = {
 }
 
 # ==========================================
-# 🔥 Firebase Setup — FIXED (Simple Sync Init)
-# Same approach as working main.py — no thread, no ping, no timeout
+# 🔥 Firebase Setup — FILE-BASED (Bulletproof)
+# Bot works even if Firebase is down!
 # ==========================================
-firebase_credentials_json = r"""
-{
-  "type": "service_account",
-  "project_id": "good-boy-cac01",
-  "private_key_id": "4c2475b848c995d79503f420862cd6f0cefee505",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDjuCd673MJLhpy\nNZAp+wqa61XpoE1xQItawE5rzYtlbrNvBXrha+qY7fsT2TdC0qPcsO/63LBvvPV9\nyWVfW9pYc5KclNGe3I4myUX/HZgVbO2mktWwovaap+kEQmTuKjdYeQ2Or+TpF76s\nWNd0DcxDzV1Y/SQKXnRGsIdH7F9G+h7fWURAnaQjD6sZH1U4E08QoVAt1L46UB4P\nOKXBJF9QLzq5vKx4cxAD6fEsExC8WYGzplYiYrnJt0i1Tnp5idftBUYmi7i4HiUx\nW847zkRWu/D/J025DbbYjqnYYU9qBRjEh2ULjUTYSA0ppS563H6tK/hQZAHYyyuv\niSq77XJZAgMBAAECggEAS4NjUDB8SLSJn4rkkg9F/oaAuFbop2Acdg0kVDpWed3i\nUbQTAhKbunfcVUIoQZgBL6tbASjSt1MFY194Js2aU8+LdDIjaxc/alw/QnCpYJ19\nF0pE42y+8x0wN7Her12/ea620LTCZ4twts1FMR5sOKWuyVY0b93PmCtsyOx40dt6\nPOitW5WMeXlZpY0eiQ33FmQaNeIhf2csA8AUKojVw4YRYx5ydFLq3IBdW/LE4IjD\nELZEJLDQ9u3g+/XxA4V5L0iEi6dZklg4Gk3Z0OeGWvapgQV1IR8lFdKiVITs/4AV\n7hPw9w44dyVVgbbUStgmlwo6AUE/cfhlgIkMLK82gwKBgQD8SFDeITXn6GtE/WxG\ntXp+tooW/7os2vNzudmAMe9gaT2xuecWcE+ggdBSXUpR5KshbSVca/kT6v6fkAGU\ntJ1ckEHDKDLr0UGGS9bkl5KO4j+FTW30ZadixWpAp9u0RbYilqU0XpOxQdi8oQK5\nEifAE+/OXSx1Cy7yizkJhaeucwKBgQDnEy3OyYPyWyTmqPmP+kQL1y6OusQJT9om\nAKDQI2r3Xuiqih9v9nz7W0KV5I6mjKY/OmJ0ysk1QpWtJZJ62imakD/7l0tZ8UWD\nP+SMvSAZq4gnTj7tgBaYhsAeHcuTnBIRXtjRp9e7xnlv9gue8RpEiUOYpKNjy7u3\nXeunOcc9AwKBgCSdul8DIvfN3APfZF++51CM3e4In9Ty0nLxfogEt2Ge5L1u5gNz\nuZrqPHo34BmSvuPTG6EWashhSyONmy0iKdTNez4AD6P6czAywbXb6gGjBOUsH9Fh\nD7JeRNWth03a8FyE0OWQ9I69p9943xRNdkeCnUOuck1qmh3J5zVimLvRAoGBAMv3\n0PJ8TH0MWQlF1Gxzk8cD3TPdxhcWJlBvM4QmD1BltWh73X4eDHpvNtpK0mRPOJwN\nNEU1jt/1c1tQE/lfQ2QMun2hMcElyJ8vMdXNR12BXQCc/8zyyH9ASqsKz9zu4b/1\ngdumlTZJ3n2mqOFWn0IqC8HcaeE4P+1++Pk2dhjzAoGABu7mfhtal5WYxpa9u8Lv\nZUjlWcn+6B9ePWs0DNwbPPUD+Q/22kk9ZjW+JnZzPNqfEuqZ0KAX8CreukDhLHa9\n44ZAMF7GW/cemJNckK+4WCS2FhrHY6sqemPLLeK8cVjJycSz3i5UD+q2EDUNmXYN\nRIBb4t9Yn1KjYNHdvKmX88k=\n-----END PRIVATE KEY-----\n",
-  "client_email": "firebase-adminsdk-fbsvc@good-boy-cac01.iam.gserviceaccount.com",
-  "client_id": "105200390950507571801",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40good-boy-cac01.iam.gserviceaccount.com",
-  "universe_domain": "googleapis.com"
-}
-"""
+db = None
 
-try:
-    cred_dict = json.loads(firebase_credentials_json)
-    cred = credentials.Certificate(cred_dict)
-    firebase_admin.initialize_app(cred)
-    db = firestore.client()
-    print("✅ Firebase Connected! (Full Sync Enabled)")
-except Exception as e:
-    print(f"❌ Firebase Error: {e}")
-    db = None
+def _init_firebase():
+    """Initialize Firebase from JSON file. Returns db or None."""
+    global db
+    try:
+        # Auto-detect Firebase JSON file (firebase-adminsdk / serviceAccount)
+        json_files = (glob.glob("*firebase-adminsdk*.json") 
+                      + glob.glob("*storm_bot_data*.json") 
+                      + glob.glob("*storm-bot-data*.json")
+                      + glob.glob("*sadikul*.json")
+                      + glob.glob("*serviceAccount*.json"))
+        
+        # Filter only valid firebase credential files
+        valid_files = []
+        for f in json_files:
+            try:
+                with open(f, "r", encoding="utf-8") as fh:
+                    d = json.load(fh)
+                    if d.get("type") == "service_account" and "private_key" in d:
+                        valid_files.append(f)
+            except: pass
+        
+        if not valid_files:
+            print("⚠️ Firebase JSON file not found — running in LOCAL-ONLY mode")
+            print("   → Firebase Console থেকে key download করে bot.py-এর পাশে রাখুন")
+            db = None
+            return
+        
+        creds_path = valid_files[0]
+        print(f"📁 Firebase credentials: {creds_path}")
+        
+        cred = credentials.Certificate(creds_path)
+        firebase_admin.initialize_app(cred)
+        db = firestore.client()
+        
+        # Quick verification with timeout — hang হবে না
+        try:
+            db.collection('_health_check_').document('x').get(timeout=6.0)
+            print("✅ Firebase Connected & VERIFIED! (Full Sync Enabled)")
+        except Exception as _ve:
+            print(f"⚠️ Firebase connected but health-check failed: {type(_ve).__name__}")
+            print("⚠️ Running in LOCAL-ONLY mode (bot still works)")
+            db = None
+            
+    except Exception as e:
+        print(f"❌ Firebase Init Error: {type(e).__name__}: {str(e)[:150]}")
+        print("⚠️ Running in LOCAL-ONLY mode (bot still works)")
+        db = None
+
+_init_firebase()
 
 bot_settings = {
     "admins": [OWNER_ID],
@@ -700,7 +729,7 @@ def load_db():
     if db:
         try:
             print("   -> Fetching Firestore config...")
-            doc = db.collection('settings').document('bot_config').get()
+            doc = db.collection('settings').document('bot_config').get(timeout=8.0)
             if doc.exists:
                 fs_data = doc.to_dict()
                 for k in FS_KEYS:
@@ -708,8 +737,10 @@ def load_db():
                 print("✅ Config Loaded from Firestore!")
             else:
                 fs_data = {k: bot_settings[k] for k in FS_KEYS}
-                db.collection('settings').document('bot_config').set(fs_data)
-                print("✅ Firestore Config Initialized!")
+                try:
+                    db.collection('settings').document('bot_config').set(fs_data, timeout=8.0)
+                    print("✅ Firestore Config Initialized!")
+                except: pass
         except Exception as e:
             print(f"Firestore load skipped ({type(e).__name__}): {str(e)[:100]}")
             print("   -> Continuing with local DB only.")
@@ -781,9 +812,9 @@ def _sync_fs():
     if not db: return
     fs_data = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
     try:
-        db.collection('settings').document('bot_config').set(fs_data)
+        db.collection('settings').document('bot_config').set(fs_data, timeout=8.0)
     except Exception as e:
-        print(f"Firestore sync failed: {e}")
+        print(f"Firestore sync failed: {type(e).__name__}")
 
 
 def save_db():
@@ -1113,7 +1144,7 @@ def extract_otp_code(text):
     if digit_matches: return digit_matches[0]
     return None
     # ==========================================
-# User Cache / Balance / OTP Credit
+# User Cache / Balance / OTP Credit — with timeouts
 # ==========================================
 user_cache = {}
 
@@ -1125,7 +1156,7 @@ def get_user(user_id):
         return new_user
     try:
         doc_ref = db.collection('users').document(str(user_id))
-        doc = doc_ref.get()
+        doc = doc_ref.get(timeout=5.0)                        # ⭐ timeout
         if doc.exists:
             data = doc.to_dict()
             if "total_otps" not in data: data["total_otps"] = 0
@@ -1135,7 +1166,9 @@ def get_user(user_id):
             return data
         else:
             new_user = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
-            doc_ref.set(new_user)
+            try:
+                doc_ref.set(new_user, timeout=5.0)             # ⭐ timeout
+            except: pass
             user_cache[user_id] = new_user
             return new_user
     except Exception as e:
@@ -1145,7 +1178,6 @@ def get_user(user_id):
 
 
 def update_balance(user_id, amount):
-    """Update balance (adds amount). Refreshes cache immediately."""
     if user_id not in user_cache:
         get_user(user_id)
     if user_id in user_cache:
@@ -1153,15 +1185,12 @@ def update_balance(user_id, amount):
     if not db: return
     try:
         doc_ref = db.collection('users').document(str(user_id))
-        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True)
+        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True, timeout=5.0)   # ⭐ timeout
     except: pass
 
 
 def credit_otp_to_user(owner_id, reward, app_full_name=""):
-    """
-    Atomically credit balance AND increment OTP count in cache + DB.
-    Called on every OTP delivered to a user's DM.
-    """
+    """Atomically credit balance AND increment OTP count in cache + DB."""
     try:
         reward = float(reward)
     except:
@@ -1180,9 +1209,9 @@ def credit_otp_to_user(owner_id, reward, app_full_name=""):
                 "user_id": owner_id,
                 "balance": firestore.Increment(reward),
                 "total_otps": firestore.Increment(1)
-            }, merge=True)
+            }, merge=True, timeout=5.0)                        # ⭐ timeout
         except Exception as e:
-            print(f"credit_otp_to_user DB error for {owner_id}: {e}")
+            print(f"credit_otp_to_user DB error for {owner_id}: {type(e).__name__}")
 
     return reward
 
@@ -1201,12 +1230,12 @@ def add_referral(inviter_id, new_user_id):
         send_message(inviter_id, render_body_text(ref_msg))
         return
     try:
-        doc = db.collection('users').document(str(new_user_id)).get()
+        doc = db.collection('users').document(str(new_user_id)).get(timeout=5.0)   # ⭐
         if not doc.exists:
             get_user(new_user_id)
             reward = bot_settings.get("refer_reward", 0.2)
             update_balance(inviter_id, reward)
-            db.collection('users').document(str(inviter_id)).update({"total_refers": firestore.Increment(1)})
+            db.collection('users').document(str(inviter_id)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)   # ⭐
             ref_msg = (
                 f"{PEM['gift']} <b>New Referral !</b>\n"
                 f"------------------\n"
@@ -1225,7 +1254,6 @@ def get_payout_for_number(clean_api_num, service_hint=""):
     reward = float(bot_settings.get("otp_reward", 0.0))
     meta = assigned_number_meta.get(clean_api_num, {})
 
-    # 1) Exact payout stored at assignment time
     if "payout" in meta:
         try:
             return float(meta["payout"])
@@ -1238,7 +1266,6 @@ def get_payout_for_number(clean_api_num, service_hint=""):
 
     pr = bot_settings.get("otp_pair_rates", {})
 
-    # 2) Exact country|service key match
     if oc and osvc:
         key = f"{oc.upper()}|{osvc.upper()}"
         if key in pr:
@@ -1247,7 +1274,6 @@ def get_payout_for_number(clean_api_num, service_hint=""):
             except:
                 pass
 
-    # 3) Match by ISO (from meta) against keys
     if meta_iso:
         for k, v in pr.items():
             try:
@@ -1266,7 +1292,6 @@ def get_payout_for_number(clean_api_num, service_hint=""):
             except:
                 continue
 
-    # 4) Country-name exact match
     if oc:
         for k, v in pr.items():
             try:
@@ -1284,7 +1309,6 @@ def get_payout_for_number(clean_api_num, service_hint=""):
             except:
                 continue
 
-    # 5) Detect from number
     try:
         _, iso_det, _ = get_country_from_num(clean_api_num)
         if iso_det and iso_det != "XX":
@@ -1468,12 +1492,11 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
 
 # ==========================================
 # 🎯 build_numbers_header — FIXED FORMAT
-# ==========================================
-# Old format:
+# Old:
 #   ⚙️ THIS IS YOUR📱BANGLADESH🇧🇩 NUMBERS📱
 #   💰0.004/OTP🪨 📵
 #
-# NEW format (as requested):
+# NEW (as requested):
 #                  💰{country_payout}/OTP📵
 #
 #   ⚙️THIS IS YOUR📱{country_name}{country_flag_emoji}NUMBERS📱
@@ -1485,7 +1508,6 @@ def build_numbers_header(country, service=None):
     NOPHONE_ICON   = "6266787022111773140"   # 📵
     flag_html = get_flag_info_html(country)
 
-    # Payout resolution
     payout_val = float(bot_settings.get("otp_reward", 0.0))
     pr = bot_settings.get("otp_pair_rates", {})
     if service:
@@ -1714,7 +1736,7 @@ def is_user_banned(user_id):
     banned = False
     if db:
         try:
-            doc = db.collection('users').document(str(user_id)).get()
+            doc = db.collection('users').document(str(user_id)).get(timeout=5.0)   # ⭐
             banned = doc.exists and doc.to_dict().get("banned", False)
         except: pass
     user_banned_cache[user_id] = {'banned': banned, 'time': time.time()}
@@ -1762,7 +1784,7 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
 
 
 # ==========================================
-# Panel monitor (uses credit_otp_to_user)
+# Panel monitor
 # ==========================================
 def panel_monitor_thread():
     global processed_otps, recent_traffic, panel_sessions
@@ -2328,10 +2350,10 @@ def handle_message(msg):
             if inviter != chat_id:
                 if db:
                     try:
-                        doc = db.collection('users').document(str(chat_id)).get()
+                        doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
                         if not doc.exists:
                             get_user(chat_id)
-                            db.collection('users').document(str(chat_id)).update({"referred_by": inviter, "ref_paid": False})
+                            db.collection('users').document(str(chat_id)).update({"referred_by": inviter, "ref_paid": False}, timeout=5.0)
                     except: pass
 
     if not check_force_join(chat_id):
@@ -2443,7 +2465,7 @@ def handle_message(msg):
             target_uid = int(target_uid_str)
             if db:
                 try:
-                    doc = db.collection('users').document(str(target_uid)).get()
+                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)   # ⭐
                     if not doc.exists:
                         send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
                     current_bal = doc.to_dict().get('balance', 0.0)
@@ -2455,7 +2477,7 @@ def handle_message(msg):
                         f"📝 <b>Send amount to ADD/REMOVE:</b>"
                     ), reply_markup=get_cancel_kb())
                 except Exception as e:
-                    send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {e}"), reply_markup=get_cancel_kb())
+                    send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {type(e).__name__}"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_um_bal_amt" and text:
             try:
@@ -2475,12 +2497,12 @@ def handle_message(msg):
             if db:
                 try:
                     doc_ref = db.collection('users').document(str(target_uid))
-                    doc = doc_ref.get()
+                    doc = doc_ref.get(timeout=5.0)   # ⭐
                     if not doc.exists:
                         send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
                     current_status = doc.to_dict().get("banned", False)
                     new_status = not current_status
-                    doc_ref.update({"banned": new_status})
+                    doc_ref.update({"banned": new_status}, timeout=5.0)   # ⭐
                     user_banned_cache[target_uid] = {'banned': new_status, 'time': time.time()}
                     if target_uid in user_cache:
                         user_cache[target_uid]["banned"] = new_status
@@ -2488,7 +2510,7 @@ def handle_message(msg):
                     send_message(chat_id, render_body_text(f"{PEM['ok']} <b>User</b> <b>{target_uid}</b> <b>→</b> {status_str}"), reply_markup=main_menu(chat_id))
                     del user_states[chat_id]; del temp_data[chat_id]
                 except Exception as e:
-                    send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {e}"), reply_markup=get_cancel_kb())
+                    send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {type(e).__name__}"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_um_prof_uid" and text:
             target_uid_str = text.strip()
@@ -2497,7 +2519,7 @@ def handle_message(msg):
             target_uid = int(target_uid_str)
             if db:
                 try:
-                    doc = db.collection('users').document(str(target_uid)).get()
+                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)   # ⭐
                     if not doc.exists:
                         send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
                     data = doc.to_dict()
@@ -2514,7 +2536,7 @@ def handle_message(msg):
                     send_message(chat_id, render_body_text(prof_text), reply_markup=kb)
                     del user_states[chat_id]; del temp_data[chat_id]
                 except Exception as e:
-                    send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {e}"), reply_markup=get_cancel_kb())
+                    send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {type(e).__name__}"), reply_markup=get_cancel_kb())
             return
 
         elif state == "wait_for_menu_text" and text:
@@ -3122,7 +3144,6 @@ def handle_message(msg):
                     else: hdr_country = query
                 except: hdr_country = query
             else: hdr_country = query
-            # ⭐ FIXED header — new format
             text_numbers = build_numbers_header(hdr_country)
             if wait_msg_id:
                 edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
@@ -3184,7 +3205,7 @@ def handle_message(msg):
                     db.collection('withdrawals').document(req_id).set({
                         "user_id": str(chat_id), "amount": amount, "method": method,
                         "status": "pending", "timestamp": firestore.SERVER_TIMESTAMP
-                    })
+                    }, timeout=5.0)   # ⭐
                 except: pass
             if bot_settings["w_group"]:
                 admin_msg = build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id)
@@ -3200,15 +3221,15 @@ def handle_message(msg):
         get_user(chat_id)
         if db:
             try:
-                doc = db.collection('users').document(str(chat_id)).get()
+                doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)   # ⭐
                 if doc.exists:
                     u_data = doc.to_dict()
                     if u_data.get("referred_by") and not u_data.get("ref_paid"):
                         inviter = u_data["referred_by"]
-                        db.collection('users').document(str(chat_id)).update({"ref_paid": True})
+                        db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)   # ⭐
                         reward = bot_settings.get("refer_reward", 0.2)
                         update_balance(inviter, reward)
-                        db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)})
+                        db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)   # ⭐
                         send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+${reward}</b>\n👤 <code>{chat_id}</code>"))
             except: pass
         c_msg = bot_settings["custom_messages"].get("start", {})
@@ -3330,7 +3351,7 @@ def build_data_zip():
                     zf.writestr("firestore_withdrawals.json", json.dumps(all_wd, default=str, indent=2))
                 except: pass
                 try:
-                    stg = db.collection('settings').document('bot_config').get()
+                    stg = db.collection('settings').document('bot_config').get(timeout=8.0)   # ⭐
                     if stg.exists:
                         zf.writestr("firestore_settings.json", json.dumps(stg.to_dict(), default=str, indent=2))
                 except: pass
@@ -3415,15 +3436,15 @@ def handle_callback(call):
             send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Thanks for joining!</b>"), reply_markup=main_menu(chat_id))
             if db:
                 try:
-                    doc = db.collection('users').document(str(chat_id)).get()
+                    doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)   # ⭐
                     if doc.exists:
                         u_data = doc.to_dict()
                         if u_data.get("referred_by") and not u_data.get("ref_paid"):
                             inviter = u_data["referred_by"]
-                            db.collection('users').document(str(chat_id)).update({"ref_paid": True})
+                            db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)   # ⭐
                             reward = bot_settings.get("refer_reward", 0.2)
                             update_balance(inviter, reward)
-                            db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)})
+                            db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)   # ⭐
                             send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+${reward}</b>\n👤 <code>{chat_id}</code>"))
                 except: pass
         else:
@@ -3553,7 +3574,6 @@ def handle_callback(call):
         kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_bs|{service}|{country}", "style": "danger"},
                    {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
-        # ⭐ FIXED header — new format
         text_numbers = build_numbers_header(country, service)
         edit_target = call.get("_edit_in_place")
         if edit_target:
@@ -3799,7 +3819,7 @@ def handle_callback(call):
             kb = [[{"text": "Refresh", "icon_custom_emoji_id": "5420155432272438703", "callback_data": data, "style": "success"}, {"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]
             edit_message(chat_id, msg_id, render_body_text(final_msg), reply_markup={"inline_keyboard": kb})
         except Exception as e:
-            edit_message(chat_id, msg_id, render_body_text(f"❌ {e}"), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]})
+            edit_message(chat_id, msg_id, render_body_text(f"❌ {type(e).__name__}"), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]})
 
     elif data == "back_to_admin":
         if chat_id in user_states: del user_states[chat_id]
@@ -3807,9 +3827,6 @@ def handle_callback(call):
     elif data == "system_settings":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['gear']} <b>System Settings</b>"), reply_markup=system_settings_keyboard())
 
-    # ==========================================
-    # FIXED: Maintenance ON also broadcasts instantly
-    # ==========================================
     elif data == "toggle_maintenance":
         current = bot_settings.get("maintenance", False)
         bot_settings["maintenance"] = not current
@@ -4669,7 +4686,6 @@ def handle_callback(call):
                     else: hdr_country = query
                 except: hdr_country = query
             else: hdr_country = query
-            # ⭐ FIXED header — new format
             text_numbers = build_numbers_header(hdr_country, service_from_cb)
             edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
             user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
@@ -4741,7 +4757,6 @@ def handle_callback(call):
         kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n|{service}|{country}", "style": "danger"},
                    {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
-        # ⭐ FIXED header — new format
         text_numbers = build_numbers_header(country, service)
         try:
             edit_message(chat_id, msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
@@ -4784,7 +4799,7 @@ def handle_callback(call):
             else:
                 send_message(u_id, render_body_text(f"❌ Your ${amt} withdrawal request was rejected."))
             if db:
-                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"})
+                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"}, timeout=5.0)   # ⭐
                 except: pass
             del pending_withdrawals[req_id]
         else:
@@ -4792,7 +4807,7 @@ def handle_callback(call):
 
 
 # ==========================================
-# Voltx SMS Listener — FIXED (uses credit_otp_to_user)
+# Voltx SMS Listener — uses credit_otp_to_user
 # ==========================================
 def voltx_sms_listener():
     global processed_otps, recent_traffic, voltx_assigned_numbers
@@ -4855,7 +4870,7 @@ def voltx_sms_listener():
 
 
 # ==========================================
-# StexSMS SMS Listener — FIXED (uses credit_otp_to_user)
+# StexSMS SMS Listener — uses credit_otp_to_user
 # ==========================================
 def global_sms_listener():
     global processed_otps, recent_traffic, stex_assigned_numbers
