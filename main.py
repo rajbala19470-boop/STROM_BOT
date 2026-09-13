@@ -123,7 +123,12 @@ GLOBAL_BODY_EMOJIS = {
     "💵": "6267068789146260253",
     "🪙": "5348469219761626211",
     "📞": "5337132498965010628",
-    "🟡": "5339082633160703625"
+    "🟡": "5339082633160703625",
+    # ---- NEW additions ----
+    "🔘": "6217469007868465305",
+    "🥂": "6266794310671275367",
+    "🎯": "6267186570034419608",
+    "🐯": "6267008582294705964"
 }
 
 # ==========================================
@@ -142,7 +147,12 @@ MESSAGE_EMOJI = "6235307467337635626"
 CHANNEL_EMOJI = "6204010762206189094"
 NUMBER_BTN_EMOJI = "5339267587337370029"
 
-WITHDRAW_SELECT_EMOJI = "6217469007868465305"
+WITHDRAW_SELECT_EMOJI = "6217469007868465305"   # 🔘
+WITHDRAW_BALANCE_EMOJI = "6217469007868465305"   # 🔘
+WITHDRAW_METHOD_ICON = "6266794310671275367"     # 🥂
+SEARCH_TARGET_EMOJI = "6267186570034419608"      # 🎯
+SEARCH_TIGER_EMOJI = "6267008582294705964"       # 🐯
+SEARCH_WORLD_EMOJI = "5780471598922337683"       # 🌍
 ROCK_EMOJI = "6267152480878990865"
 
 LANG_FULL_NAMES = {
@@ -388,7 +398,6 @@ USERS_LIST_FILE = os.path.join(STROM_DATA_DIR, "users_list.json")
 FLAG_TXT_FILE = os.path.join(STROM_DATA_DIR, "flag.txt")
 SERVICE_TXT_FILE = os.path.join(STROM_DATA_DIR, "service.txt")
 
-# One-time non-destructive migration of legacy root-level files
 for _legacy_name, _new_path in (("bot_data.json", DB_FILE),
                                 ("users_list.json", USERS_LIST_FILE),
                                 ("flag.txt", FLAG_TXT_FILE),
@@ -402,7 +411,6 @@ for _legacy_name, _new_path in (("bot_data.json", DB_FILE),
 
 current_db_mode = "sqlite"
 
-# -------- SQLite core --------
 _sqlite_lock = threading.RLock()
 _sqlite_conn = None
 
@@ -480,7 +488,6 @@ _sqlite_open()
 
 
 def sqlite_exec(query, params=(), fetch=None):
-    """Thread-safe single-op executor. Never raises — logs and returns None."""
     if _sqlite_conn is None:
         return None
     try:
@@ -500,7 +507,6 @@ def sqlite_exec(query, params=(), fetch=None):
 
 @contextmanager
 def sqlite_tx():
-    """Atomic transaction. Rolls back on any failure."""
     if _sqlite_conn is None:
         yield None
         return
@@ -574,7 +580,6 @@ def _try_firebase_init():
         if not firebase_admin._apps:
             firebase_admin.initialize_app(cred)
         _db = firestore.client()
-        # READ-ONLY health check — never writes to user collections
         try:
             _db.collection('_health_check_').document('x').get(timeout=10.0)
         except Exception:
@@ -822,10 +827,9 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
 
 
 # ==========================================
-# 🗄️ load_db / save_db — SQLite + optional Firebase
+# 🗄️ load_db / save_db
 # ==========================================
 def _load_settings_from_sqlite():
-    """Load every FS_KEY setting from SQLite settings table."""
     try:
         rows = sqlite_exec("SELECT key, value FROM settings", fetch="all")
         if not rows:
@@ -846,7 +850,6 @@ def _load_settings_from_sqlite():
 
 
 def _persist_all_settings_to_sqlite():
-    """Write every FS_KEY setting into SQLite settings table."""
     try:
         with sqlite_tx() as conn:
             if conn is None:
@@ -876,7 +879,6 @@ def load_db():
     global stex_assigned_numbers, voltx_assigned_numbers, current_db_mode
     print("Loading DB...")
 
-    # ---- 1. Firebase settings (NON-DESTRUCTIVE read) ----
     if db:
         try:
             doc = db.collection('settings').document('bot_config').get(timeout=8.0)
@@ -887,8 +889,6 @@ def load_db():
                         bot_settings[k] = fs_data[k]
                 print("✅ Config merged from Firestore (non-destructive)")
             else:
-                # First-time init — write our defaults so remote has config.
-                # Safe because the document doesn't exist yet.
                 try:
                     initial = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
                     db.collection('settings').document('bot_config').set(initial, timeout=8.0)
@@ -898,13 +898,11 @@ def load_db():
         except Exception as e:
             print(f"⚠️  Firestore load skipped ({type(e).__name__}) — SQLite remains authoritative")
 
-    # ---- 2. SQLite settings — merged on top (SQLite wins if newer) ----
     try:
         _load_settings_from_sqlite()
     except Exception as e:
         print(f"⚠️  SQLite settings load skipped: {type(e).__name__}")
 
-    # ---- 3. Local JSON blob (legacy + runtime state) ----
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding='utf-8') as f:
@@ -932,7 +930,6 @@ def load_db():
         except Exception as e:
             print(f"⚠️  Local JSON load failed: {type(e).__name__}")
 
-    # ---- 4. Users list (SQLite-backed + file mirror) ----
     try:
         ul = sqlite_kv_get("all_known_users")
         if isinstance(ul, list) and ul:
@@ -940,7 +937,6 @@ def load_db():
     except Exception as e:
         print(f"⚠️  all_known_users cache load: {type(e).__name__}")
 
-    # ---- 5. flag.txt & service.txt ----
     try:
         flag_data = load_flag_txt()
         if flag_data:
@@ -957,7 +953,6 @@ def load_db():
     except Exception as e:
         print(f"⚠️  Service load error: {type(e).__name__}")
 
-    # ---- 6. Persist merged state back to SQLite ----
     try:
         _persist_all_settings_to_sqlite()
     except Exception as e:
@@ -965,8 +960,6 @@ def load_db():
 
 
 def save_local_db():
-    """Persist runtime blobs to SQLite + JSON mirror. Never crashes."""
-    # JSON mirror (kept for backward compatibility & data export)
     local_data = {
         "bot_settings": {k: v for k, v in bot_settings.items() if k not in FS_KEYS},
         "number_batches": number_batches,
@@ -984,7 +977,6 @@ def save_local_db():
     except Exception as e:
         print(f"⚠️  save_local_db (json): {type(e).__name__}")
 
-    # SQLite mirrored copies
     try:
         sqlite_kv_set("number_batches", number_batches)
         sqlite_kv_set("used_numbers_list", used_numbers_list)
@@ -999,12 +991,10 @@ def save_local_db():
 
 
 def _sync_fs():
-    """Non-destructive Firestore sync of bot_settings (field-aware merge)."""
     if not db:
         return
     try:
         payload = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
-        # merge=True → never wipes existing remote fields
         db.collection('settings').document('bot_config').set(payload, merge=True, timeout=8.0)
     except Exception as e:
         print(f"⚠️  Firestore sync failed: {type(e).__name__}")
@@ -1012,7 +1002,6 @@ def _sync_fs():
 
 def save_db():
     save_local_db()
-    # Always persist all FS_KEYS into SQLite settings table
     _persist_all_settings_to_sqlite()
     if db:
         threading.Thread(target=_sync_fs, daemon=True).start()
@@ -1033,6 +1022,9 @@ user_states = {}
 temp_data = {}
 user_cooldowns = {}
 pending_withdrawals = {}
+
+# Track message IDs to auto-delete search prompt + prefix after numbers are issued
+pending_search_prompts = {}   # {chat_id: [msg_id_1, msg_id_2, ...]}
 
 tg_session = requests.Session()
 
@@ -1122,25 +1114,21 @@ all_known_users = set()
 def sync_users_list():
     global all_known_users
     try:
-        # Prefer SQLite kv
         ul = sqlite_kv_get("all_known_users")
         if isinstance(ul, list) and ul:
             all_known_users.update(str(x) for x in ul)
-        # Then file mirror
         if os.path.exists(USERS_LIST_FILE):
             try:
                 with open(USERS_LIST_FILE, "r") as f:
                     all_known_users.update(str(x) for x in json.load(f))
             except Exception as _fe:
                 print(f"⚠️  users_list.json read: {type(_fe).__name__}")
-        # Then Firestore (read-only)
         if not all_known_users and db:
             try:
                 for doc in db.collection('users').select([]).stream():
                     all_known_users.add(str(doc.id))
             except Exception as _fse:
                 print(f"⚠️  Firestore user-list read: {type(_fse).__name__}")
-        # Persist back
         if all_known_users:
             try:
                 with open(USERS_LIST_FILE, "w") as f:
@@ -1585,7 +1573,7 @@ def attempt_auto_login(p, idx):
 
 
 # ==========================================
-# User Cache / Balance / OTP Credit (SQLite primary, Firebase optional)
+# User Cache / Balance / OTP Credit
 # ==========================================
 user_cache = {}
 
@@ -1618,7 +1606,6 @@ def get_user(user_id):
     if user_id in user_cache:
         return user_cache[user_id]
 
-    # --- SQLite first (authoritative local cache) ---
     row = sqlite_exec(
         "SELECT user_id,balance,total_refers,total_otps,banned,verified,referred_by,ref_paid "
         "FROM users WHERE user_id=?", (int(user_id),), fetch="one"
@@ -1637,7 +1624,6 @@ def get_user(user_id):
         user_cache[int(user_id)] = data
         return data
 
-    # --- Not in SQLite → check Firebase, then seed SQLite non-destructively ---
     if db:
         try:
             doc_ref = db.collection('users').document(str(user_id))
@@ -1651,7 +1637,6 @@ def get_user(user_id):
                 data.setdefault("banned", False)
                 data.setdefault("verified", False)
                 user_cache[int(user_id)] = data
-                # Mirror into SQLite so it survives Firebase downtime
                 _sqlite_ensure_user(user_id)
                 try:
                     with sqlite_tx() as conn:
@@ -1674,7 +1659,6 @@ def get_user(user_id):
         except Exception as e:
             print(f"⚠️  get_user Firebase read ({user_id}): {type(e).__name__}")
 
-    # --- Brand-new user ---
     new_user = {"user_id": int(user_id), "balance": 0.0, "total_refers": 0,
                 "total_otps": 0, "banned": False, "verified": False}
     user_cache[int(user_id)] = new_user
@@ -1688,11 +1672,9 @@ def get_user(user_id):
 
 
 def update_balance(user_id, amount):
-    """Atomic balance update — SQLite transaction + Firebase merge. Never allows race corruption."""
     uid = int(user_id)
     amt = float(amount)
 
-    # SQLite atomic
     try:
         _sqlite_ensure_user(uid)
         with sqlite_tx() as conn:
@@ -1704,13 +1686,11 @@ def update_balance(user_id, amount):
     except Exception as e:
         print(f"⚠️  update_balance SQLite ({uid}): {type(e).__name__}")
 
-    # Cache
     if uid not in user_cache:
         get_user(uid)
     if uid in user_cache:
         user_cache[uid]["balance"] = float(user_cache[uid].get("balance", 0.0)) + amt
 
-    # Firebase non-blocking (uses Increment → race-safe)
     if db:
         try:
             db.collection('users').document(str(uid)).set(
@@ -1722,13 +1702,14 @@ def update_balance(user_id, amount):
 
 
 def credit_otp_to_user(owner_id, reward, app_full_name=""):
+    """Atomic OTP credit: increments balance by the SERVICE-SPECIFIC reward
+    and increments total_otps by exactly 1. Falls back to SQLite if Firebase down."""
     try:
         reward = float(reward)
     except Exception:
         reward = 0.0
     uid = int(owner_id)
 
-    # SQLite atomic increment of balance + total_otps
     try:
         _sqlite_ensure_user(uid)
         with sqlite_tx() as conn:
@@ -1741,14 +1722,12 @@ def credit_otp_to_user(owner_id, reward, app_full_name=""):
     except Exception as e:
         print(f"⚠️  credit_otp_to_user SQLite ({uid}): {type(e).__name__}")
 
-    # Cache
     if uid not in user_cache:
         get_user(uid)
     if uid in user_cache:
         user_cache[uid]["balance"] = float(user_cache[uid].get("balance", 0.0)) + reward
         user_cache[uid]["total_otps"] = int(user_cache[uid].get("total_otps", 0)) + 1
 
-    # Firebase (optional)
     if db:
         try:
             db.collection('users').document(str(uid)).set({
@@ -1763,25 +1742,21 @@ def credit_otp_to_user(owner_id, reward, app_full_name=""):
 
 
 # ==========================================
-# 🎁 REFERRAL SYSTEM (SQLite-persistent, non-duplicating)
+# 🎁 REFERRAL SYSTEM
 # ==========================================
 def process_referral_for_user(new_user_id, inviter_id):
-    """Persist a pending referral locally. Idempotent. Never overwrites existing."""
     try:
         nuid = int(new_user_id)
         iid = int(inviter_id)
         if nuid == iid:
             return False
-        # Already paid? skip
         row = sqlite_exec("SELECT user_id FROM referral_paid_users WHERE user_id=?", (nuid,), fetch="one")
         if row:
             return False
-        # Already have pending with same inviter? skip
         row2 = sqlite_exec("SELECT inviter_id FROM pending_referrals WHERE new_user_id=?", (nuid,), fetch="one")
         if row2 and int(row2["inviter_id"]) == iid:
             return False
         if row2:
-            # Different inviter already pending — keep the FIRST inviter (do not overwrite)
             return False
         with sqlite_tx() as conn:
             if conn is None:
@@ -1790,7 +1765,6 @@ def process_referral_for_user(new_user_id, inviter_id):
                 "INSERT OR IGNORE INTO pending_referrals(new_user_id, inviter_id, created_at) VALUES(?,?,?)",
                 (nuid, iid, time.time()),
             )
-        # Mirror referred_by on the users row (non-destructive)
         try:
             _sqlite_ensure_user(nuid)
             with sqlite_tx() as conn:
@@ -1801,7 +1775,6 @@ def process_referral_for_user(new_user_id, inviter_id):
                     )
         except Exception:
             pass
-        # Optional Firebase (non-destructive)
         if db:
             try:
                 db.collection('users').document(str(nuid)).set(
@@ -1816,10 +1789,8 @@ def process_referral_for_user(new_user_id, inviter_id):
 
 
 def check_and_pay_referral_for_user(new_user_id):
-    """If a pending referral exists and not yet paid → credit inviter atomically."""
     try:
         nuid = int(new_user_id)
-        # Already paid?
         paid = sqlite_exec("SELECT user_id FROM referral_paid_users WHERE user_id=?", (nuid,), fetch="one")
         if paid:
             return False
@@ -1829,7 +1800,6 @@ def check_and_pay_referral_for_user(new_user_id):
         iid = int(pend["inviter_id"])
         reward = float(bot_settings.get("refer_reward", 0.2))
 
-        # Atomic: mark paid + credit inviter + bump total_refers
         try:
             _sqlite_ensure_user(iid)
             with sqlite_tx() as conn:
@@ -1841,7 +1811,6 @@ def check_and_pay_referral_for_user(new_user_id):
                     (nuid, time.time())
                 )
                 if cur.rowcount == 0:
-                    # Someone else already paid — bail
                     return False
                 cur.execute(
                     "UPDATE users SET balance = COALESCE(balance,0) + ?, "
@@ -1851,20 +1820,17 @@ def check_and_pay_referral_for_user(new_user_id):
                 cur.execute(
                     "UPDATE users SET ref_paid=1 WHERE user_id=?", (nuid,)
                 )
-                # Remove pending
                 cur.execute("DELETE FROM pending_referrals WHERE new_user_id=?", (nuid,))
         except Exception as e:
             print(f"⚠️  check_and_pay_referral SQLite: {type(e).__name__}")
             return False
 
-        # Cache update
         if iid not in user_cache:
             get_user(iid)
         if iid in user_cache:
             user_cache[iid]["balance"] = float(user_cache[iid].get("balance", 0.0)) + reward
             user_cache[iid]["total_refers"] = int(user_cache[iid].get("total_refers", 0)) + 1
 
-        # Optional Firebase
         if db:
             try:
                 db.collection('users').document(str(iid)).set({
@@ -1878,7 +1844,6 @@ def check_and_pay_referral_for_user(new_user_id):
             except Exception as e:
                 print(f"⚠️  check_and_pay_referral Firestore: {type(e).__name__}")
 
-        # Notify inviter (keep existing presentation)
         ref_msg = (
             f"{PEM['gift']} <b>New Referral !</b>\n"
             f"━━━━━━━━━━━━━━━\n"
@@ -1894,18 +1859,18 @@ def check_and_pay_referral_for_user(new_user_id):
 
 
 def add_referral(inviter_id, new_user_id):
-    """Kept for backward compatibility — delegates to the SQLite referral pipeline."""
     process_referral_for_user(new_user_id, inviter_id)
     return check_and_pay_referral_for_user(new_user_id)
 
 
 # ==========================================
-# Payout Lookup — 9 Layer Fallback (unchanged)
+# 💰 Payout Lookup — 9 Layer Fallback (uses SERVICE-SPECIFIC payout first)
 # ==========================================
 def get_payout_for_number(clean_api_num, service_hint=""):
     reward = float(bot_settings.get("otp_reward", 0.0))
     meta = assigned_number_meta.get(clean_api_num, {})
 
+    # Layer 1: per-number pinned payout (assigned at stock-issue time)
     if "payout" in meta:
         try:
             return float(meta["payout"])
@@ -1916,12 +1881,14 @@ def get_payout_for_number(clean_api_num, service_hint=""):
     meta_iso = str(meta.get("iso", "") or "").strip().upper()
     pr = bot_settings.get("otp_pair_rates", {})
 
+    # Layer 2: exact country+service pair
     if oc and osvc:
         key = f"{oc.upper()}|{osvc.upper()}"
         if key in pr:
             try: return float(pr[key])
             except: pass
 
+    # Layer 3: ISO + service
     if meta_iso:
         for k, v in pr.items():
             try:
@@ -1931,6 +1898,7 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                     return float(v)
             except: continue
 
+    # Layer 4: ISO only
     if meta_iso:
         for k, v in pr.items():
             try:
@@ -1938,6 +1906,7 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                 if kc.upper() == meta_iso: return float(v)
             except: continue
 
+    # Layer 5: country name + service
     if oc:
         for k, v in pr.items():
             try:
@@ -1947,12 +1916,14 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                     return float(v)
             except: continue
 
+    # Layer 6: country name only
     if oc:
         for k, v in pr.items():
             try:
                 if k.split("|")[0].upper() == oc.upper(): return float(v)
             except: continue
 
+    # Layer 7-8: auto-detected ISO / country name
     try:
         _, iso_det, _ = get_country_from_num(clean_api_num)
         if iso_det and iso_det != "XX":
@@ -1988,6 +1959,7 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                     except: continue
     except: pass
 
+    # Layer 9: default
     return reward
 
 
@@ -1999,10 +1971,10 @@ def get_wmethod_emoji_html(method_name):
         if isinstance(m, dict):
             if m.get("name", "").lower() == method_name.lower():
                 eid = m.get("emoji_id", "")
-                char = m.get("char", "💳")
+                char = m.get("char", "🛅")
                 if eid and str(eid).isdigit() and len(str(eid)) >= 10:
                     return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
-    return f'<tg-emoji emoji-id="{WITHDRAW_SELECT_EMOJI}">🛅</tg-emoji>'
+    return f'<tg-emoji emoji-id="{WITHDRAW_SELECT_EMOJI}">🔘</tg-emoji>'
 
 
 def get_wmethod_display_list():
@@ -2011,21 +1983,23 @@ def get_wmethod_display_list():
         if isinstance(m, dict):
             name = m.get("name", "")
             eid = m.get("emoji_id", "")
-            char = m.get("char", "💳")
+            char = m.get("char", "🛅")
             if eid and str(eid).isdigit() and len(str(eid)) >= 10:
                 emoji_html = f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
                 icon_id = eid
             else:
-                emoji_html = f'<tg-emoji emoji-id="{WITHDRAW_SELECT_EMOJI}">🛅</tg-emoji>'
+                emoji_html = f'<tg-emoji emoji-id="{WITHDRAW_SELECT_EMOJI}">🔘</tg-emoji>'
                 icon_id = WITHDRAW_SELECT_EMOJI
             out.append((name, emoji_html, icon_id))
         else:
-            out.append((str(m), f'<tg-emoji emoji-id="{WITHDRAW_SELECT_EMOJI}">🛅</tg-emoji>', WITHDRAW_SELECT_EMOJI))
+            out.append((str(m), f'<tg-emoji emoji-id="{WITHDRAW_SELECT_EMOJI}">🔘</tg-emoji>', WITHDRAW_SELECT_EMOJI))
     return out
 
 
 # ==========================================
 # Group OTP Display Formatter
+# NEW format: 🇳🇬NG |📱 | +2348🔹334 | ✉️English
+# (space added before ✉️)
 # ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
     clean = str(num).lstrip('+').replace(" ", "")
@@ -2050,10 +2024,11 @@ def format_otp_display(num, app_full_name, lang, masked=True):
 
     lang_display = lang_full(lang)
 
+    # ⭐ NEW: added a space before ✉️
     return (
         f"{flag_html}<b>{iso}</b> |"
         f"{svc_html} | "
-        f"{num_part} |"
+        f"{num_part} | "
         f'<tg-emoji emoji-id="{MESSAGE_EMOJI}">✉️</tg-emoji><b>{lang_display}</b>'
     )
 
@@ -2127,7 +2102,9 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
 
 
 # ==========================================
-# build_numbers_header — EXACT FORMAT (unchanged)
+# 🎯 build_numbers_header — NEW shorter indent
+# Old: ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀💷0.0085$/OTP🪨
+# New: ⠀⠀⠀⠀⠀💷0.0085$/OTP🪨
 # ==========================================
 def build_numbers_header(country, service=None):
     HEADER_EMOJI_1 = "6282641460093260838"
@@ -2162,7 +2139,8 @@ def build_numbers_header(country, service=None):
 
     country_display = html.escape(str(country).upper())
 
-    indent = "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+    # ⭐ NEW: shorter leading braille blanks
+    indent = "⠀⠀⠀⠀⠀"
 
     header = (
         f"{indent}{money_icon}<b>{payout_str}$/OTP</b>{rock_icon}\n"
@@ -2405,23 +2383,61 @@ def build_group_kb(otp_value, fw=None):
     return {"inline_keyboard": kb}
 
 
+# ==========================================
+# NEW Withdrawal group message — with <blockquote> header
+# ==========================================
 def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id):
     frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
     web_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>'
     user_emoji = '<tg-emoji emoji-id="5352861489541714456">👤</tg-emoji>'
-    money_emoji = '<tg-emoji emoji-id="5348469219761626211">💸</tg-emoji>'
+    balance_icon = f'<tg-emoji emoji-id="{WITHDRAW_BALANCE_EMOJI}">🔘</tg-emoji>'
     phone_emoji = '<tg-emoji emoji-id="5337132498965010628">🍏</tg-emoji>'
-    bank_emoji = '<tg-emoji emoji-id="5348469219761626211">🏦</tg-emoji>'
-    tkt_emoji = '<tg-emoji emoji-id="5192739271886282680">🧾</tg-emoji>'
     method_icon = get_wmethod_emoji_html(method)
+    amount_display = fmt_payout(amount)
+
     txt = (
-        f"🎙 <b>NEW WITHDRAWAL</b> {web_emoji}\n"
-        f"{frog_emoji} <b>USER ID :</b><code>{chat_id}</code>\n"
+        f"<blockquote>🎙 <b>NEW WITHDRAWAL REUQUEST</b>{web_emoji}</blockquote>\n"
+        f"\n"
+        f"{frog_emoji} <b>USER ID :</b> <code>{chat_id}</code>\n"
         f"{user_emoji} <b>User :</b> <a href='tg://user?id={chat_id}'>{full_name}</a>\n"
-        f"{money_emoji} <b>BALANCE:</b> <code>${amount}</code>\n"
+        f"{balance_icon} <b>BALANCE:</b> <code>${amount_display}</code>\n"
         f"{phone_emoji} <b>NUMBER :</b> <code>{number}</code>\n"
-        f"{bank_emoji} <b>METHOD :</b> {method_icon} <b>{method}</b>\n\n"
-        f"{tkt_emoji} <b>WITHDRAW ID :</b> <code>{req_id}</code>"
+        f"{method_icon} <b>METHOD :</b> {method_icon} <b>{method}</b>\n"
+        f"\n"
+        f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>"
+    )
+    return render_body_text(txt)
+
+
+# ==========================================
+# NEW Withdrawal approved/rejected format
+# ==========================================
+def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method, req_id):
+    """action = 'APPROVE' or 'REJECT'"""
+    if action == "APPROVE" and len(number) >= 7:
+        masked_num = f"{number[:4]}❖STR❖{number[-3:]}"
+    else:
+        masked_num = number
+
+    status_word = "APPROVED" if action == "APPROVE" else "REJECTED"
+    web_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>'
+    frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
+    user_emoji = '<tg-emoji emoji-id="5352861489541714456">👤</tg-emoji>'
+    balance_icon = f'<tg-emoji emoji-id="{WITHDRAW_BALANCE_EMOJI}">🔘</tg-emoji>'
+    phone_emoji = '<tg-emoji emoji-id="5337132498965010628">🍏</tg-emoji>'
+    method_icon = get_wmethod_emoji_html(method)
+    amount_display = fmt_payout(amount)
+
+    txt = (
+        f"<blockquote>🎙 <b>WITHDRAWAL {status_word}</b> {web_emoji}</blockquote>\n"
+        f"\n"
+        f"{frog_emoji} <b>USER ID :</b> <code>{u_id}</code>\n"
+        f"{user_emoji} <b>User :</b> <a href='tg://user?id={u_id}'>{full_name}</a>\n"
+        f"{balance_icon} <b>BALANCE:</b> <code>${amount_display}</code>\n"
+        f"{phone_emoji} <b>NUMBER :</b> <code>{masked_num}</code>\n"
+        f"{method_icon} <b>METHOD :</b> {method_icon} <b>{method}</b>\n"
+        f"\n"
+        f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>"
     )
     return render_body_text(txt)
 
@@ -2556,6 +2572,7 @@ def panel_monitor_thread():
 
                             owners = list(set(owners))
                             for owner_id in owners:
+                                # ⭐ Payout from SERVICE-SPECIFIC rate (Melbet Bangladesh = $0.005)
                                 reward = get_payout_for_number(clean_api_num, app_full_name)
                                 credit_otp_to_user(owner_id, reward, app_full_name)
                                 new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
@@ -2605,7 +2622,6 @@ def get_admin_text():
 
     yellow_icon = '<tg-emoji emoji-id="5339082633160703625">🟡</tg-emoji>'
     green_icon = '<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>'
-    # Database status: reflect the ACTUALLY usable backend
     if db and current_db_mode == "firebase":
         db_status = f"{green_icon} <b>FIREBASE ACTIVE</b>"
         db_line2 = f"{green_icon} <b>SQLITE ACTIVE</b>"
@@ -2953,6 +2969,16 @@ def expire_previous_number(chat_id):
         del user_active_sessions[chat_id]
 
 
+def purge_pending_search_prompts(chat_id):
+    """Delete stored search prompt + prefix/search-result messages."""
+    ids = pending_search_prompts.pop(chat_id, [])
+    for mid in ids:
+        try:
+            delete_message(chat_id, mid)
+        except Exception:
+            pass
+
+
 # ==========================================
 # Message Handler — All States
 # ==========================================
@@ -3034,15 +3060,13 @@ def handle_message(msg):
             send_message(chat_id, render_body_text(maint_msg))
             return
 
-    # ---------- /start referral capture (LOCAL FIRST, non-destructive) ----------
+    # ---------- /start referral capture ----------
     if text.startswith("/start"):
         parts = text.split()
         if len(parts) > 1 and parts[1].isdigit():
             inviter = int(parts[1])
             if inviter != chat_id:
-                # Ensure the new user row exists (SQLite)
                 _sqlite_ensure_user(chat_id)
-                # Persist pending referral locally first
                 process_referral_for_user(chat_id, inviter)
 
     # ---------- Force-join check ----------
@@ -3624,7 +3648,7 @@ def handle_message(msg):
                 parts = raw.split("|", 1)
                 m_name = parts[0].strip()
                 m_eid = parts[1].strip()
-                m_char = "🛅"
+                m_char = "🔘"
                 method_obj = {"name": m_name, "emoji_id": m_eid, "char": m_char}
                 bot_settings["w_methods"].append(method_obj)
             else:
@@ -3961,16 +3985,37 @@ def handle_message(msg):
             }
             del user_states[chat_id]
 
+            # ⭐ NEW SEARCH RESULT FORMAT with 🐯 next to prefix and flag after country name
+            tiger_icon = f'<tg-emoji emoji-id="{SEARCH_TIGER_EMOJI}">🐯</tg-emoji>'
+            world_icon = f'<tg-emoji emoji-id="{SEARCH_WORLD_EMOJI}">🌍</tg-emoji>'
+            target_icon = f'<tg-emoji emoji-id="{SEARCH_TARGET_EMOJI}">🎯</tg-emoji>'
+            country_display_name = country_name_det.upper() if country_name_det else (iso_det or "UNKNOWN")
+            # Build the flag part (premium emoji or plain)
+            if iso_det and iso_det != "XX":
+                flag_for_country = country_flag_html
+            else:
+                flag_for_country = "🌍"
+
             txt = (
                 f"━━━━━━━━━━━━━━━\n"
                 f"🔍 <b>SEARCH RESULT</b>\n"
                 f"━━━━━━━━━━━━━━━\n"
-                f"📌 <b>Prefix:</b> <code>{query}</code>\n"
-                f"{country_flag_html} <b>Country:</b> <b>{country_name_det.upper() if country_name_det else iso_det}</b>\n"
+                f"📌 <b>Prefix:</b> <code>{query}</code> {tiger_icon}\n"
+                f"{world_icon} <b>Country:</b> {country_display_name} {flag_for_country}\n"
                 f"━━━━━━━━━━━━━━━\n"
-                f"🎯 <b>Available Services:</b>"
+                f"{target_icon} <b>Available Services:</b>\n"
             )
-            send_message(chat_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
+            sent_res = send_message(chat_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
+            # ⭐ Save all sent message IDs (prompt + search result) so we can delete them later
+            ids_to_track = []
+            try:
+                prompt_mid = temp_data.get(chat_id, {}).get("prompt_msg_id")
+                if prompt_mid: ids_to_track.append(prompt_mid)
+                if sent_res and sent_res.get("ok"):
+                    ids_to_track.append(sent_res["result"]["message_id"])
+                pending_search_prompts[chat_id] = ids_to_track
+            except Exception:
+                pending_search_prompts[chat_id] = ids_to_track
             return
 
         # ========== WITHDRAW AMOUNT ==========
@@ -4028,7 +4073,6 @@ def handle_message(msg):
             last_name = msg.get("from", {}).get("last_name", "")
             full_name = f"{first_name} {last_name}".strip()
             pending_withdrawals[req_id] = {"user_id": chat_id, "amount": amount, "method": method, "number": number, "full_name": full_name}
-            # SQLite persist
             try:
                 with sqlite_tx() as conn:
                     if conn:
@@ -4051,16 +4095,29 @@ def handle_message(msg):
                 admin_msg = build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id)
                 kb = {"inline_keyboard": [[{"text": "APPROVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"wapp_{req_id}", "style": "success"}, {"text": "REJECT", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"wrej_{req_id}", "style": "danger"}]]}
                 send_message(bot_settings["w_group"], admin_msg, reply_markup=kb)
-            kb = {"inline_keyboard": [[{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}]]}
-            success_text = f"{PEM['ok']} <b>Submitted!</b>\n\n🧾 <b>{req_id}</b>\n💰 <b>${amount}</b>\n🏦 <b>{method}</b>\n📱 <code>{number}</code>"
-            if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text(success_text), reply_markup=kb)
-            else: send_message(chat_id, render_body_text(success_text), reply_markup=kb)
+
+            # ⭐ NEW: submitted confirmation (NO inline keyboard)
+            balance_icon = f'<tg-emoji emoji-id="{WITHDRAW_BALANCE_EMOJI}">🔘</tg-emoji>'
+            method_icon = f'<tg-emoji emoji-id="{WITHDRAW_METHOD_ICON}">🥂</tg-emoji>'
+            method_emoji = get_wmethod_emoji_html(method)
+            amount_display = fmt_payout(amount)
+            success_text = (
+                f"{PEM['ok']} <b>Your Withdraw Request is Submitted!</b>\n"
+                f"\n"
+                f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>\n"
+                f"{balance_icon} <b>BALANCE :</b> <code>${amount_display}</code>\n"
+                f"{method_icon} <b>METHOED :</b> <b>{method}</b> {method_emoji}\n"
+                f"📱 <b>YOUR NUMBER :</b> <code>{number}</code>\n"
+            )
+            if msg_id_to_edit:
+                edit_message(chat_id, msg_id_to_edit, render_body_text(success_text))
+            else:
+                send_message(chat_id, render_body_text(success_text))
             del user_states[chat_id]; del temp_data[chat_id]; return
 
     # ========== MAIN MENU COMMANDS ==========
     if text.startswith("/start"):
         get_user(chat_id)
-        # Pay pending referral (SQLite-persistent) — only fires once per user
         check_and_pay_referral_for_user(chat_id)
         c_msg = bot_settings["custom_messages"].get("start", {})
         start_text = c_msg.get("text", "").strip()
@@ -4139,7 +4196,13 @@ def handle_message(msg):
         c_msg = bot_settings["custom_messages"].get("search_number", {})
         txt = render_body_text(c_msg.get("text", f"{PEM['num']} <b>Search</b>"))
         kb = [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_state", "style": "danger"}]]
-        send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
+        sent = send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
+        # Track prompt message id so we can delete it when numbers are shown
+        try:
+            if sent and sent.get("ok"):
+                temp_data[chat_id] = {"prompt_msg_id": sent["result"]["message_id"]}
+        except Exception:
+            pass
     elif text == "2FA ONLINE" or text == "🔐 2FA ONLINE":
         txt = "━━━━━━━━━━━━━━━\n《 🔐 <b>2FA ONLINE</b> 》\n━━━━━━━━━━━━━━━\n<i>Generate 2FA code instantly.</i>\n━━━━━━━━━━━━━━━"
         kb = [[{"text": "Generate 2fa code", "icon_custom_emoji_id": "5353022963132174959", "callback_data": "gen_2fa", "style": "success"}],
@@ -4162,7 +4225,6 @@ def build_data_zip():
     mem = io.BytesIO()
     try:
         with zipfile.ZipFile(mem, 'w', zipfile.ZIP_DEFLATED) as zf:
-            # Block 1
             settings_block = {
                 "bot_settings_non_fs": {k: v for k, v in bot_settings.items() if k not in FS_KEYS},
                 "custom_messages": bot_settings.get("custom_messages", {}),
@@ -4176,7 +4238,6 @@ def build_data_zip():
             }
             zf.writestr("01_SETTINGS.json", json.dumps(settings_block, default=str, indent=4))
 
-            # Block 2
             stock_block = {
                 "number_batches": number_batches,
                 "used_numbers_list": used_numbers_list,
@@ -4185,7 +4246,6 @@ def build_data_zip():
             }
             zf.writestr("02_STOCK.json", json.dumps(stock_block, default=str, indent=4))
 
-            # Block 3
             assigned_block = {
                 "stex_assigned_numbers": stex_assigned_numbers,
                 "voltx_assigned_numbers": voltx_assigned_numbers,
@@ -4193,21 +4253,17 @@ def build_data_zip():
             }
             zf.writestr("03_ASSIGNED_NUMBERS.json", json.dumps(assigned_block, default=str, indent=4))
 
-            # Block 4
             traffic_block = {"recent_traffic": recent_traffic}
             zf.writestr("04_TRAFFIC.json", json.dumps(traffic_block, default=str, indent=4))
 
-            # Block 5
             users_block = {"all_known_users": list(all_known_users)}
             zf.writestr("05_USERS_LIST.json", json.dumps(users_block, default=str, indent=4))
 
-            # Block 6
             user_cache_block = {}
             for uid, udata in user_cache.items():
                 user_cache_block[str(uid)] = udata
             zf.writestr("06_USER_CACHE.json", json.dumps(user_cache_block, default=str, indent=4))
 
-            # Block 6b — SQLite tables (new)
             try:
                 sql_users = sqlite_exec("SELECT * FROM users", fetch="all") or []
                 zf.writestr("06b_SQLITE_USERS.json", json.dumps(sql_users, default=str, indent=4))
@@ -4224,7 +4280,6 @@ def build_data_zip():
             except Exception as _se:
                 print(f"⚠️  ZIP sqlite dump: {type(_se).__name__}")
 
-            # Block 7
             if os.path.exists(DB_FILE):
                 try:
                     with open(DB_FILE, "r", encoding='utf-8') as f:
@@ -4232,7 +4287,6 @@ def build_data_zip():
                     zf.writestr("07_LOCAL_DB_RAW.json", db_content)
                 except Exception: pass
 
-            # Block 8
             if os.path.exists(USERS_LIST_FILE):
                 try:
                     with open(USERS_LIST_FILE, "r") as f:
@@ -4240,7 +4294,6 @@ def build_data_zip():
                     zf.writestr("08_USERS_LIST_RAW.json", ul_content)
                 except Exception: pass
 
-            # Block 9-11 — Firestore dump
             if db:
                 try:
                     fs_users = {}
@@ -4263,7 +4316,6 @@ def build_data_zip():
                 except Exception as _e3:
                     print(f"⚠️  ZIP fs settings: {type(_e3).__name__}")
 
-            # Block 12
             fb_info = {
                 "firebase_connected": db is not None,
                 "firebase_status": "FIREBASE_ACTIVE" if (db and current_db_mode == "firebase") else "SQLITE_ONLY",
@@ -4302,7 +4354,6 @@ def delete_all_data():
                 except Exception: pass
         except Exception as _e:
             print(f"⚠️  delete fs withdrawals: {type(_e).__name__}")
-    # SQLite wipe
     try:
         with sqlite_tx() as conn:
             if conn:
@@ -4372,7 +4423,6 @@ def handle_callback(call):
         if check_force_join(chat_id):
             delete_message(chat_id, msg_id)
             send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Thanks for joining!</b>"), reply_markup=main_menu(chat_id))
-            # Ensure the user row exists before paying referral (safe)
             get_user(chat_id)
             check_and_pay_referral_for_user(chat_id)
         else:
@@ -4556,6 +4606,9 @@ def handle_callback(call):
                         except Exception: continue
 
         save_db()
+
+        # ⭐ Delete prompt message + search result message
+        purge_pending_search_prompts(chat_id)
 
         if not fetched_nums:
             answer_callback(call["id"], "❌ Out of stock!", show_alert=True)
@@ -4881,7 +4934,6 @@ def handle_callback(call):
                     u_copy = dict(udata)
                     u_copy["user_id"] = uid
                     all_users.append(u_copy)
-                # Also try SQLite for complete list
                 if not all_users:
                     try:
                         rows = sqlite_exec("SELECT * FROM users", fetch="all") or []
@@ -5772,6 +5824,8 @@ def handle_callback(call):
                 for b_id in number_batches:
                     number_batches[b_id]["numbers"] = [n for n in number_batches[b_id]["numbers"] if not n.get("to_remove")]
                 save_db()
+            # ⭐ Delete prompt + search result when numbers are shown
+            purge_pending_search_prompts(chat_id)
             kb = []
             if service_from_cb:
                 app_full_name, _ = get_service_info_html(service_from_cb)
@@ -5893,30 +5947,18 @@ def handle_callback(call):
             req_data = pending_withdrawals[req_id]
             u_id, amt = req_data["user_id"], req_data["amount"]
             num = req_data["number"]; full_name = req_data.get("full_name", u_id)
-            if action == "APPROVE" and len(num) >= 7: masked_num = f"{num[:4]}❖STR❖{num[-3:]}"
-            else: masked_num = num
+
+            # ⭐ NEW approved/rejected format
+            new_text = build_withdrawal_status_msg(action, u_id, full_name, amt, num, req_data['method'], req_id)
             status_text = "APPROVED" if action == "APPROVE" else "REJECTED"
             emoji_icon_id = "5352694861990501856" if action == "APPROVE" else "5420130255174145507"
-            frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
-            web_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>'
-            method_icon = get_wmethod_emoji_html(req_data['method'])
-            new_text = (
-                f"🎙 <b>WITHDRAWAL {status_text}</b> {web_emoji}\n"
-                f"{frog_emoji} <b>USER ID :</b><code>{u_id}</code>\n"
-                f"👤 <b>User :</b> <a href='tg://user?id={u_id}'>{full_name}</a>\n"
-                f"💸 <b>BALANCE:</b> <code>${amt}</code>\n"
-                f"🍏 <b>NUMBER :</b> <code>{masked_num}</code>\n"
-                f"🛅 <b>METHOD :</b> {method_icon} <b>{req_data['method']}</b>\n\n"
-                f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>"
-            )
             kb = {"inline_keyboard": [[{"text": status_text, "icon_custom_emoji_id": emoji_icon_id, "callback_data": "ignore", "style": "success" if action == "APPROVE" else "danger"}]]}
-            edit_message(chat_id, msg_id, render_body_text(new_text), reply_markup=kb)
+            edit_message(chat_id, msg_id, new_text, reply_markup=kb)
             if action == "APPROVE":
                 update_balance(u_id, -amt)
                 send_message(u_id, render_body_text(f"{PEM['ok']} Your ${amt} withdrawal has been paid successfully!"))
             else:
                 send_message(u_id, render_body_text(f"❌ Your ${amt} withdrawal request was rejected."))
-            # SQLite status update
             try:
                 with sqlite_tx() as conn:
                     if conn:
