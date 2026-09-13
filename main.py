@@ -154,20 +154,19 @@ SEARCH_TIGER_EMOJI = "6267008582294705964"
 SEARCH_WORLD_EMOJI = "5780471598922337683"
 ROCK_EMOJI = "6267152480878990865"
 
-# Leaderboard position emojis (1-9 + 10)
 LEADERBOARD_NUM_EMOJI = {
-    1:  "5352651766288652742",   # 1️⃣
-    2:  "5355186458418257716",   # 2️⃣
-    3:  "5352867219028091093",   # 3️⃣
-    4:  "5352566657216714037",   # 4️⃣
-    5:  "5353086880835474989",   # 5️⃣
-    6:  "5354859211975071385",   # 6️⃣
-    7:  "5352859127309707652",   # 7️⃣
-    8:  "5352957533600389988",   # 8️⃣
-    9:  "5353060913463204207",   # 9️⃣
-    10: "6309655288261644098",   # ℹ️  (part of ℹ️🅾️ for 10)
+    1:  "5352651766288652742",
+    2:  "5355186458418257716",
+    3:  "5352867219028091093",
+    4:  "5352566657216714037",
+    5:  "5353086880835474989",
+    6:  "5354859211975071385",
+    7:  "5352859127309707652",
+    8:  "5352957533600389988",
+    9:  "5353060913463204207",
+    10: "6309655288261644098",
 }
-LEADERBOARD_10_SECOND_EMOJI = "6307374961275180239"   # 🅾️ (for #10)
+LEADERBOARD_10_SECOND_EMOJI = "6307374961275180239"
 
 LANG_FULL_NAMES = {
     "EN":"English","AR":"Arabic","BN":"Bangla","HI":"Hindi","PA":"Punjabi",
@@ -1684,8 +1683,7 @@ def get_user(user_id):
 
 
 def update_balance(user_id, amount):
-    """Atomic balance update. amount can be positive or negative.
-    Never allows negative balance below 0 due to race — SQLite atomic UPDATE."""
+    """Atomic balance update. amount can be positive or negative."""
     uid = int(user_id)
     amt = float(amount)
 
@@ -2104,7 +2102,7 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
 
 
 # ==========================================
-# build_numbers_header — 12 braille blanks indent
+# build_numbers_header — 10 braille blanks indent
 # ==========================================
 def build_numbers_header(country, service=None):
     HEADER_EMOJI_1 = "6282641460093260838"
@@ -2139,7 +2137,7 @@ def build_numbers_header(country, service=None):
 
     country_display = html.escape(str(country).upper())
 
-    indent = "⠀⠀⠀⠀⠀⠀"   # 12 braille blanks
+    indent = "⠀⠀⠀⠀"   # 10 braille blanks
 
     header = (
         f"{indent}{money_icon}<b>{payout_str}$/OTP</b>{rock_icon}\n"
@@ -2383,7 +2381,7 @@ def build_group_kb(otp_value, fw=None):
 
 
 # ==========================================
-# Withdrawal — group & status messages
+# Withdrawal group message — "NEW WITHDRAW REUQUEST"
 # ==========================================
 def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id):
     frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
@@ -2409,6 +2407,10 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
     return render_body_text(txt)
 
 
+# ==========================================
+# Withdrawal status message
+# APPROVED → 🕸️  |  REJECTED → ❌
+# ==========================================
 def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method, req_id):
     if action == "APPROVE" and len(number) >= 7:
         masked_num = f"{number[:4]}❖STR❖{number[-3:]}"
@@ -2416,7 +2418,9 @@ def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method,
         masked_num = number
 
     status_word = "APPROVED" if action == "APPROVE" else "REJECTED"
-    web_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>'
+    trailing_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>' if action == "APPROVE" \
+                     else '<tg-emoji emoji-id="5420130255174145507">❌</tg-emoji>'
+
     frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
     user_emoji = '<tg-emoji emoji-id="5352861489541714456">👤</tg-emoji>'
     balance_icon = f'<tg-emoji emoji-id="{WITHDRAW_BALANCE_EMOJI}">🔘</tg-emoji>'
@@ -2426,7 +2430,7 @@ def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method,
     amount_display = fmt_payout(amount)
 
     txt = (
-        f"<blockquote>🎙 <b>WITHDRAW {status_word}</b> {web_emoji}</blockquote>\n"
+        f"<blockquote>🎙 <b>WITHDRAW {status_word}</b> {trailing_emoji}</blockquote>\n"
         f"\n"
         f"{frog_emoji} <b>USER ID :</b> <code>{u_id}</code>\n"
         f"{user_emoji} <b>User :</b> <a href='tg://user?id={u_id}'>{full_name}</a>\n"
@@ -2443,8 +2447,7 @@ def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method,
 # Withdrawal BALANCE HOLD / REFUND helpers
 # ==========================================
 def hold_withdrawal_balance(user_id, amount):
-    """Deduct the requested amount from user's balance when the withdraw is submitted.
-    The amount is 'held' — it will be either kept (on approve) or refunded (on reject/cancel)."""
+    """Deduct the requested amount from user's balance when the withdraw is submitted."""
     try:
         update_balance(user_id, -float(amount))
         return True
@@ -2685,7 +2688,7 @@ def admin_panel_keyboard():
          {"text": "Delete files", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "delete_files", "style": "danger"}],
         [{"text": "Broadcast", "icon_custom_emoji_id": "5789428375261023681", "callback_data": "broadcast_msg", "style": "success"},
          {"text": "System", "icon_custom_emoji_id": "5420155432272438703", "callback_data": "system_settings", "style": "primary"}],
-        [{"text": "DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
+        [{"text": "📁DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
         [maint_btn],
         [{"text": "Used number", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "show_used", "style": "success"},
          {"text": "Unused number", "icon_custom_emoji_id": "5352597830089347330", "callback_data": "show_unused", "style": "success"}],
@@ -2990,8 +2993,6 @@ def expire_previous_number(chat_id):
 
 
 def purge_pending_search_prompts(chat_id, keep_msg_id=None):
-    """Delete search-prompt + user's prefix + search-result messages.
-    If keep_msg_id is provided, that message id is NOT deleted."""
     ids = pending_search_prompts.pop(chat_id, [])
     for mid in ids:
         try:
@@ -3004,7 +3005,6 @@ def purge_pending_search_prompts(chat_id, keep_msg_id=None):
 
 # ==========================================
 # Leaderboard position formatter
-# 1️⃣...9️⃣ for positions 1..9, ℹ️🅾️ for 10
 # ==========================================
 def leaderboard_pos_emoji(rank):
     if rank == 10:
@@ -3027,7 +3027,6 @@ def handle_message(msg):
     text = msg.get("text", "")
     register_user_local(chat_id)
 
-    # ---------- /dmotp ----------
     if text.startswith("/dmotp"):
         if not is_admin(chat_id): return
         parts = text.split(maxsplit=4)
@@ -3050,7 +3049,6 @@ def handle_message(msg):
         send_message(chat_id, render_body_text(dm_text), reply_markup=dm_kb)
         return
 
-    # ---------- /setservice ----------
     if text.startswith("/setservice"):
         if not is_admin(chat_id): return
         raw = text.replace("/setservice", "", 1).strip()
@@ -3078,7 +3076,6 @@ def handle_message(msg):
         ))
         return
 
-    # ---------- Banned check ----------
     if is_user_banned(chat_id):
         send_message(chat_id, render_body_text(
             "🚫 <b>You are banned from using this bot!</b>\n"
@@ -3086,7 +3083,6 @@ def handle_message(msg):
         ))
         return
 
-    # ---------- Maintenance check ----------
     if bot_settings.get("maintenance", False) and not is_admin(chat_id):
         if not text.startswith("/start") and text != "SUPPORT":
             maint_msg = (
@@ -3097,7 +3093,6 @@ def handle_message(msg):
             send_message(chat_id, render_body_text(maint_msg))
             return
 
-    # ---------- /start referral ----------
     if text.startswith("/start"):
         parts = text.split()
         if len(parts) > 1 and parts[1].isdigit():
@@ -3106,12 +3101,10 @@ def handle_message(msg):
                 _sqlite_ensure_user(chat_id)
                 process_referral_for_user(chat_id, inviter)
 
-    # ---------- Force-join check ----------
     if not check_force_join(chat_id):
         send_force_join_msg(chat_id)
         return
 
-    # ---------- Reset on main menu ----------
     MAIN_MENU_CMDS = ["GET NUMBER", "SEARCH NUMBER", "TRAFFIC", "REFER", "BALANCE", "SUPPORT", "Admin Panel", "2FA ONLINE"]
     is_main_cmd = False
     if text in MAIN_MENU_CMDS or text.startswith("/start"):
@@ -3119,7 +3112,6 @@ def handle_message(msg):
         if chat_id in temp_data: del temp_data[chat_id]
         is_main_cmd = True
 
-    # ---------- State Machine ----------
     if chat_id in user_states and not is_main_cmd:
         state = user_states[chat_id]
 
@@ -3888,15 +3880,22 @@ def handle_message(msg):
                 return
             file_id = doc["file_id"]
             file_info = requests.get(f"{BASE_URL}/getFile?file_id={file_id}").json()
+            if not file_info.get("ok"):
+                send_message(chat_id, render_body_text(f"❌ <b>Download failed.</b>"))
+                if chat_id in user_states: del user_states[chat_id]
+                return
             file_path = file_info["result"]["file_path"]
             raw_bytes = requests.get(f"{FILE_URL}{file_path}").content
-            try:
-                with zipfile.ZipFile(io.BytesIO(raw_bytes), 'r') as zf:
-                    zf.extractall(".")
-                load_db()
-                send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Data restored successfully!</b>"), reply_markup=main_menu(chat_id))
-            except Exception as e:
-                send_message(chat_id, render_body_text(f"❌ <b>Restore failed:</b> {html.escape(str(e))}"))
+            ok, summary = restore_data_from_zip(raw_bytes)
+            if ok:
+                send_message(chat_id, render_body_text(
+                    f"{PEM['ok']} <b>Data restored successfully!</b>\n\n"
+                    f"📊 <b>Applied:</b>\n<code>{html.escape(summary)}</code>"
+                ), reply_markup=main_menu(chat_id))
+            else:
+                send_message(chat_id, render_body_text(
+                    f"{PEM['no']} <b>Restore failed!</b>\n<code>{html.escape(str(summary))}</code>"
+                ))
             if chat_id in user_states: del user_states[chat_id]
             return
 
@@ -4119,7 +4118,7 @@ def handle_message(msg):
             last_name = msg.get("from", {}).get("last_name", "")
             full_name = f"{first_name} {last_name}".strip()
 
-            # ⭐ 1) HOLD the balance: deduct from user immediately.
+            # ⭐ HOLD the balance: deduct from user immediately
             hold_withdrawal_balance(chat_id, amount)
 
             pending_withdrawals[req_id] = {"user_id": chat_id, "amount": amount, "method": method, "number": number, "full_name": full_name}
@@ -4267,122 +4266,416 @@ def handle_message(msg):
 
 
 # ==========================================
-# 📦 Database ZIP
+# 📦 Database ZIP — FOLDER-STRUCTURED
 # ==========================================
 def build_data_zip():
     mem = io.BytesIO()
     try:
         with zipfile.ZipFile(mem, 'w', zipfile.ZIP_DEFLATED) as zf:
-            settings_block = {
-                "bot_settings_non_fs": {k: v for k, v in bot_settings.items() if k not in FS_KEYS},
-                "custom_messages": bot_settings.get("custom_messages", {}),
-                "premium_flags": bot_settings.get("premium_flags", {}),
-                "premium_apps": bot_settings.get("premium_apps", {}),
-                "otp_link": bot_settings.get("otp_link", ""),
-                "main_channel_link": bot_settings.get("main_channel_link", ""),
-                "support_link": bot_settings.get("support_link", ""),
-                "w_methods": bot_settings.get("w_methods", []),
-                "w_group": bot_settings.get("w_group", "")
-            }
-            zf.writestr("01_SETTINGS.json", json.dumps(settings_block, default=str, indent=4))
+            # ========== USER DETAILS/ ==========
+            user_details = {}
+            try:
+                for row in sqlite_exec("SELECT * FROM users", fetch="all") or []:
+                    user_details[str(row.get("user_id"))] = row
+            except Exception as _e:
+                print(f"⚠️  ZIP users dump: {type(_e).__name__}")
+            for uid, udata in user_cache.items():
+                user_details[str(uid)] = udata
+            zf.writestr("USER DETAILS/users.json", json.dumps(user_details, default=str, indent=4))
+            zf.writestr("USER DETAILS/user_cache.json", json.dumps({str(k): v for k, v in user_cache.items()}, default=str, indent=4))
+            zf.writestr("USER DETAILS/all_known_users.json", json.dumps(list(all_known_users), default=str, indent=4))
+            try:
+                pend = sqlite_exec("SELECT * FROM pending_referrals", fetch="all") or []
+                zf.writestr("USER DETAILS/pending_referrals.json", json.dumps(pend, default=str, indent=4))
+                paid = sqlite_exec("SELECT * FROM referral_paid_users", fetch="all") or []
+                zf.writestr("USER DETAILS/referral_paid_users.json", json.dumps(paid, default=str, indent=4))
+                wds = sqlite_exec("SELECT * FROM withdrawals ORDER BY timestamp DESC", fetch="all") or []
+                zf.writestr("USER DETAILS/withdrawals.json", json.dumps(wds, default=str, indent=4))
+            except Exception as _e:
+                print(f"⚠️  ZIP user-details: {type(_e).__name__}")
 
-            stock_block = {
-                "number_batches": number_batches,
-                "used_numbers_list": used_numbers_list,
+            # ========== NUMBERS/ ==========
+            zf.writestr("NUMBERS/number_batches.json", json.dumps(number_batches, default=str, indent=4))
+            zf.writestr("NUMBERS/used_numbers.json", json.dumps(used_numbers_list, default=str, indent=4))
+            zf.writestr("NUMBERS/stex_assigned.json", json.dumps(stex_assigned_numbers, default=str, indent=4))
+            zf.writestr("NUMBERS/voltx_assigned.json", json.dumps(voltx_assigned_numbers, default=str, indent=4))
+            zf.writestr("NUMBERS/assigned_meta.json", json.dumps(assigned_number_meta, default=str, indent=4))
+            zf.writestr("NUMBERS/stats.json", json.dumps({
                 "total_uploaded_stats": total_uploaded_stats,
                 "total_assigned_stats": total_assigned_stats
-            }
-            zf.writestr("02_STOCK.json", json.dumps(stock_block, default=str, indent=4))
+            }, default=str, indent=4))
 
-            assigned_block = {
-                "stex_assigned_numbers": stex_assigned_numbers,
-                "voltx_assigned_numbers": voltx_assigned_numbers,
-                "assigned_number_meta": assigned_number_meta
-            }
-            zf.writestr("03_ASSIGNED_NUMBERS.json", json.dumps(assigned_block, default=str, indent=4))
-
-            traffic_block = {"recent_traffic": recent_traffic}
-            zf.writestr("04_TRAFFIC.json", json.dumps(traffic_block, default=str, indent=4))
-
-            users_block = {"all_known_users": list(all_known_users)}
-            zf.writestr("05_USERS_LIST.json", json.dumps(users_block, default=str, indent=4))
-
-            user_cache_block = {}
-            for uid, udata in user_cache.items():
-                user_cache_block[str(uid)] = udata
-            zf.writestr("06_USER_CACHE.json", json.dumps(user_cache_block, default=str, indent=4))
-
+            # ========== COUNTRY AND SERVICE/ ==========
+            zf.writestr("COUNTRY AND SERVICE/premium_flags.json", json.dumps(bot_settings.get("premium_flags", {}), default=str, indent=4))
+            zf.writestr("COUNTRY AND SERVICE/premium_apps.json", json.dumps(bot_settings.get("premium_apps", {}), default=str, indent=4))
             try:
-                sql_users = sqlite_exec("SELECT * FROM users", fetch="all") or []
-                zf.writestr("06b_SQLITE_USERS.json", json.dumps(sql_users, default=str, indent=4))
-                sql_pend = sqlite_exec("SELECT * FROM pending_referrals", fetch="all") or []
-                zf.writestr("06c_SQLITE_PENDING_REFERRALS.json", json.dumps(sql_pend, default=str, indent=4))
-                sql_paid = sqlite_exec("SELECT * FROM referral_paid_users", fetch="all") or []
-                zf.writestr("06d_SQLITE_REFERRAL_PAID.json", json.dumps(sql_paid, default=str, indent=4))
+                if os.path.exists(FLAG_TXT_FILE):
+                    with open(FLAG_TXT_FILE, "r", encoding='utf-8') as f:
+                        zf.writestr("COUNTRY AND SERVICE/flag.txt", f.read())
+                if os.path.exists(SERVICE_TXT_FILE):
+                    with open(SERVICE_TXT_FILE, "r", encoding='utf-8') as f:
+                        zf.writestr("COUNTRY AND SERVICE/service.txt", f.read())
+            except Exception:
+                pass
+
+            # ========== SETTINGS/ ==========
+            zf.writestr("SETTINGS/bot_settings.json", json.dumps(bot_settings, default=str, indent=4))
+            zf.writestr("SETTINGS/custom_messages.json", json.dumps(bot_settings.get("custom_messages", {}), default=str, indent=4))
+            try:
                 sql_settings = sqlite_exec("SELECT * FROM settings", fetch="all") or []
-                zf.writestr("06e_SQLITE_SETTINGS.json", json.dumps(sql_settings, default=str, indent=4))
+                zf.writestr("SETTINGS/sqlite_settings.json", json.dumps(sql_settings, default=str, indent=4))
                 sql_kv = sqlite_exec("SELECT * FROM kv_store", fetch="all") or []
-                zf.writestr("06f_SQLITE_KV.json", json.dumps(sql_kv, default=str, indent=4))
-                sql_wd = sqlite_exec("SELECT * FROM withdrawals", fetch="all") or []
-                zf.writestr("06g_SQLITE_WITHDRAWALS.json", json.dumps(sql_wd, default=str, indent=4))
-            except Exception as _se:
-                print(f"⚠️  ZIP sqlite dump: {type(_se).__name__}")
+                zf.writestr("SETTINGS/kv_store.json", json.dumps(sql_kv, default=str, indent=4))
+            except Exception:
+                pass
 
-            if os.path.exists(DB_FILE):
-                try:
-                    with open(DB_FILE, "r", encoding='utf-8') as f:
-                        db_content = f.read()
-                    zf.writestr("07_LOCAL_DB_RAW.json", db_content)
-                except Exception: pass
-
-            if os.path.exists(USERS_LIST_FILE):
-                try:
-                    with open(USERS_LIST_FILE, "r") as f:
-                        ul_content = f.read()
-                    zf.writestr("08_USERS_LIST_RAW.json", ul_content)
-                except Exception: pass
-
+            # ========== FIREBASE/ ==========
+            fb_status = {
+                "firebase_connected": db is not None,
+                "firebase_status": "FIREBASE_ACTIVE" if (db and current_db_mode == "firebase") else "SQLITE_ONLY",
+                "current_db_mode": current_db_mode,
+                "exported_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "bot_username": BOT_USERNAME,
+                "owner_id": OWNER_ID
+            }
+            zf.writestr("FIREBASE/firebase_status.json", json.dumps(fb_status, default=str, indent=4))
             if db:
                 try:
                     fs_users = {}
                     for doc in db.collection('users').stream():
                         fs_users[doc.id] = doc.to_dict()
-                    zf.writestr("09_FIRESTORE_USERS.json", json.dumps(fs_users, default=str, indent=4))
-                except Exception as _e1:
-                    print(f"⚠️  ZIP fs users: {type(_e1).__name__}")
+                    zf.writestr("FIREBASE/firestore_users.json", json.dumps(fs_users, default=str, indent=4))
+                except Exception:
+                    pass
                 try:
                     fs_wd = {}
                     for doc in db.collection('withdrawals').stream():
                         fs_wd[doc.id] = doc.to_dict()
-                    zf.writestr("10_FIRESTORE_WITHDRAWALS.json", json.dumps(fs_wd, default=str, indent=4))
-                except Exception as _e2:
-                    print(f"⚠️  ZIP fs withdrawals: {type(_e2).__name__}")
+                    zf.writestr("FIREBASE/firestore_withdrawals.json", json.dumps(fs_wd, default=str, indent=4))
+                except Exception:
+                    pass
                 try:
                     stg = db.collection('settings').document('bot_config').get(timeout=8.0)
                     if stg.exists:
-                        zf.writestr("11_FIRESTORE_SETTINGS.json", json.dumps(stg.to_dict(), default=str, indent=4))
-                except Exception as _e3:
-                    print(f"⚠️  ZIP fs settings: {type(_e3).__name__}")
+                        zf.writestr("FIREBASE/firestore_settings.json", json.dumps(stg.to_dict(), default=str, indent=4))
+                except Exception:
+                    pass
 
-            fb_info = {
-                "firebase_connected": db is not None,
-                "firebase_status": "FIREBASE_ACTIVE" if (db and current_db_mode == "firebase") else "SQLITE_ONLY",
-                "current_db_mode": current_db_mode,
-                "sqlite_file": STROM_SQLITE_FILE,
+            # ========== TRAFFIC/ ==========
+            zf.writestr("TRAFFIC/recent_traffic.json", json.dumps(recent_traffic, default=str, indent=4))
+
+            # ========== SYSTEM/ ==========
+            zf.writestr("SYSTEM/export_info.json", json.dumps({
                 "exported_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "bot_username": BOT_USERNAME,
                 "owner_id": OWNER_ID,
                 "total_users_known": len(all_known_users),
+                "total_user_cache": len(user_cache),
                 "total_batches": len(number_batches),
-                "total_available_numbers": sum(len(b["numbers"]) for b in number_batches.values())
-            }
-            zf.writestr("12_FIREBASE_STATUS.json", json.dumps(fb_info, default=str, indent=4))
+                "total_available_numbers": sum(len(b["numbers"]) for b in number_batches.values()),
+                "total_used_numbers": len(used_numbers_list)
+            }, default=str, indent=4))
+            try:
+                if os.path.exists(DB_FILE):
+                    with open(DB_FILE, "r", encoding='utf-8') as f:
+                        zf.writestr("SYSTEM/local_db_backup.json", f.read())
+            except Exception:
+                pass
 
         mem.seek(0)
         return mem.getvalue()
     except Exception as e:
         print(f"⚠️  ZIP build error: {type(e).__name__}: {e}")
         return None
+
+
+# ==========================================
+# 📥 Restore from ZIP — actually applies data
+# ==========================================
+def restore_data_from_zip(raw_bytes):
+    global number_batches, used_numbers_list, stex_assigned_numbers, voltx_assigned_numbers
+    global total_uploaded_stats, total_assigned_stats, recent_traffic, assigned_number_meta
+    global all_known_users, bot_settings, user_cache
+
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(raw_bytes), 'r')
+        names = set(zf.namelist())
+    except Exception as e:
+        return False, f"Invalid zip: {type(e).__name__}"
+
+    def read_json(path, default=None):
+        try:
+            if path in names:
+                return json.loads(zf.read(path).decode('utf-8'))
+        except Exception as e:
+            print(f"⚠️  restore read {path}: {type(e).__name__}")
+        return default
+
+    def read_text(path):
+        try:
+            if path in names:
+                return zf.read(path).decode('utf-8')
+        except Exception:
+            pass
+        return None
+
+    restored = []
+
+    try:
+        new_bs = read_json("SETTINGS/bot_settings.json")
+        if isinstance(new_bs, dict):
+            for k, v in new_bs.items():
+                bot_settings[k] = v
+            restored.append("bot_settings")
+    except Exception as e:
+        print(f"⚠️  restore bot_settings: {type(e).__name__}")
+
+    cm = read_json("SETTINGS/custom_messages.json")
+    if isinstance(cm, dict) and cm:
+        bot_settings["custom_messages"] = cm
+        restored.append("custom_messages")
+
+    users_map = read_json("USER DETAILS/users.json", {}) or {}
+    if not isinstance(users_map, dict):
+        users_map = {}
+    uc_map = read_json("USER DETAILS/user_cache.json", {}) or {}
+    if isinstance(uc_map, dict):
+        for k, v in uc_map.items():
+            users_map.setdefault(k, v)
+
+    users_applied = 0
+    try:
+        with sqlite_tx() as conn:
+            if conn:
+                cur = conn.cursor()
+                for uid_s, udata in users_map.items():
+                    if not isinstance(udata, dict):
+                        continue
+                    try:
+                        uid = int(uid_s)
+                    except Exception:
+                        continue
+                    bal = float(udata.get("balance", 0.0) or 0.0)
+                    refs = int(udata.get("total_refers", 0) or 0)
+                    otps = int(udata.get("total_otps", 0) or 0)
+                    banned = 1 if udata.get("banned") else 0
+                    verified = 1 if udata.get("verified") else 0
+                    rby = udata.get("referred_by")
+                    try:
+                        rby = int(rby) if rby else None
+                    except Exception:
+                        rby = None
+                    paid = 1 if udata.get("ref_paid") else 0
+                    cur.execute(
+                        "INSERT INTO users(user_id, balance, total_refers, total_otps, banned, verified, referred_by, ref_paid, created_at, updated_at) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?) "
+                        "ON CONFLICT(user_id) DO UPDATE SET "
+                        "balance=excluded.balance, total_refers=excluded.total_refers, "
+                        "total_otps=excluded.total_otps, banned=excluded.banned, "
+                        "verified=excluded.verified, referred_by=excluded.referred_by, "
+                        "ref_paid=excluded.ref_paid, updated_at=excluded.updated_at",
+                        (uid, bal, refs, otps, banned, verified, rby, paid, time.time(), time.time())
+                    )
+                    user_cache[uid] = {
+                        "user_id": uid, "balance": bal, "total_refers": refs,
+                        "total_otps": otps, "banned": bool(banned), "verified": bool(verified),
+                    }
+                    users_applied += 1
+        restored.append(f"users({users_applied})")
+    except Exception as e:
+        print(f"⚠️  restore users: {type(e).__name__}")
+
+    aku = read_json("USER DETAILS/all_known_users.json")
+    if isinstance(aku, list):
+        for u in aku:
+            all_known_users.add(str(u))
+        try:
+            with open(USERS_LIST_FILE, "w") as f:
+                json.dump(list(all_known_users), f)
+            sqlite_kv_set("all_known_users", list(all_known_users))
+        except Exception:
+            pass
+        restored.append(f"all_known_users({len(aku)})")
+
+    pend = read_json("USER DETAILS/pending_referrals.json", []) or []
+    if isinstance(pend, list) and pend:
+        try:
+            with sqlite_tx() as conn:
+                if conn:
+                    for row in pend:
+                        if not isinstance(row, dict): continue
+                        try:
+                            conn.cursor().execute(
+                                "INSERT OR IGNORE INTO pending_referrals(new_user_id, inviter_id, created_at) VALUES(?,?,?)",
+                                (int(row.get("new_user_id")), int(row.get("inviter_id")), float(row.get("created_at") or time.time()))
+                            )
+                        except Exception: continue
+            restored.append(f"pending_referrals({len(pend)})")
+        except Exception:
+            pass
+
+    paid_list = read_json("USER DETAILS/referral_paid_users.json", []) or []
+    if isinstance(paid_list, list) and paid_list:
+        try:
+            with sqlite_tx() as conn:
+                if conn:
+                    for row in paid_list:
+                        if not isinstance(row, dict): continue
+                        try:
+                            conn.cursor().execute(
+                                "INSERT OR IGNORE INTO referral_paid_users(user_id, paid_at) VALUES(?,?)",
+                                (int(row.get("user_id")), float(row.get("paid_at") or time.time()))
+                            )
+                        except Exception: continue
+            restored.append(f"referral_paid_users({len(paid_list)})")
+        except Exception:
+            pass
+
+    wds = read_json("USER DETAILS/withdrawals.json", []) or []
+    if isinstance(wds, list) and wds:
+        try:
+            with sqlite_tx() as conn:
+                if conn:
+                    for row in wds:
+                        if not isinstance(row, dict): continue
+                        try:
+                            conn.cursor().execute(
+                                "INSERT OR REPLACE INTO withdrawals(req_id, user_id, amount, method, number, full_name, status, timestamp) "
+                                "VALUES(?,?,?,?,?,?,?,?)",
+                                (
+                                    str(row.get("req_id")),
+                                    int(row.get("user_id") or 0),
+                                    float(row.get("amount") or 0),
+                                    str(row.get("method") or ""),
+                                    str(row.get("number") or ""),
+                                    str(row.get("full_name") or ""),
+                                    str(row.get("status") or "pending"),
+                                    float(row.get("timestamp") or time.time()),
+                                )
+                            )
+                        except Exception: continue
+            restored.append(f"withdrawals({len(wds)})")
+        except Exception:
+            pass
+
+    nb = read_json("NUMBERS/number_batches.json")
+    if isinstance(nb, dict):
+        number_batches.clear()
+        number_batches.update(nb)
+        restored.append(f"number_batches({len(nb)})")
+
+    un = read_json("NUMBERS/used_numbers.json")
+    if isinstance(un, list):
+        used_numbers_list.clear()
+        used_numbers_list.extend(un)
+        restored.append(f"used_numbers({len(un)})")
+
+    sx = read_json("NUMBERS/stex_assigned.json")
+    if isinstance(sx, dict):
+        stex_assigned_numbers.clear()
+        stex_assigned_numbers.update(sx)
+        restored.append(f"stex_assigned({len(sx)})")
+
+    vx = read_json("NUMBERS/voltx_assigned.json")
+    if isinstance(vx, dict):
+        voltx_assigned_numbers.clear()
+        voltx_assigned_numbers.update(vx)
+        restored.append(f"voltx_assigned({len(vx)})")
+
+    am = read_json("NUMBERS/assigned_meta.json")
+    if isinstance(am, dict):
+        assigned_number_meta.clear()
+        assigned_number_meta.update(am)
+        restored.append(f"assigned_meta({len(am)})")
+
+    stats = read_json("NUMBERS/stats.json", {})
+    if isinstance(stats, dict):
+        try:
+            total_uploaded_stats = int(stats.get("total_uploaded_stats", total_uploaded_stats))
+            total_assigned_stats = int(stats.get("total_assigned_stats", total_assigned_stats))
+            restored.append("stats")
+        except Exception:
+            pass
+
+    pf = read_json("COUNTRY AND SERVICE/premium_flags.json")
+    if isinstance(pf, dict) and pf:
+        bot_settings["premium_flags"] = pf
+        restored.append(f"premium_flags({len(pf)})")
+
+    pa = read_json("COUNTRY AND SERVICE/premium_apps.json")
+    if isinstance(pa, dict) and pa:
+        bot_settings["premium_apps"] = pa
+        restored.append(f"premium_apps({len(pa)})")
+
+    ft = read_text("COUNTRY AND SERVICE/flag.txt")
+    if ft:
+        try:
+            with open(FLAG_TXT_FILE, "w", encoding='utf-8') as f:
+                f.write(ft)
+            restored.append("flag.txt")
+        except Exception: pass
+    st = read_text("COUNTRY AND SERVICE/service.txt")
+    if st:
+        try:
+            with open(SERVICE_TXT_FILE, "w", encoding='utf-8') as f:
+                f.write(st)
+            restored.append("service.txt")
+        except Exception: pass
+
+    rt = read_json("TRAFFIC/recent_traffic.json")
+    if isinstance(rt, list):
+        recent_traffic.clear()
+        recent_traffic.extend(rt)
+        restored.append(f"recent_traffic({len(rt)})")
+
+    try:
+        sql_settings = read_json("SETTINGS/sqlite_settings.json", []) or []
+        if isinstance(sql_settings, list) and sql_settings:
+            with sqlite_tx() as conn:
+                if conn:
+                    for row in sql_settings:
+                        if not isinstance(row, dict): continue
+                        k = str(row.get("key") or "")
+                        if not k: continue
+                        try:
+                            conn.cursor().execute(
+                                "INSERT INTO settings(key,value,updated_at) VALUES(?,?,?) "
+                                "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+                                (k, row.get("value"), float(row.get("updated_at") or time.time()))
+                            )
+                        except Exception: continue
+            restored.append("sqlite_settings")
+    except Exception:
+        pass
+
+    try:
+        kv = read_json("SETTINGS/kv_store.json", []) or []
+        if isinstance(kv, list) and kv:
+            with sqlite_tx() as conn:
+                if conn:
+                    for row in kv:
+                        if not isinstance(row, dict): continue
+                        k = str(row.get("k") or "")
+                        if not k: continue
+                        try:
+                            conn.cursor().execute(
+                                "INSERT INTO kv_store(k,v,updated_at) VALUES(?,?,?) "
+                                "ON CONFLICT(k) DO UPDATE SET v=excluded.v, updated_at=excluded.updated_at",
+                                (k, row.get("v"), float(row.get("updated_at") or time.time()))
+                            )
+                        except Exception: continue
+            restored.append("kv_store")
+    except Exception:
+        pass
+
+    try:
+        save_db()
+        restored.append("persisted")
+    except Exception as e:
+        print(f"⚠️  restore save_db: {type(e).__name__}")
+
+    zf.close()
+    return True, ", ".join(restored)
 
 
 def delete_all_data():
@@ -4526,7 +4819,6 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, txt, reply_markup=markup)
         answer_callback(call["id"], "✅ Refreshed!", show_alert=False)
 
-    # ---------- Search service selected ----------
     elif data.startswith("s_srv|"):
         parts = data.split("|", 2)
         query = parts[1] if len(parts) > 1 else ""
@@ -4658,7 +4950,6 @@ def handle_callback(call):
 
         save_db()
 
-        # ⭐ Delete prompt + user's prefix messages, KEEP the search-result message (msg_id) for editing
         purge_pending_search_prompts(chat_id, keep_msg_id=msg_id)
 
         if not fetched_nums:
@@ -4966,7 +5257,6 @@ def handle_callback(call):
         send_document(chat_id, "unused_numbers.txt", "\n".join(unused_list).encode('utf-8'))
         answer_callback(call["id"])
 
-    # ---------- Leaderboard (with 1️⃣..9️⃣ + ℹ️🅾️) ----------
     elif data == "lb_main":
         txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
@@ -5129,8 +5419,8 @@ def handle_callback(call):
     elif data == "db_delete_confirm":
         txt = f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> <b>DO YOU REALLY WANT TO REMOVE ALL DATA?</b>'
         kb = {"inline_keyboard": [
-            [{"text": "YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
-            [{"text": "NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
+            [{"text": "✅YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
+            [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
         ]}
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
     elif data == "db_delete_yes":
@@ -5994,6 +6284,7 @@ def handle_callback(call):
             msg_res = send_message(chat_id, text_numbers, reply_markup={"inline_keyboard": kb})
             if msg_res and "result" in msg_res: user_active_sessions[chat_id] = {"msg_id": msg_res["result"]["message_id"], "nums": fetched_nums}
 
+    # ---------- Withdrawal APPROVE / REJECT ----------
     elif data.startswith("wapp_") or data.startswith("wrej_"):
         user_id_clicked = call["from"]["id"]
         if not is_admin(user_id_clicked):
@@ -6012,12 +6303,25 @@ def handle_callback(call):
             edit_message(chat_id, msg_id, new_text, reply_markup=kb)
 
             if action == "APPROVE":
-                # Balance already held at submission time → just notify
-                send_message(u_id, render_body_text(f"{PEM['ok']} Your ${amt} withdrawal has been paid successfully!"))
+                # Balance already held → just notify
+                approve_msg = (
+                    f"{PEM['ok']} <b><i>Your Withdrawal Has Been Paid Successfully!</i></b>\n"
+                    f"\n"
+                    f"💰 <b>Amount:</b> <code>${fmt_payout(amt)}</code>\n"
+                    f"🧾 <b>Withdraw ID:</b> <code>{req_id}</code>"
+                )
+                send_message(u_id, render_body_text(approve_msg))
             else:
-                # ⭐ REFUND the held amount back to user
+                # REFUND the held amount
                 refund_withdrawal_balance(u_id, amt)
-                send_message(u_id, render_body_text(f"❌ Your ${amt} withdrawal request was rejected. Amount refunded."))
+                reject_msg = (
+                    f"{PEM['no']} <b><i>Your Withdrawal Request Was Rejected!</i></b>\n"
+                    f"\n"
+                    f"💰 <b>Amount:</b> <code>${fmt_payout(amt)}</code>\n"
+                    f"💵 <b>Refunded to your balance</b>\n"
+                    f"🧾 <b>Withdraw ID:</b> <code>{req_id}</code>"
+                )
+                send_message(u_id, render_body_text(reject_msg))
 
             try:
                 with sqlite_tx() as conn:
