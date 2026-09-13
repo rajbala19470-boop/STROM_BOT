@@ -1,6 +1,3 @@
-import os
-os.environ["GRPC_DNS_RESOLVER"] = "native"
-
 import requests
 import time
 import json
@@ -114,7 +111,13 @@ GLOBAL_BODY_EMOJIS = {
     "🐚": "6203886371363364022",
     "⏫": "6206046503690048595",
     "🆘": "6206108815075579644",
-    "❓": "6203773684306418660"
+    "❓": "6203773684306418660",
+    "💷": "5190576863226933563",
+    "☎️": "5197474438970363734",
+    "🪨": "6267152480878990865",
+    "💵": "6267068789146260253",
+    "🪙": "5348469219761626211",
+    "📞": "5337132498965010628"
 }
 
 # ==========================================
@@ -425,19 +428,17 @@ DEFAULT_CUSTOM_MESSAGES = {
     "search_number": {"text": "╔═══════════╗\n     🔍 <b>SEARCH NUMBER</b>\n╚═══════════╝\n✅ Enter 3 to 9 digits  \nto search for a number.\n━━━━━━━━━━━━━\n📝 Example:\n➥ 880\n➥ 9227373\n━━━━━━━━━━━━━\n🔍 Fast Number Lookup System", "buttons": []},
     "traffic": {"text": f"{PEM['graph']} <b>Traffic Overview</b>\n\n{PEM['ok']} Available Numbers: {{avail}}\n{PEM['rocket']} Assigned Numbers: {{assigned}}", "buttons": []},
     "refer": {"text": f"➖➖➖➖➖➖➖\n« {PEM['gift']} REFER & EARN »\n➖➖➖➖➖➖➖\n{PEM['link']} YOUR LINK:\n<code>{{ref_link}}</code>\n➖➖➖➖➖➖➖\n{PEM['user']} TOTAL REFERS: <b>{{total_ref}}</b>\n➖➖➖➖➖➖➖\n{PEM['money']} PER REFER: <b>${{ref_reward}}</b>\n➖➖➖➖➖➖➖", "buttons": []},
-    "withdrawal": {"text": "➖➖➖➖➖➖➖\n《 🙈 <b>USER ID</b> : <code>{user_id}</code> 》\n➖➖➖➖➖➖➖\n☁️ <b>Total Otp:</b> <code>{total_otp}</code>\n➖➖➖➖➖➖➖\n🫂 <b>Reffer :</b><code>{total_ref}</code>\n➖➖➖➖➖➖➖\n📅 <b>BALANCE:</b> <code>${bal}</code>\n➖➖➖➖➖➖➖\n🔐 <b>MINIMUM:</b> <code>${min_w}</code>\n➖➖➖➖➖➖➖\n<blockquote><b>SELECT METHOD <tg-emoji emoji-id=\"6217469007868465305\">📱</tg-emoji></b></blockquote>", "buttons": []},
+    "withdrawal": {"text": "➖➖➖➖➖➖➖\n《 🙈 <b>USER ID</b> : <code>{user_id}</code>  》\n➖➖➖➖➖➖➖\n☁️ <b>Total Otp:</b> <code>{total_otp}</code>\n➖➖➖➖➖➖➖\n🫂 <b>Reffer :</b><code>{total_ref}</code>\n➖➖➖➖➖➖➖\n📅 <b>BALANCE:</b> <code>${bal}</code>\n➖➖➖➖➖➖➖\n🔐 <b>MINIMUM:</b> <code>${min_w}</code>\n➖➖➖➖➖➖➖\n<blockquote><b>📱 SELECT METHOD ☎️</b></blockquote>", "buttons": []},
     "support": {"text": f"{PEM['msg']} Contact us for any help:", "buttons": []}
 }
 
 # ==========================================
 # 🔥 Firebase Setup — OPTIONAL with 15s Timeout
-# Bot works fine WITHOUT Firebase (local-only mode)
 # ==========================================
 db = None
 _fb_result = {"db": None, "done": False}
 
 def _try_firebase_init():
-    """Try to initialize Firebase. Bot works with local DB if unavailable."""
     try:
         json_files = (glob.glob("*firebase-adminsdk*.json")
                       + glob.glob("*storm_bot_data*.json")
@@ -451,8 +452,7 @@ def _try_firebase_init():
                     d = json.load(fh)
                     if d.get("type") == "service_account" and "private_key" in d:
                         valid_files.append(f)
-            except:
-                pass
+            except: pass
 
         if not valid_files:
             print("⚠️  Firebase JSON not found — LOCAL-ONLY mode")
@@ -465,7 +465,6 @@ def _try_firebase_init():
         cred = credentials.Certificate(creds_path)
         firebase_admin.initialize_app(cred)
         _db = firestore.client()
-        # Verify connectivity with strict timeout
         _db.collection('_health_check_').document('x').set({'t': time.time()}, timeout=10.0)
         _fb_result["db"] = _db
         _fb_result["done"] = True
@@ -1183,7 +1182,6 @@ def get_user(user_id):
 
 
 def update_balance(user_id, amount):
-    """Update balance atomically. Cache first, then DB if available."""
     if user_id not in user_cache:
         get_user(user_id)
     if user_id in user_cache:
@@ -1196,7 +1194,6 @@ def update_balance(user_id, amount):
 
 
 def credit_otp_to_user(owner_id, reward, app_full_name=""):
-    """Atomically credit balance AND increment OTP count in cache + DB (if Firebase)."""
     try:
         reward = float(reward)
     except:
@@ -1247,25 +1244,13 @@ def add_referral(inviter_id, new_user_id):
 
 
 # ==========================================
-# Payout Lookup — Multi-fallback (11 layers)
+# Payout Lookup — Multi-fallback (9 layers)
 # ==========================================
 def get_payout_for_number(clean_api_num, service_hint=""):
-    """
-    Resolve payout for a number using multiple fallback layers:
-    1. Stored payout in assigned_number_meta
-    2. Exact country|service key
-    3. ISO match with service
-    4. ISO match (any service)
-    5. Country name match with service
-    6. Country name match (any service)
-    7. Detected ISO + name + service
-    8. Detected ISO + name (any)
-    9. Global default
-    """
     reward = float(bot_settings.get("otp_reward", 0.0))
     meta = assigned_number_meta.get(clean_api_num, {})
 
-    # Layer 1: Stored payout at assignment time
+    # Layer 1: Stored payout at assignment
     if "payout" in meta:
         try:
             return float(meta["payout"])
@@ -1408,7 +1393,7 @@ def get_wmethod_display_list():
 
 
 # ==========================================
-# Group OTP display format
+# OTP Display Formatter (Group format)
 # 🇲🇷MR |📱 | +2222🔹548 |✉️English
 # ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
@@ -1443,7 +1428,7 @@ def format_otp_display(num, app_full_name, lang, masked=True):
 
 
 # ==========================================
-# Deliver OTP to User DM
+# Deliver OTP to user DM
 # ==========================================
 def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balance, reward, lang):
     app = get_premium_app(service_name)
@@ -1477,7 +1462,7 @@ def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balanc
 
 
 # ==========================================
-# Broadcast / Stock builder
+# Broadcast Stock builder
 # ==========================================
 def build_stock_broadcast_new(country_display, service_name, count, per_otp,
                                flag_html=None, app_emoji_html=None):
@@ -1511,20 +1496,18 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
 
 
 # ==========================================
-# 🎯 build_numbers_header — FIXED PRESENTATION STYLE
-# Old format:
-#   ⚙️ THIS IS YOUR📱BANGLADESH🇧🇩 NUMBERS📱
-#   💰0.004/OTP🪨 📵
+# 🎯 build_numbers_header — NEW PRESENTATION FORMAT
+# ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀💷0.007$/OTP🪨
 #
-# NEW format (as requested):
-#                  💰{country_payout}/OTP🪨
-#
-#   ⚙️THIS IS YOUR📱{country_name}{country_flag_emoji}NUMBERS📱
+# ⚙️THIS IS YOUR📱MAURITANIA ONFIRE🇲🇷NUMBERS☎️
 # ==========================================
 def build_numbers_header(country, service=None):
     HEADER_EMOJI_1 = "6282641460093260838"   # ⚙️
     HEADER_EMOJI_2 = "6267315814190290529"   # 📱
-    PHONE_ICON     = "5197474438970363734"   # 📱
+    PHONE_END_ICON = "5197474438970363734"   # ☎️
+    MONEY_ICON     = "5190576863226933563"   # 💷
+    ROCK_ICON      = "6267152480878990865"   # 🪨
+
     flag_html = get_flag_info_html(country)
 
     # Payout resolution
@@ -1544,16 +1527,19 @@ def build_numbers_header(country, service=None):
 
     payout_str = fmt_payout(payout_val)
 
-    money_icon = f'<tg-emoji emoji-id="{TAKA_EMOJI}">💰</tg-emoji>'
-    rock_icon  = f'<tg-emoji emoji-id="{ROCK_EMOJI}">🪨</tg-emoji>'
+    money_icon = f'<tg-emoji emoji-id="{MONEY_ICON}">💷</tg-emoji>'
+    rock_icon  = f'<tg-emoji emoji-id="{ROCK_ICON}">🪨</tg-emoji>'
     gear_icon  = f'<tg-emoji emoji-id="{HEADER_EMOJI_1}">⚙️</tg-emoji>'
     phone_icon_2 = f'<tg-emoji emoji-id="{HEADER_EMOJI_2}">📱</tg-emoji>'
-    phone_icon_end = f'<tg-emoji emoji-id="{PHONE_ICON}">📱</tg-emoji>'
+    phone_icon_end = f'<tg-emoji emoji-id="{PHONE_END_ICON}">☎️</tg-emoji>'
 
     country_display = html.escape(str(country).upper())
 
+    # Leading invisible braille chars for indentation
+    indent = "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+
     header = (
-        f"{money_icon}<b>{payout_str}/OTP</b>{rock_icon}\n"
+        f"{indent}{money_icon}<b>{payout_str}$/OTP</b>{rock_icon}\n"
         f"\n"
         f"{gear_icon}<b>THIS IS YOUR</b>{phone_icon_2}<b>{country_display}</b>"
         f"{flag_html}<b>NUMBERS</b>{phone_icon_end}"
@@ -1775,7 +1761,8 @@ def build_group_kb(otp_value, fw=None):
              "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}]
     ch_link = bot_settings.get("main_channel_link", "")
     if ch_link:
-        row2.append({"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI,
+        row2.append([{"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI,
+                     "url": ch_link, "style": "primary"}][0] if False else {"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI,
                      "url": ch_link, "style": "primary"})
     kb.append(row2)
     if fw:
@@ -1809,7 +1796,7 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
 
 
 # ==========================================
-# Panel Monitor — Firebase optional safe
+# Panel Monitor
 # ==========================================
 def panel_monitor_thread():
     global processed_otps, recent_traffic, panel_sessions
@@ -3084,30 +3071,99 @@ def handle_message(msg):
                 edit_message(chat_id, msg_id, render_body_text("🕹 <b>STORM</b>\n\n❌ <b>Invalid!</b>"), reply_markup=storm_control_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
-        # ========== PAYOUT VALUE ==========
+        # ========== PAYOUT VALUE (with SUCCESS/FAIL confirmation) ==========
         elif state == "set_payout_value" and text:
-            msg_id = temp_data[chat_id]["msg_id"]
-            service = temp_data[chat_id]["service"]
-            country = temp_data[chat_id]["country"]
+            msg_id_to_edit = temp_data[chat_id].get("msg_id")
+            service = temp_data[chat_id].get("service", "?")
+            country = temp_data[chat_id].get("country", "?")
+            
+            # Delete user input
+            try: delete_message(chat_id, msg.get("message_id"))
+            except: pass
+            
+            # Validate input
             try:
                 new_val = float(text.strip())
-                if new_val < 0: raise ValueError()
+                if new_val < 0: raise ValueError("negative")
+            except:
+                # FAILURE message
+                fail_txt = (
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"❌ <b>PAYOUT UPDATE FAILED</b>\n"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"📌 <b>Reason:</b> <b>Invalid number format</b>\n"
+                    f"💡 <b>Example:</b> <code>0.005</code>\n"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"📝 <b>Send a valid number:</b>"
+                )
+                if msg_id_to_edit:
+                    try:
+                        edit_message(chat_id, msg_id_to_edit, render_body_text(fail_txt), reply_markup=get_cancel_kb())
+                    except:
+                        send_message(chat_id, render_body_text(fail_txt), reply_markup=get_cancel_kb())
+                else:
+                    send_message(chat_id, render_body_text(fail_txt), reply_markup=get_cancel_kb())
+                return
+            
+            # Update payout
+            try:
                 if "otp_pair_rates" not in bot_settings: bot_settings["otp_pair_rates"] = {}
                 key = f"{str(country).upper()}|{str(service).upper()}"
+                old_val = bot_settings["otp_pair_rates"].get(key, "None")
                 bot_settings["otp_pair_rates"][key] = new_val
                 save_db()
+                
                 country_flag = get_flag_info_html(country)
-                delete_message(chat_id, msg["message_id"])
+                
+                # SUCCESS message
                 ok_txt = (
-                    f"{PEM['ok']} <b>Payout Updated Successfully!</b>\n\n"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"✅ <b>PAYOUT UPDATED SUCCESSFULLY</b>\n"
+                    f"━━━━━━━━━━━━━━━\n"
                     f"🌍 <b>Country:</b> <code>{country}</code> {country_flag}\n"
                     f"🔧 <b>Service:</b> <code>{service}</code>\n"
-                    f"💰 <b>New Payout:</b> <code>${new_val}</code>"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"💰 <b>Old Payout:</b> <code>${old_val}</code>\n"
+                    f"💵 <b>New Payout:</b> <code>${new_val}</code>\n"
+                    f"━━━━━━━━━━━━━━━"
                 )
-                edit_message(chat_id, msg_id, render_body_text(ok_txt), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
-            except ValueError:
-                send_message(chat_id, render_body_text("❌ <b>Invalid value!</b> Please send a number."), reply_markup=get_cancel_kb())
-            del user_states[chat_id]; del temp_data[chat_id]; return
+                
+                if msg_id_to_edit:
+                    try:
+                        edit_message(
+                            chat_id, msg_id_to_edit,
+                            render_body_text(ok_txt),
+                            reply_markup={"inline_keyboard": [[
+                                {"text": "◀️ Back to Payout Menu", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"},
+                                {"text": "🏠 Admin Panel", "icon_custom_emoji_id": "5420155432272438703", "callback_data": "back_to_admin", "style": "success"}
+                            ]]}
+                        )
+                    except:
+                        send_message(chat_id, render_body_text(ok_txt), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
+                else:
+                    send_message(chat_id, render_body_text(ok_txt), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
+                    
+            except Exception as e:
+                fail_txt = (
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"❌ <b>PAYOUT UPDATE FAILED</b>\n"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"📌 <b>Error:</b> <code>{html.escape(str(e)[:80])}</code>\n"
+                    f"━━━━━━━━━━━━━━━"
+                )
+                if msg_id_to_edit:
+                    try:
+                        edit_message(chat_id, msg_id_to_edit, render_body_text(fail_txt), reply_markup=get_cancel_kb())
+                    except:
+                        send_message(chat_id, render_body_text(fail_txt), reply_markup=get_cancel_kb())
+                else:
+                    send_message(chat_id, render_body_text(fail_txt), reply_markup=get_cancel_kb())
+                return
+            
+            # Cleanup
+            del user_states[chat_id]
+            del temp_data[chat_id]
+            return
 
         # ========== DATA ZIP RESTORE ==========
         elif state == "wait_for_data_zip" and "document" in msg:
@@ -3235,7 +3291,6 @@ def handle_message(msg):
                     else: hdr_country = query
                 except: hdr_country = query
             else: hdr_country = query
-            # ⭐ FIXED header
             text_numbers = build_numbers_header(hdr_country)
             if wait_msg_id:
                 edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
@@ -3421,14 +3476,14 @@ def handle_message(msg):
 
 
 # ==========================================
-# 📦 Database ZIP — Each Section in SEPARATE Blocks
-# 12 separate files inside ZIP — one per data type
+# 📦 Database ZIP — Each section in SEPARATE block
+# 12 separate files inside ZIP
 # ==========================================
 def build_data_zip():
     mem = io.BytesIO()
     try:
         with zipfile.ZipFile(mem, 'w', zipfile.ZIP_DEFLATED) as zf:
-            # ─── Block 1: Settings (all bot config) ───
+            # Block 1: Settings
             settings_block = {
                 "bot_settings_non_fs": {k: v for k, v in bot_settings.items() if k not in FS_KEYS},
                 "custom_messages": bot_settings.get("custom_messages", {}),
@@ -3442,7 +3497,7 @@ def build_data_zip():
             }
             zf.writestr("01_SETTINGS.json", json.dumps(settings_block, default=str, indent=4))
 
-            # ─── Block 2: Stock batches ───
+            # Block 2: Stock
             stock_block = {
                 "number_batches": number_batches,
                 "used_numbers_list": used_numbers_list,
@@ -3451,7 +3506,7 @@ def build_data_zip():
             }
             zf.writestr("02_STOCK.json", json.dumps(stock_block, default=str, indent=4))
 
-            # ─── Block 3: Assigned numbers (Stex/Voltx) ───
+            # Block 3: Assigned Numbers
             assigned_block = {
                 "stex_assigned_numbers": stex_assigned_numbers,
                 "voltx_assigned_numbers": voltx_assigned_numbers,
@@ -3459,21 +3514,21 @@ def build_data_zip():
             }
             zf.writestr("03_ASSIGNED_NUMBERS.json", json.dumps(assigned_block, default=str, indent=4))
 
-            # ─── Block 4: Traffic stats ───
+            # Block 4: Traffic
             traffic_block = {"recent_traffic": recent_traffic}
             zf.writestr("04_TRAFFIC.json", json.dumps(traffic_block, default=str, indent=4))
 
-            # ─── Block 5: User list ───
+            # Block 5: Users List
             users_block = {"all_known_users": list(all_known_users)}
             zf.writestr("05_USERS_LIST.json", json.dumps(users_block, default=str, indent=4))
 
-            # ─── Block 6: User cache (runtime balance data) ───
+            # Block 6: User Cache
             user_cache_block = {}
             for uid, udata in user_cache.items():
                 user_cache_block[str(uid)] = udata
             zf.writestr("06_USER_CACHE.json", json.dumps(user_cache_block, default=str, indent=4))
 
-            # ─── Block 7: Local DB file raw ───
+            # Block 7: Local DB raw
             if os.path.exists(DB_FILE):
                 try:
                     with open(DB_FILE, "r", encoding='utf-8') as f:
@@ -3481,7 +3536,7 @@ def build_data_zip():
                     zf.writestr("07_LOCAL_DB_RAW.json", db_content)
                 except: pass
 
-            # ─── Block 8: users_list.json raw ───
+            # Block 8: users_list.json raw
             if os.path.exists("users_list.json"):
                 try:
                     with open("users_list.json", "r") as f:
@@ -3489,7 +3544,7 @@ def build_data_zip():
                     zf.writestr("08_USERS_LIST_RAW.json", ul_content)
                 except: pass
 
-            # ─── Block 9: Firestore Users (if Firebase) ───
+            # Block 9-11: Firestore (if available)
             if db:
                 try:
                     fs_users = {}
@@ -3497,23 +3552,19 @@ def build_data_zip():
                         fs_users[doc.id] = doc.to_dict()
                     zf.writestr("09_FIRESTORE_USERS.json", json.dumps(fs_users, default=str, indent=4))
                 except: pass
-
-                # ─── Block 10: Firestore Withdrawals ───
                 try:
                     fs_wd = {}
                     for doc in db.collection('withdrawals').stream():
                         fs_wd[doc.id] = doc.to_dict()
                     zf.writestr("10_FIRESTORE_WITHDRAWALS.json", json.dumps(fs_wd, default=str, indent=4))
                 except: pass
-
-                # ─── Block 11: Firestore Settings ───
                 try:
                     stg = db.collection('settings').document('bot_config').get(timeout=8.0)
                     if stg.exists:
                         zf.writestr("11_FIRESTORE_SETTINGS.json", json.dumps(stg.to_dict(), default=str, indent=4))
                 except: pass
 
-            # ─── Block 12: Firebase Status Info ───
+            # Block 12: Firebase Status
             fb_info = {
                 "firebase_connected": db is not None,
                 "firebase_status": "CLOUD_SYNC" if db else "LOCAL_ONLY",
@@ -3666,7 +3717,7 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, txt, reply_markup=markup)
         answer_callback(call["id"], "✅ Refreshed!", show_alert=False)
 
-    # ---------- Broadcast stock "Get Numbers" button ----------
+    # ---------- Broadcast Stock "Get Numbers" ----------
     elif data.startswith("g_bs|"):
         user_states.pop(chat_id, None)
         temp_data.pop(chat_id, None)
@@ -3947,7 +3998,7 @@ def handle_callback(call):
         send_document(chat_id, "unused_numbers.txt", "\n".join(unused_list).encode('utf-8'))
         answer_callback(call["id"])
 
-    # ---------- Leaderboard ----------
+    # ---------- Leaderboard (LOCAL + FIREBASE modes) ----------
     elif data == "lb_main":
         txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
@@ -3961,9 +4012,49 @@ def handle_callback(call):
         sub = data.replace("lb_", "")
         edit_message(chat_id, msg_id, render_body_text("⌛ <i>Fetching...</i>"))
         try:
+            # ⭐ LOCAL MODE (if Firebase not available)
             if not db:
-                edit_message(chat_id, msg_id, render_body_text("❌ <b>Firebase disabled.</b>"), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]})
+                all_users = []
+                for uid, udata in user_cache.items():
+                    u_copy = dict(udata)
+                    u_copy["user_id"] = uid
+                    all_users.append(u_copy)
+
+                if sub == "top_refs":
+                    title = "TOP 5 REFERRERS (LOCAL)"
+                    sorted_users = sorted(all_users, key=lambda u: u.get('total_refers', 0), reverse=True)[:5]
+                    res_txt = ""; count = 1
+                    for u in sorted_users:
+                        if u.get('total_refers', 0) > 0:
+                            res_txt += f"| {count} <a href='tg://user?id={u['user_id']}'>{u['user_id']}</a> → <b>{u.get('total_refers',0)}</b>\n"
+                            count += 1
+                    if not res_txt: res_txt = "No data available (local cache).\n"
+                elif sub == "top_otps":
+                    title = "TOP 5 OTP RECEIVERS (LOCAL)"
+                    sorted_users = sorted(all_users, key=lambda u: u.get('total_otps', 0), reverse=True)[:5]
+                    res_txt = ""; count = 1
+                    for u in sorted_users:
+                        if u.get('total_otps', 0) > 0:
+                            res_txt += f"| {count} <a href='tg://user?id={u['user_id']}'>{u['user_id']}</a> → <b>{u.get('total_otps',0)}</b>\n"
+                            count += 1
+                    if not res_txt: res_txt = "No data available (local cache).\n"
+                elif sub == "w_history":
+                    title = "LAST 10 WITHDRAWALS (LOCAL)"
+                    res_txt = ""
+                    count = 1
+                    for req_id, wd in list(pending_withdrawals.items())[:10]:
+                        uid = wd.get('user_id', 'User')
+                        amt = wd.get('amount', 0)
+                        res_txt += f"| {count} <a href='tg://user?id={uid}'>{uid}</a> → <b>${amt}</b> ⏳\n"
+                        count += 1
+                    if not res_txt: res_txt = "No local withdrawal data.\n"
+
+                final_msg = f"━━━━━━━━━━━━━━━\n📊 <b>{title}</b>\n━━━━━━━━━━━━━━━\n{res_txt}━━━━━━━━━━━━━━━\n<i>⚠️ Firebase disabled — showing local cache data</i>"
+                kb = [[{"text": "Refresh", "icon_custom_emoji_id": "5420155432272438703", "callback_data": data, "style": "success"}, {"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]
+                edit_message(chat_id, msg_id, render_body_text(final_msg), reply_markup={"inline_keyboard": kb})
                 return
+
+            # ⭐ FIREBASE MODE
             if sub == "top_refs":
                 title, field, limit = "TOP 5 REFERRERS", "total_refers", 5
                 users = db.collection('users').order_by(field, direction="DESCENDING").limit(limit).stream()
@@ -4041,7 +4132,6 @@ def handle_callback(call):
             f'<i>Choose an option below:</i>'
         )
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=database_menu_keyboard())
-
     elif data == "db_download":
         wait = send_message(chat_id, render_body_text("⏳ <i>Preparing database zip...</i>"))
         wait_id = wait.get("result", {}).get("message_id")
@@ -4056,11 +4146,9 @@ def handle_callback(call):
         except Exception as e:
             if wait_id: delete_message(chat_id, wait_id)
             send_message(chat_id, render_body_text(f'❌ Error: {html.escape(str(e))}'))
-
     elif data == "db_upload":
         user_states[chat_id] = "wait_for_data_zip"
         edit_message(chat_id, msg_id, render_body_text("📂 Send the <code>STR_BOT_DATA.zip</code> file to restore:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "database_menu", "style": "danger"}]]})
-
     elif data == "db_delete_confirm":
         txt = (
             f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> '
@@ -4071,11 +4159,9 @@ def handle_callback(call):
             [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
         ]}
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
-
     elif data == "db_delete_yes":
         delete_all_data()
         edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>All data has been removed successfully!</b>'), reply_markup=database_menu_keyboard())
-
     elif data == "db_delete_no":
         edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>Cancelled.</b>'), reply_markup=database_menu_keyboard())
 
@@ -4107,7 +4193,6 @@ def handle_callback(call):
             f'📌 <b>Select a Service</b> to change its payout:'
         )
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
-
     elif data.startswith("cp_srv|"):
         srv = data.replace("cp_srv|", "")
         local_cnts = set()
@@ -4136,6 +4221,7 @@ def handle_callback(call):
         )
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
 
+    # ---------- Country Payout Edit (Confirmation Flow) ----------
     elif data.startswith("cp_cnt|"):
         parts = data.split("|", 2)
         srv = parts[1]; country = parts[2]
@@ -4153,9 +4239,11 @@ def handle_callback(call):
                 except: pass
             if current_payout is None:
                 current_payout = float(bot_settings.get("otp_reward", 0.0))
+
         country_flag = get_flag_info_html(country)
         user_states[chat_id] = "set_payout_value"
         temp_data[chat_id] = {"msg_id": msg_id, "service": srv, "country": country}
+
         txt = (
             f'<b>{country}</b>{country_flag} <b>Payout :</b> <code>${current_payout}</code>\n\n'
             f'<b>Send The New Value</b> <code>country_payout</code> :'
@@ -4877,7 +4965,6 @@ def handle_callback(call):
                     else: hdr_country = query
                 except: hdr_country = query
             else: hdr_country = query
-            # ⭐ FIXED header
             text_numbers = build_numbers_header(hdr_country, service_from_cb)
             edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
             user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
@@ -4949,7 +5036,6 @@ def handle_callback(call):
         kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n|{service}|{country}", "style": "danger"},
                    {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
-        # ⭐ FIXED header
         text_numbers = build_numbers_header(country, service)
         try:
             edit_message(chat_id, msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
@@ -5001,7 +5087,7 @@ def handle_callback(call):
 
 
 # ==========================================
-# Voltx SMS Listener (with credit_otp_to_user)
+# Voltx SMS Listener
 # ==========================================
 def voltx_sms_listener():
     global processed_otps, recent_traffic, voltx_assigned_numbers
@@ -5063,7 +5149,7 @@ def voltx_sms_listener():
 
 
 # ==========================================
-# Global (StexSMS) SMS Listener (with credit_otp_to_user)
+# Global (StexSMS) SMS Listener
 # ==========================================
 def global_sms_listener():
     global processed_otps, recent_traffic, stex_assigned_numbers
