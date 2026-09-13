@@ -33,7 +33,7 @@ BOT_USERNAME = ""
 DB_FILE = "bot_data.json"
 
 # ==========================================
-# Premium Emoji Database
+# Premium Emoji Dictionary
 # ==========================================
 PEM = {
     "ok": '<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>',
@@ -120,7 +120,8 @@ GLOBAL_BODY_EMOJIS = {
     "🪨": "6267152480878990865",
     "💵": "6267068789146260253",
     "🪙": "5348469219761626211",
-    "📞": "5337132498965010628"
+    "📞": "5337132498965010628",
+    "🟡": "5339082633160703625"
 }
 
 # ==========================================
@@ -137,7 +138,6 @@ TAKA_EMOJI = "6267068789146260253"
 HIDDEN_EMOJI = "6235253239080555488"
 MESSAGE_EMOJI = "6235307467337635626"
 CHANNEL_EMOJI = "6204010762206189094"
-EMOJI_BOT_BUTTON = "5339267587337370029"
 NUMBER_BTN_EMOJI = "5339267587337370029"
 
 WITHDRAW_SELECT_EMOJI = "6217469007868465305"
@@ -186,6 +186,37 @@ def get_by_path(obj, path):
             return None
     return cur
 
+def _extract_by_paths(data, p_config):
+    number_path = p_config.get("number_path", "").strip()
+    message_path = p_config.get("message_path", "").strip()
+    service_path = p_config.get("service_path", "").strip()
+    otp_list_path = p_config.get("otp_list_path", "").strip()
+    if not (number_path or message_path or service_path):
+        return None
+    root = data
+    if otp_list_path:
+        try:
+            dr = get_by_path(data, otp_list_path)
+            if dr is not None: root = dr
+        except: pass
+    items = root if isinstance(root, list) else [root]
+    results = []
+    for it in items:
+        if not isinstance(it, (dict, list)): continue
+        num_raw = get_by_path(it, number_path) if number_path else None
+        msg_raw = get_by_path(it, message_path) if message_path else None
+        svc_raw = get_by_path(it, service_path) if service_path else None
+        if num_raw is None: continue
+        clean_num = re.sub(r'\D', '', str(num_raw))
+        if not (5 <= len(clean_num) <= 18): continue
+        msg_str = str(msg_raw) if msg_raw is not None else ""
+        if len(msg_str) < 4: continue
+        otp = extract_otp_code(msg_str)
+        if not otp: otp = "N/A"
+        svc_str = str(svc_raw).strip() if svc_raw is not None else ""
+        results.append({"number": clean_num, "message": msg_str, "otp": otp, "service_name": svc_str})
+    return results if results else None
+
 assigned_number_meta = {}
 _last_upload_bcast = {}
 _upload_in_progress = {}
@@ -232,196 +263,101 @@ def parse_curl_command(curl_str):
 # World Country Database
 # ==========================================
 COUNTRY_DB = {
-    "1":   {"iso": "US", "name": "United States"},
-    "7":   {"iso": "RU", "name": "Russia"},
-    "20":  {"iso": "EG", "name": "Egypt"},
-    "27":  {"iso": "ZA", "name": "South Africa"},
-    "30":  {"iso": "GR", "name": "Greece"},
-    "31":  {"iso": "NL", "name": "Netherlands"},
-    "32":  {"iso": "BE", "name": "Belgium"},
-    "33":  {"iso": "FR", "name": "France"},
-    "34":  {"iso": "ES", "name": "Spain"},
-    "36":  {"iso": "HU", "name": "Hungary"},
-    "39":  {"iso": "IT", "name": "Italy"},
-    "40":  {"iso": "RO", "name": "Romania"},
-    "41":  {"iso": "CH", "name": "Switzerland"},
-    "43":  {"iso": "AT", "name": "Austria"},
-    "44":  {"iso": "GB", "name": "United Kingdom"},
-    "45":  {"iso": "DK", "name": "Denmark"},
-    "46":  {"iso": "SE", "name": "Sweden"},
-    "47":  {"iso": "NO", "name": "Norway"},
-    "48":  {"iso": "PL", "name": "Poland"},
-    "49":  {"iso": "DE", "name": "Germany"},
-    "51":  {"iso": "PE", "name": "Peru"},
-    "52":  {"iso": "MX", "name": "Mexico"},
-    "53":  {"iso": "CU", "name": "Cuba"},
-    "54":  {"iso": "AR", "name": "Argentina"},
-    "55":  {"iso": "BR", "name": "Brazil"},
-    "56":  {"iso": "CL", "name": "Chile"},
-    "57":  {"iso": "CO", "name": "Colombia"},
-    "58":  {"iso": "VE", "name": "Venezuela"},
-    "60":  {"iso": "MY", "name": "Malaysia"},
-    "61":  {"iso": "AU", "name": "Australia"},
-    "62":  {"iso": "ID", "name": "Indonesia"},
-    "63":  {"iso": "PH", "name": "Philippines"},
-    "64":  {"iso": "NZ", "name": "New Zealand"},
-    "65":  {"iso": "SG", "name": "Singapore"},
-    "66":  {"iso": "TH", "name": "Thailand"},
-    "81":  {"iso": "JP", "name": "Japan"},
-    "82":  {"iso": "KR", "name": "South Korea"},
-    "84":  {"iso": "VN", "name": "Vietnam"},
-    "86":  {"iso": "CN", "name": "China"},
-    "90":  {"iso": "TR", "name": "Turkey"},
-    "91":  {"iso": "IN", "name": "India"},
-    "92":  {"iso": "PK", "name": "Pakistan"},
-    "93":  {"iso": "AF", "name": "Afghanistan"},
-    "94":  {"iso": "LK", "name": "Sri Lanka"},
-    "95":  {"iso": "MM", "name": "Myanmar"},
-    "98":  {"iso": "IR", "name": "Iran"},
-    "212": {"iso": "MA", "name": "Morocco"},
-    "213": {"iso": "DZ", "name": "Algeria"},
-    "216": {"iso": "TN", "name": "Tunisia"},
-    "218": {"iso": "LY", "name": "Libya"},
-    "220": {"iso": "GM", "name": "Gambia"},
-    "221": {"iso": "SN", "name": "Senegal"},
-    "222": {"iso": "MR", "name": "Mauritania"},
-    "223": {"iso": "ML", "name": "Mali"},
-    "224": {"iso": "GN", "name": "Guinea"},
-    "225": {"iso": "CI", "name": "Ivory Coast"},
-    "226": {"iso": "BF", "name": "Burkina Faso"},
-    "227": {"iso": "NE", "name": "Niger"},
-    "228": {"iso": "TG", "name": "Togo"},
-    "229": {"iso": "BJ", "name": "Benin"},
-    "230": {"iso": "MU", "name": "Mauritius"},
-    "231": {"iso": "LR", "name": "Liberia"},
-    "232": {"iso": "SL", "name": "Sierra Leone"},
-    "233": {"iso": "GH", "name": "Ghana"},
-    "234": {"iso": "NG", "name": "Nigeria"},
-    "235": {"iso": "TD", "name": "Chad"},
-    "236": {"iso": "CF", "name": "Central African Republic"},
-    "237": {"iso": "CM", "name": "Cameroon"},
-    "238": {"iso": "CV", "name": "Cape Verde"},
-    "239": {"iso": "ST", "name": "Sao Tome and Principe"},
-    "240": {"iso": "GQ", "name": "Equatorial Guinea"},
-    "241": {"iso": "GA", "name": "Gabon"},
-    "242": {"iso": "CG", "name": "Congo"},
-    "243": {"iso": "CD", "name": "DR Congo"},
-    "244": {"iso": "AO", "name": "Angola"},
-    "245": {"iso": "GW", "name": "Guinea-Bissau"},
-    "248": {"iso": "SC", "name": "Seychelles"},
-    "249": {"iso": "SD", "name": "Sudan"},
-    "250": {"iso": "RW", "name": "Rwanda"},
-    "251": {"iso": "ET", "name": "Ethiopia"},
-    "252": {"iso": "SO", "name": "Somalia"},
-    "253": {"iso": "DJ", "name": "Djibouti"},
-    "254": {"iso": "KE", "name": "Kenya"},
-    "255": {"iso": "TZ", "name": "Tanzania"},
-    "256": {"iso": "UG", "name": "Uganda"},
-    "257": {"iso": "BI", "name": "Burundi"},
-    "258": {"iso": "MZ", "name": "Mozambique"},
-    "260": {"iso": "ZM", "name": "Zambia"},
-    "261": {"iso": "MG", "name": "Madagascar"},
-    "263": {"iso": "ZW", "name": "Zimbabwe"},
-    "264": {"iso": "NA", "name": "Namibia"},
-    "265": {"iso": "MW", "name": "Malawi"},
-    "266": {"iso": "LS", "name": "Lesotho"},
-    "267": {"iso": "BW", "name": "Botswana"},
-    "268": {"iso": "SZ", "name": "Eswatini"},
-    "269": {"iso": "KM", "name": "Comoros"},
-    "290": {"iso": "SH", "name": "Saint Helena"},
-    "291": {"iso": "ER", "name": "Eritrea"},
-    "297": {"iso": "AW", "name": "Aruba"},
-    "298": {"iso": "FO", "name": "Faroe Islands"},
-    "299": {"iso": "GL", "name": "Greenland"},
-    "350": {"iso": "GI", "name": "Gibraltar"},
-    "351": {"iso": "PT", "name": "Portugal"},
-    "352": {"iso": "LU", "name": "Luxembourg"},
-    "353": {"iso": "IE", "name": "Ireland"},
-    "354": {"iso": "IS", "name": "Iceland"},
-    "355": {"iso": "AL", "name": "Albania"},
-    "356": {"iso": "MT", "name": "Malta"},
-    "357": {"iso": "CY", "name": "Cyprus"},
-    "358": {"iso": "FI", "name": "Finland"},
-    "359": {"iso": "BG", "name": "Bulgaria"},
-    "370": {"iso": "LT", "name": "Lithuania"},
-    "371": {"iso": "LV", "name": "Latvia"},
-    "372": {"iso": "EE", "name": "Estonia"},
-    "373": {"iso": "MD", "name": "Moldova"},
-    "374": {"iso": "AM", "name": "Armenia"},
-    "375": {"iso": "BY", "name": "Belarus"},
-    "376": {"iso": "AD", "name": "Andorra"},
-    "377": {"iso": "MC", "name": "Monaco"},
-    "378": {"iso": "SM", "name": "San Marino"},
-    "380": {"iso": "UA", "name": "Ukraine"},
-    "381": {"iso": "RS", "name": "Serbia"},
-    "382": {"iso": "ME", "name": "Montenegro"},
-    "385": {"iso": "HR", "name": "Croatia"},
-    "386": {"iso": "SI", "name": "Slovenia"},
-    "387": {"iso": "BA", "name": "Bosnia and Herzegovina"},
-    "389": {"iso": "MK", "name": "North Macedonia"},
-    "420": {"iso": "CZ", "name": "Czech Republic"},
-    "421": {"iso": "SK", "name": "Slovakia"},
-    "423": {"iso": "LI", "name": "Liechtenstein"},
-    "500": {"iso": "FK", "name": "Falkland Islands"},
-    "501": {"iso": "BZ", "name": "Belize"},
-    "502": {"iso": "GT", "name": "Guatemala"},
-    "503": {"iso": "SV", "name": "El Salvador"},
-    "504": {"iso": "HN", "name": "Honduras"},
-    "505": {"iso": "NI", "name": "Nicaragua"},
-    "506": {"iso": "CR", "name": "Costa Rica"},
-    "507": {"iso": "PA", "name": "Panama"},
-    "509": {"iso": "HT", "name": "Haiti"},
-    "591": {"iso": "BO", "name": "Bolivia"},
-    "592": {"iso": "GY", "name": "Guyana"},
-    "593": {"iso": "EC", "name": "Ecuador"},
-    "595": {"iso": "PY", "name": "Paraguay"},
-    "597": {"iso": "SR", "name": "Suriname"},
-    "598": {"iso": "UY", "name": "Uruguay"},
-    "670": {"iso": "TL", "name": "East Timor"},
-    "673": {"iso": "BN", "name": "Brunei"},
-    "675": {"iso": "PG", "name": "Papua New Guinea"},
-    "676": {"iso": "TO", "name": "Tonga"},
-    "677": {"iso": "SB", "name": "Solomon Islands"},
-    "678": {"iso": "VU", "name": "Vanuatu"},
-    "679": {"iso": "FJ", "name": "Fiji"},
-    "680": {"iso": "PW", "name": "Palau"},
-    "682": {"iso": "CK", "name": "Cook Islands"},
-    "685": {"iso": "WS", "name": "Samoa"},
-    "686": {"iso": "KI", "name": "Kiribati"},
-    "688": {"iso": "TV", "name": "Tuvalu"},
-    "689": {"iso": "PF", "name": "French Polynesia"},
-    "691": {"iso": "FM", "name": "Micronesia"},
-    "692": {"iso": "MH", "name": "Marshall Islands"},
-    "850": {"iso": "KP", "name": "North Korea"},
-    "852": {"iso": "HK", "name": "Hong Kong"},
-    "853": {"iso": "MO", "name": "Macau"},
-    "855": {"iso": "KH", "name": "Cambodia"},
-    "856": {"iso": "LA", "name": "Laos"},
-    "880": {"iso": "BD", "name": "Bangladesh"},
-    "886": {"iso": "TW", "name": "Taiwan"},
-    "960": {"iso": "MV", "name": "Maldives"},
-    "961": {"iso": "LB", "name": "Lebanon"},
-    "962": {"iso": "JO", "name": "Jordan"},
-    "963": {"iso": "SY", "name": "Syria"},
-    "964": {"iso": "IQ", "name": "Iraq"},
-    "965": {"iso": "KW", "name": "Kuwait"},
-    "966": {"iso": "SA", "name": "Saudi Arabia"},
-    "967": {"iso": "YE", "name": "Yemen"},
-    "968": {"iso": "OM", "name": "Oman"},
-    "970": {"iso": "PS", "name": "Palestine"},
-    "971": {"iso": "AE", "name": "United Arab Emirates"},
-    "972": {"iso": "IL", "name": "Israel"},
-    "973": {"iso": "BH", "name": "Bahrain"},
-    "974": {"iso": "QA", "name": "Qatar"},
-    "975": {"iso": "BT", "name": "Bhutan"},
-    "976": {"iso": "MN", "name": "Mongolia"},
-    "977": {"iso": "NP", "name": "Nepal"},
-    "992": {"iso": "TJ", "name": "Tajikistan"},
-    "993": {"iso": "TM", "name": "Turkmenistan"},
-    "994": {"iso": "AZ", "name": "Azerbaijan"},
-    "995": {"iso": "GE", "name": "Georgia"},
-    "996": {"iso": "KG", "name": "Kyrgyzstan"},
-    "998": {"iso": "UZ", "name": "Uzbekistan"},
+    "1":{"iso":"US","name":"United States"},"7":{"iso":"RU","name":"Russia"},
+    "20":{"iso":"EG","name":"Egypt"},"27":{"iso":"ZA","name":"South Africa"},
+    "30":{"iso":"GR","name":"Greece"},"31":{"iso":"NL","name":"Netherlands"},
+    "32":{"iso":"BE","name":"Belgium"},"33":{"iso":"FR","name":"France"},
+    "34":{"iso":"ES","name":"Spain"},"36":{"iso":"HU","name":"Hungary"},
+    "39":{"iso":"IT","name":"Italy"},"40":{"iso":"RO","name":"Romania"},
+    "41":{"iso":"CH","name":"Switzerland"},"43":{"iso":"AT","name":"Austria"},
+    "44":{"iso":"GB","name":"United Kingdom"},"45":{"iso":"DK","name":"Denmark"},
+    "46":{"iso":"SE","name":"Sweden"},"47":{"iso":"NO","name":"Norway"},
+    "48":{"iso":"PL","name":"Poland"},"49":{"iso":"DE","name":"Germany"},
+    "51":{"iso":"PE","name":"Peru"},"52":{"iso":"MX","name":"Mexico"},
+    "53":{"iso":"CU","name":"Cuba"},"54":{"iso":"AR","name":"Argentina"},
+    "55":{"iso":"BR","name":"Brazil"},"56":{"iso":"CL","name":"Chile"},
+    "57":{"iso":"CO","name":"Colombia"},"58":{"iso":"VE","name":"Venezuela"},
+    "60":{"iso":"MY","name":"Malaysia"},"61":{"iso":"AU","name":"Australia"},
+    "62":{"iso":"ID","name":"Indonesia"},"63":{"iso":"PH","name":"Philippines"},
+    "64":{"iso":"NZ","name":"New Zealand"},"65":{"iso":"SG","name":"Singapore"},
+    "66":{"iso":"TH","name":"Thailand"},"81":{"iso":"JP","name":"Japan"},
+    "82":{"iso":"KR","name":"South Korea"},"84":{"iso":"VN","name":"Vietnam"},
+    "86":{"iso":"CN","name":"China"},"90":{"iso":"TR","name":"Turkey"},
+    "91":{"iso":"IN","name":"India"},"92":{"iso":"PK","name":"Pakistan"},
+    "93":{"iso":"AF","name":"Afghanistan"},"94":{"iso":"LK","name":"Sri Lanka"},
+    "95":{"iso":"MM","name":"Myanmar"},"98":{"iso":"IR","name":"Iran"},
+    "212":{"iso":"MA","name":"Morocco"},"213":{"iso":"DZ","name":"Algeria"},
+    "216":{"iso":"TN","name":"Tunisia"},"218":{"iso":"LY","name":"Libya"},
+    "220":{"iso":"GM","name":"Gambia"},"221":{"iso":"SN","name":"Senegal"},
+    "222":{"iso":"MR","name":"Mauritania"},"223":{"iso":"ML","name":"Mali"},
+    "224":{"iso":"GN","name":"Guinea"},"225":{"iso":"CI","name":"Ivory Coast"},
+    "226":{"iso":"BF","name":"Burkina Faso"},"227":{"iso":"NE","name":"Niger"},
+    "228":{"iso":"TG","name":"Togo"},"229":{"iso":"BJ","name":"Benin"},
+    "230":{"iso":"MU","name":"Mauritius"},"231":{"iso":"LR","name":"Liberia"},
+    "232":{"iso":"SL","name":"Sierra Leone"},"233":{"iso":"GH","name":"Ghana"},
+    "234":{"iso":"NG","name":"Nigeria"},"235":{"iso":"TD","name":"Chad"},
+    "236":{"iso":"CF","name":"Central African Republic"},"237":{"iso":"CM","name":"Cameroon"},
+    "238":{"iso":"CV","name":"Cape Verde"},"239":{"iso":"ST","name":"Sao Tome and Principe"},
+    "240":{"iso":"GQ","name":"Equatorial Guinea"},"241":{"iso":"GA","name":"Gabon"},
+    "242":{"iso":"CG","name":"Congo"},"243":{"iso":"CD","name":"DR Congo"},
+    "244":{"iso":"AO","name":"Angola"},"245":{"iso":"GW","name":"Guinea-Bissau"},
+    "248":{"iso":"SC","name":"Seychelles"},"249":{"iso":"SD","name":"Sudan"},
+    "250":{"iso":"RW","name":"Rwanda"},"251":{"iso":"ET","name":"Ethiopia"},
+    "252":{"iso":"SO","name":"Somalia"},"253":{"iso":"DJ","name":"Djibouti"},
+    "254":{"iso":"KE","name":"Kenya"},"255":{"iso":"TZ","name":"Tanzania"},
+    "256":{"iso":"UG","name":"Uganda"},"257":{"iso":"BI","name":"Burundi"},
+    "258":{"iso":"MZ","name":"Mozambique"},"260":{"iso":"ZM","name":"Zambia"},
+    "261":{"iso":"MG","name":"Madagascar"},"263":{"iso":"ZW","name":"Zimbabwe"},
+    "264":{"iso":"NA","name":"Namibia"},"265":{"iso":"MW","name":"Malawi"},
+    "266":{"iso":"LS","name":"Lesotho"},"267":{"iso":"BW","name":"Botswana"},
+    "268":{"iso":"SZ","name":"Eswatini"},"269":{"iso":"KM","name":"Comoros"},
+    "290":{"iso":"SH","name":"Saint Helena"},"291":{"iso":"ER","name":"Eritrea"},
+    "297":{"iso":"AW","name":"Aruba"},"298":{"iso":"FO","name":"Faroe Islands"},
+    "299":{"iso":"GL","name":"Greenland"},"350":{"iso":"GI","name":"Gibraltar"},
+    "351":{"iso":"PT","name":"Portugal"},"352":{"iso":"LU","name":"Luxembourg"},
+    "353":{"iso":"IE","name":"Ireland"},"354":{"iso":"IS","name":"Iceland"},
+    "355":{"iso":"AL","name":"Albania"},"356":{"iso":"MT","name":"Malta"},
+    "357":{"iso":"CY","name":"Cyprus"},"358":{"iso":"FI","name":"Finland"},
+    "359":{"iso":"BG","name":"Bulgaria"},"370":{"iso":"LT","name":"Lithuania"},
+    "371":{"iso":"LV","name":"Latvia"},"372":{"iso":"EE","name":"Estonia"},
+    "373":{"iso":"MD","name":"Moldova"},"374":{"iso":"AM","name":"Armenia"},
+    "375":{"iso":"BY","name":"Belarus"},"376":{"iso":"AD","name":"Andorra"},
+    "377":{"iso":"MC","name":"Monaco"},"378":{"iso":"SM","name":"San Marino"},
+    "380":{"iso":"UA","name":"Ukraine"},"381":{"iso":"RS","name":"Serbia"},
+    "382":{"iso":"ME","name":"Montenegro"},"385":{"iso":"HR","name":"Croatia"},
+    "386":{"iso":"SI","name":"Slovenia"},"387":{"iso":"BA","name":"Bosnia and Herzegovina"},
+    "389":{"iso":"MK","name":"North Macedonia"},"420":{"iso":"CZ","name":"Czech Republic"},
+    "421":{"iso":"SK","name":"Slovakia"},"423":{"iso":"LI","name":"Liechtenstein"},
+    "500":{"iso":"FK","name":"Falkland Islands"},"501":{"iso":"BZ","name":"Belize"},
+    "502":{"iso":"GT","name":"Guatemala"},"503":{"iso":"SV","name":"El Salvador"},
+    "504":{"iso":"HN","name":"Honduras"},"505":{"iso":"NI","name":"Nicaragua"},
+    "506":{"iso":"CR","name":"Costa Rica"},"507":{"iso":"PA","name":"Panama"},
+    "509":{"iso":"HT","name":"Haiti"},"591":{"iso":"BO","name":"Bolivia"},
+    "592":{"iso":"GY","name":"Guyana"},"593":{"iso":"EC","name":"Ecuador"},
+    "595":{"iso":"PY","name":"Paraguay"},"597":{"iso":"SR","name":"Suriname"},
+    "598":{"iso":"UY","name":"Uruguay"},"670":{"iso":"TL","name":"East Timor"},
+    "673":{"iso":"BN","name":"Brunei"},"675":{"iso":"PG","name":"Papua New Guinea"},
+    "676":{"iso":"TO","name":"Tonga"},"677":{"iso":"SB","name":"Solomon Islands"},
+    "678":{"iso":"VU","name":"Vanuatu"},"679":{"iso":"FJ","name":"Fiji"},
+    "680":{"iso":"PW","name":"Palau"},"682":{"iso":"CK","name":"Cook Islands"},
+    "685":{"iso":"WS","name":"Samoa"},"686":{"iso":"KI","name":"Kiribati"},
+    "688":{"iso":"TV","name":"Tuvalu"},"689":{"iso":"PF","name":"French Polynesia"},
+    "691":{"iso":"FM","name":"Micronesia"},"692":{"iso":"MH","name":"Marshall Islands"},
+    "850":{"iso":"KP","name":"North Korea"},"852":{"iso":"HK","name":"Hong Kong"},
+    "853":{"iso":"MO","name":"Macau"},"855":{"iso":"KH","name":"Cambodia"},
+    "856":{"iso":"LA","name":"Laos"},"880":{"iso":"BD","name":"Bangladesh"},
+    "886":{"iso":"TW","name":"Taiwan"},"960":{"iso":"MV","name":"Maldives"},
+    "961":{"iso":"LB","name":"Lebanon"},"962":{"iso":"JO","name":"Jordan"},
+    "963":{"iso":"SY","name":"Syria"},"964":{"iso":"IQ","name":"Iraq"},
+    "965":{"iso":"KW","name":"Kuwait"},"966":{"iso":"SA","name":"Saudi Arabia"},
+    "967":{"iso":"YE","name":"Yemen"},"968":{"iso":"OM","name":"Oman"},
+    "970":{"iso":"PS","name":"Palestine"},"971":{"iso":"AE","name":"United Arab Emirates"},
+    "972":{"iso":"IL","name":"Israel"},"973":{"iso":"BH","name":"Bahrain"},
+    "974":{"iso":"QA","name":"Qatar"},"975":{"iso":"BT","name":"Bhutan"},
+    "976":{"iso":"MN","name":"Mongolia"},"977":{"iso":"NP","name":"Nepal"},
+    "992":{"iso":"TJ","name":"Tajikistan"},"993":{"iso":"TM","name":"Turkmenistan"},
+    "994":{"iso":"AZ","name":"Azerbaijan"},"995":{"iso":"GE","name":"Georgia"},
+    "996":{"iso":"KG","name":"Kyrgyzstan"},"998":{"iso":"UZ","name":"Uzbekistan"},
 }
 
 DEFAULT_CUSTOM_MESSAGES = {
@@ -436,7 +372,7 @@ DEFAULT_CUSTOM_MESSAGES = {
 }
 
 # ==========================================
-# 🔥 Firebase Setup — OPTIONAL with 15s Timeout
+# 🔥 Firebase Setup — OPTIONAL, 15s Timeout
 # ==========================================
 db = None
 _fb_result = {"db": None, "done": False}
@@ -456,13 +392,10 @@ def _try_firebase_init():
                     if d.get("type") == "service_account" and "private_key" in d:
                         valid_files.append(f)
             except: pass
-
         if not valid_files:
             print("⚠️  Firebase JSON not found — LOCAL-ONLY mode")
-            print("   → Bot will work with bot_data.json (all features enabled)")
             _fb_result["done"] = True
             return
-
         creds_path = valid_files[0]
         print(f"📁 Firebase credentials: {creds_path}")
         cred = credentials.Certificate(creds_path)
@@ -494,40 +427,27 @@ else:
 # ==========================================
 bot_settings = {
     "admins": [OWNER_ID],
-    "panels": [],
-    "fw_groups": [],
+    "panels": [], "fw_groups": [],
     "otp_link": "https://t.me/your_otp_group",
     "main_channel_link": "",
-    "withdraw_on": True,
-    "min_withdraw": 30.0,
-    "otp_reward": 0.1,
-    "refer_reward": 0.2,
-    "cooldown": 10,
-    "num_req": 3,
-    "num_share": 1,
+    "withdraw_on": True, "min_withdraw": 30.0,
+    "otp_reward": 0.1, "refer_reward": 0.2,
+    "cooldown": 10, "num_req": 3, "num_share": 1,
     "support_link": "https://t.me/your_support",
-    "w_methods": ["bKash", "Nagad"],
-    "w_group": "",
-    "fj_on": False,
-    "fj_channels": [],
-    "stex_keys": [],
-    "voltx_keys": [],
-    "search_countries": [],
-    "stex_services": {},
-    "voltx_services": {},
-    "otp_pair_rates": {},
-    "maintenance": False,
-    "premium_flags": {},
-    "premium_apps": {},
+    "w_methods": ["bKash", "Nagad"], "w_group": "",
+    "fj_on": False, "fj_channels": [],
+    "stex_keys": [], "voltx_keys": [],
+    "search_countries": [], "stex_services": {}, "voltx_services": {},
+    "otp_pair_rates": {}, "maintenance": False,
+    "premium_flags": {}, "premium_apps": {},
     "custom_messages": DEFAULT_CUSTOM_MESSAGES.copy()
 }
 
 FS_KEYS = [
-    "admins", "panels", "fw_groups", "otp_link", "main_channel_link", "withdraw_on",
-    "min_withdraw", "otp_reward", "refer_reward", "cooldown",
-    "num_req", "num_share", "support_link", "w_methods", "w_group", "stex_keys", "voltx_keys",
-    "search_countries", "stex_services", "voltx_services", "fj_on", "fj_channels",
-    "otp_pair_rates", "maintenance"
+    "admins","panels","fw_groups","otp_link","main_channel_link","withdraw_on",
+    "min_withdraw","otp_reward","refer_reward","cooldown","num_req","num_share",
+    "support_link","w_methods","w_group","stex_keys","voltx_keys","search_countries",
+    "stex_services","voltx_services","fj_on","fj_channels","otp_pair_rates","maintenance"
 ]
 
 number_batches = {}
@@ -670,31 +590,26 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
         clean_num = re.sub(r'\D', '', str(num_val))
         if not (clean_num and 5 <= len(clean_num) <= 18): return None
         otp = extract_otp_code(msg_val)
-        if not otp:
-            otp = "N/A"
+        if not otp: otp = "N/A"
         if not (len(str(msg_val)) > 4): return None
         return {"number": clean_num, "message": str(msg_val), "otp": otp, "service_name": str(svc_val).strip()}
 
     if s_ajax_source:
         baseUrl = p.get("login_url", "").split("/client")[0].split("/login")[0].strip()
         if not baseUrl.startswith("http"): baseUrl = "http://" + baseUrl
-        full_ajax_url = ""
         if s_ajax_source.startswith("http"):
             full_ajax_url = s_ajax_source
         elif s_ajax_source.startswith("/"):
             full_ajax_url = f"{baseUrl}{s_ajax_source}"
         else:
-            last_slash_idx = check_url.rfind("/")
-            current_dir = check_url[:last_slash_idx]
+            current_dir = check_url[:check_url.rfind("/")]
             full_ajax_url = f"{current_dir}/{s_ajax_source}"
         if "iDisplayLength" not in full_ajax_url:
-            query_params = "sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=250&sSearch=&iSortingCols=1&iSortCol_0=0&sSortDir_0=desc"
             divider = "&" if "?" in full_ajax_url else "?"
-            full_ajax_url += f"{divider}{query_params}"
+            full_ajax_url += f"{divider}sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=250&sSearch=&iSortingCols=1&iSortCol_0=0&sSortDir_0=desc"
         ajax_headers = {"Referer": check_url, "X-Requested-With": "XMLHttpRequest"}
         ajax_res = session.get(full_ajax_url, headers=ajax_headers, timeout=15)
-        data_dict = ajax_res.json()
-        rows = data_dict.get("aaData", [])
+        rows = ajax_res.json().get("aaData", [])
         for row_val in rows:
             item = _extract_row(row_val)
             if item: results.append(item)
@@ -703,9 +618,7 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
         for table in tables:
             rows = table.find_all('tr')
             if not rows: continue
-            final_n_idx = n_idx
-            final_m_idx = m_idx
-            final_s_idx = s_idx
+            final_n_idx, final_m_idx, final_s_idx = n_idx, m_idx, s_idx
             header_cells = rows[0].find_all(['th', 'td'])
             for i, cell in enumerate(header_cells):
                 c_text = cell.get_text(strip=True).lower()
@@ -722,8 +635,7 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
                     clean_num = re.sub(r'\D', '', num_text)
                     if clean_num and 5 <= len(clean_num) <= 18:
                         otp = extract_otp_code(msg_text)
-                        if not otp:
-                            otp = "N/A"
+                        if not otp: otp = "N/A"
                         if len(msg_text) > 4:
                             results.append({"number": clean_num, "message": msg_text, "otp": otp, "service_name": svc_text.strip()})
     return results, html_text
@@ -948,9 +860,7 @@ def register_user_local(uid):
         threading.Thread(target=_save_users_list, daemon=True).start()
 
 def broadcast_copymessage(from_chat_id, msg_id):
-    success = 0
-    failed = 0
-    last_err = ""
+    success = 0; failed = 0; last_err = ""
     users = list(all_known_users)
     b_session = requests.Session()
     url = f"{BASE_URL}/copyMessage"
@@ -963,8 +873,7 @@ def broadcast_copymessage(from_chat_id, msg_id):
                 failed += 1
                 last_err = str(res.get("description", "?"))[:80]
         except Exception as e:
-            failed += 1
-            last_err = str(e)[:80]
+            failed += 1; last_err = str(e)[:80]
         time.sleep(0.035)
     send_message(from_chat_id, render_body_text(f"📢 <b>Broadcast Completed!</b>\n✅ Success: {success}\n❌ Failed: {failed}\n👥 Total Sent: {len(users)}\n⚠️ Last Error: {last_err}"))
 
@@ -1135,21 +1044,229 @@ def mask_number(num):
 def extract_otp_code(text):
     clean_text = re.sub(r'[\u200B-\u200D\uFEFF]', '', str(text))
     multi_part = re.search(r'(\d{3}[-\s]+\d{3})|(\d{2}[-\s]+\d{2}[-\s]+\d{2})', clean_text)
-    if multi_part:
-        return multi_part.group(0).replace(" ", "")
+    if multi_part: return multi_part.group(0).replace(" ", "")
     otp_keywords = ['code', 'is', 'otp', 'pin', 'verification', 'auth', 'কোড', 'رمز', 'your code']
     keywords_pattern = '|'.join(otp_keywords)
     keyword_match = re.search(rf'(?:{keywords_pattern})\s*(?:is|:|-|=)?\s*([a-z0-9]{{4,10}})', clean_text, re.I)
-    if keyword_match and keyword_match.group(1).isdigit():
-        return keyword_match.group(1)
+    if keyword_match and keyword_match.group(1).isdigit(): return keyword_match.group(1)
     keyword_match_rev = re.search(rf'([a-z0-9]{{4,10}})\s*(?:is your|is the|কোড)', clean_text, re.I)
-    if keyword_match_rev and keyword_match_rev.group(1).isdigit():
-        return keyword_match_rev.group(1)
+    if keyword_match_rev and keyword_match_rev.group(1).isdigit(): return keyword_match_rev.group(1)
     g_match = re.search(r'G-(\d{6})', clean_text, re.IGNORECASE)
     if g_match: return g_match.group(1)
     digit_matches = re.findall(r'(?<!\d)\d{4,8}(?!\d)', clean_text)
     if digit_matches: return digit_matches[0]
     return None
+
+
+# ==========================================
+# 🌟 parse_panel_response — MISSING FUNCTION FIXED
+# ==========================================
+def parse_panel_response(response_text, p_config=None):
+    results = []
+    p_type = p_config.get("type", "API Panel") if p_config else "API Panel"
+
+    if p_type == "Auto Captcha Panel":
+        try:
+            soup = BeautifulSoup(response_text, 'html.parser')
+            tables = soup.find_all('table')
+            n_col_name = p_config.get("num_col_name", "number").lower() if p_config else "number"
+            m_col_name = p_config.get("msg_col_name", "message").lower() if p_config else "message"
+            s_col_name = p_config.get("service_col_name", "service").lower() if p_config else "service"
+            n_idx = int(p_config.get("num_col_idx", 1)) - 1 if p_config and p_config.get("num_col_idx") else 1
+            m_idx = int(p_config.get("msg_col_idx", 2)) - 1 if p_config and p_config.get("msg_col_idx") else 2
+            s_idx = int(p_config.get("service_col_idx", 3)) - 1 if p_config and p_config.get("service_col_idx") else 3
+            for table in tables:
+                rows = table.find_all('tr')
+                if not rows: continue
+                final_n_idx = n_idx; final_m_idx = m_idx; final_s_idx = s_idx
+                header_cells = rows[0].find_all(['th', 'td'])
+                for i, cell in enumerate(header_cells):
+                    c_text = cell.get_text(strip=True).lower()
+                    if n_col_name in c_text: final_n_idx = i
+                    if m_col_name in c_text: final_m_idx = i
+                    if s_col_name in c_text: final_s_idx = i
+                for row in rows:
+                    cols = row.find_all(['td', 'th'])
+                    if all(c.name == 'th' for c in cols): continue
+                    if len(cols) > max(final_n_idx, final_m_idx):
+                        num_text = cols[final_n_idx].get_text(separator=" ", strip=True)
+                        msg_text = cols[final_m_idx].get_text(separator=" ", strip=True)
+                        svc_text = cols[final_s_idx].get_text(separator=" ", strip=True) if len(cols) > final_s_idx else ""
+                        clean_num = re.sub(r'\D', '', num_text)
+                        if clean_num and 5 <= len(clean_num) <= 18:
+                            otp = extract_otp_code(msg_text)
+                            if not otp: otp = "N/A"
+                            if len(msg_text) > 4:
+                                results.append({"number": clean_num, "message": msg_text, "otp": otp, "service_name": svc_text.strip()})
+        except: pass
+        return results
+
+    try:
+        data = json.loads(response_text)
+    except:
+        return results
+
+    if p_config:
+        try:
+            path_results = _extract_by_paths(data, p_config)
+            if path_results:
+                return path_results
+        except: pass
+
+    temp_results = []
+
+    def process_item(item):
+        pot_nums_list = []; pot_msg = None; pot_svc = ""
+        values = []
+        if isinstance(item, dict):
+            lower_keys = {str(k).lower(): v for k, v in item.items()}
+            for k in ["number", "num", "phone", "msisdn", "sender"]:
+                if k in lower_keys:
+                    clean_val = re.sub(r'\D', '', str(lower_keys[k]))
+                    if 5 <= len(clean_val) <= 18 and clean_val not in pot_nums_list:
+                        pot_nums_list.append(clean_val)
+            for k in ["service", "app", "application", "type", "site"]:
+                if k in lower_keys:
+                    pot_svc = str(lower_keys[k]).strip(); break
+            for k in ["message", "msg", "sms", "content", "text"]:
+                if k in lower_keys:
+                    val = str(lower_keys[k])
+                    if len(val) > 4:
+                        pot_msg = val; break
+            values = list(item.values())
+        elif isinstance(item, list):
+            values = item
+
+        for v in values:
+            if isinstance(v, (dict, list)) or v is None: continue
+            v_str = str(v).strip()
+            clean_v = re.sub(r'\D', '', v_str)
+            if 7 <= len(clean_v) <= 18 and not re.search(r'[a-zA-Z]', v_str):
+                if not re.search(r'\d{4}[-/]\d{2}[-/]\d{2}', v_str) and not re.search(r'\d{2}:\d{2}:\d{2}', v_str) and "." not in v_str:
+                    if clean_v not in pot_nums_list: pot_nums_list.append(clean_v)
+            if len(v_str) > 4 and not v_str.isdigit():
+                if extract_otp_code(v_str):
+                    if pot_msg is None or len(v_str) > len(pot_msg): pot_msg = v_str
+
+        pot_num = None
+        if pot_nums_list:
+            matched_user_num = None
+            for n in pot_nums_list:
+                if n in stex_assigned_numbers or any(n in str(key) for key in stex_assigned_numbers.keys()):
+                    matched_user_num = n; break
+            if matched_user_num: pot_num = matched_user_num
+            elif len(pot_nums_list) >= 2: pot_num = pot_nums_list[1]
+            else: pot_num = pot_nums_list[0]
+        if pot_num and pot_msg:
+            otp = extract_otp_code(pot_msg)
+            if not otp: otp = "N/A"
+            temp_results.append({"number": pot_num, "message": pot_msg, "otp": otp, "service_name": pot_svc})
+
+    def traverse_json(node):
+        if isinstance(node, list):
+            if len(node) > 0 and not isinstance(node[0], (dict, list)):
+                process_item(node)
+            for child in node:
+                if isinstance(child, (dict, list)): traverse_json(child)
+        elif isinstance(node, dict):
+            process_item(node)
+            for val in node.values():
+                if isinstance(val, (dict, list)): traverse_json(val)
+
+    traverse_json(data)
+    seen = set()
+    for r in temp_results:
+        uid = f"{r['number']}_{r['otp']}"
+        if uid not in seen:
+            seen.add(uid); results.append(r)
+    return results
+
+
+# ==========================================
+# 🌟 attempt_auto_login — MISSING FUNCTION FIXED
+# ==========================================
+def attempt_auto_login(p, idx):
+    login_url = p.get("login_url", "").strip()
+    if not login_url.startswith("http"):
+        login_url = "http://" + login_url
+    if not login_url.lower().endswith('/login') and not login_url.lower().endswith('.php'):
+        login_url = f"{login_url.rstrip('/')}/login"
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    })
+    try:
+        res = session.get(login_url, timeout=15)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        all_text = res.text
+        captcha_match = re.search(r'(\d+\s*[\+\-\*]\s*\d+)\s*[=\?:]', all_text)
+        if not captcha_match:
+            captcha_match = re.search(r'what is\s*(\d+\s*[\+\-\*]\s*\d+)', all_text, re.I)
+        if not captcha_match:
+            elements = soup.find_all(["label", "div", "span", "p", "strong"])
+            for el in elements:
+                txt = el.get_text(separator=" ", strip=True)
+                if any(op in txt for op in ["+", "-", "*"]):
+                    m = re.search(r'(\d+\s*[\+\-\*]\s*\d+)', txt)
+                    if m:
+                        captcha_match = m; break
+        captcha_text = captcha_match.group(1) if captcha_match else "0 + 0"
+        answer = "0"
+        m2 = re.search(r'(\d+)\s*([\+\-\*])\s*(\d+)', captcha_text)
+        if m2:
+            a, op, b = int(m2.group(1)), m2.group(2), int(m2.group(3))
+            if op == '+': answer = str(a + b)
+            elif op == '-': answer = str(a - b)
+            elif op == '*': answer = str(a * b)
+
+        form = soup.find("form")
+        if not form:
+            p["login_status"] = "❌ No login form found"
+            return False
+        action = form.get("action")
+        post_url = urljoin(login_url, action) if action else login_url
+
+        form_data = {}
+        for hidden in form.find_all("input", type="hidden"):
+            name = hidden.get("name")
+            if name: form_data[name] = hidden.get("value") or ""
+
+        user_input = form.find("input", {"name": re.compile(r"user|email|id", re.I)}) or \
+                     form.find("input", {"type": "text", "placeholder": re.compile(r"user|email", re.I)}) or \
+                     form.find("input", {"type": "text"})
+        pass_input = form.find("input", {"name": re.compile(r"pass", re.I)}) or \
+                     form.find("input", {"type": "password"})
+        captcha_input = form.find("input", {"placeholder": re.compile(r"answer|ans|code|verification|value|captcha", re.I)}) or \
+                        form.find("input", {"name": re.compile(r"ans|captcha|ver|code", re.I)})
+
+        user_field = user_input.get("name") if user_input else "username"
+        pass_field = pass_input.get("name") if pass_input else "password"
+        captcha_field = captcha_input.get("name") if captcha_input else "answer"
+
+        form_data[user_field] = p.get("username", "")
+        form_data[pass_field] = p.get("password", "")
+        if captcha_field:
+            form_data[captcha_field] = answer
+
+        login_req = session.post(post_url, data=form_data, allow_redirects=True, timeout=15)
+
+        msg_link = p.get("msg_link", "").strip()
+        if not msg_link.startswith("http") and msg_link != "":
+            msg_link = "http://" + msg_link
+        check_url = msg_link if msg_link else f"{login_url.split('/login')[0]}/client/SMSCDRStats"
+        check_res = session.get(check_url, timeout=10)
+
+        if 'logout' in login_req.text.lower() or 'logout' in check_res.text.lower() or 'sms reports' in check_res.text.lower() or 'dashboard' in check_res.text.lower() or 'cdrs' in check_res.text.lower():
+            panel_sessions[idx] = session
+            p["login_status"] = "✅ Active & Fetching"
+            return True
+        else:
+            p["login_status"] = f"❌ Login Failed (Math: {captcha_text} = {answer})"
+            return False
+    except Exception as e:
+        p["login_status"] = f"❌ Error: {str(e)[:20]}"
+    return False
     # ==========================================
 # User Cache / Balance / OTP Credit (Firebase Optional)
 # ==========================================
@@ -1247,34 +1364,31 @@ def add_referral(inviter_id, new_user_id):
 
 
 # ==========================================
-# Payout Lookup — Multi-fallback (9 layers)
+# Payout Lookup — 9 Layer Fallback
 # ==========================================
 def get_payout_for_number(clean_api_num, service_hint=""):
     reward = float(bot_settings.get("otp_reward", 0.0))
     meta = assigned_number_meta.get(clean_api_num, {})
 
-    # Layer 1: Stored payout at assignment
+    # Layer 1
     if "payout" in meta:
         try:
             return float(meta["payout"])
-        except:
-            pass
+        except: pass
 
     oc = str(meta.get("country", "") or "").strip()
     osvc = str(meta.get("service", "") or service_hint or "").strip()
     meta_iso = str(meta.get("iso", "") or "").strip().upper()
     pr = bot_settings.get("otp_pair_rates", {})
 
-    # Layer 2: Exact country|service
+    # Layer 2
     if oc and osvc:
         key = f"{oc.upper()}|{osvc.upper()}"
         if key in pr:
-            try:
-                return float(pr[key])
-            except:
-                pass
+            try: return float(pr[key])
+            except: pass
 
-    # Layer 3: ISO + service
+    # Layer 3
     if meta_iso:
         for k, v in pr.items():
             try:
@@ -1282,20 +1396,17 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                 if kc.upper() == meta_iso:
                     if osvc and ks.upper() != osvc.upper(): continue
                     return float(v)
-            except:
-                continue
+            except: continue
 
-    # Layer 4: ISO (any service)
+    # Layer 4
     if meta_iso:
         for k, v in pr.items():
             try:
                 kc, ks = k.split("|", 1)
-                if kc.upper() == meta_iso:
-                    return float(v)
-            except:
-                continue
+                if kc.upper() == meta_iso: return float(v)
+            except: continue
 
-    # Layer 5: Country name + service
+    # Layer 5
     if oc:
         for k, v in pr.items():
             try:
@@ -1303,19 +1414,16 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                 if kc.upper() == oc.upper():
                     if osvc and ks.upper() != osvc.upper(): continue
                     return float(v)
-            except:
-                continue
+            except: continue
 
-    # Layer 6: Country name (any service)
+    # Layer 6
     if oc:
         for k, v in pr.items():
             try:
-                if k.split("|")[0].upper() == oc.upper():
-                    return float(v)
-            except:
-                continue
+                if k.split("|")[0].upper() == oc.upper(): return float(v)
+            except: continue
 
-    # Layer 7-8: Detect from number
+    # Layer 7-8
     try:
         _, iso_det, _ = get_country_from_num(clean_api_num)
         if iso_det and iso_det != "XX":
@@ -1323,13 +1431,11 @@ def get_payout_for_number(clean_api_num, service_hint=""):
             detected_name = None
             for _c, fdata in bot_settings.get("premium_flags", {}).items():
                 if fdata.get("iso", "").upper() == iso_det:
-                    detected_name = fdata.get("name", "")
-                    break
+                    detected_name = fdata.get("name", ""); break
             if not detected_name:
                 for _c, cinfo in COUNTRY_DB.items():
                     if cinfo["iso"].upper() == iso_det:
-                        detected_name = cinfo["name"]
-                        break
+                        detected_name = cinfo["name"]; break
 
             for k, v in pr.items():
                 try:
@@ -1337,8 +1443,7 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                     if kc.upper() == iso_det:
                         if osvc and ks.upper() != osvc.upper(): continue
                         return float(v)
-                except:
-                    continue
+                except: continue
 
             if detected_name:
                 for k, v in pr.items():
@@ -1347,18 +1452,14 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                         if kc.upper() == detected_name.upper():
                             if osvc and ks.upper() != osvc.upper(): continue
                             return float(v)
-                    except:
-                        continue
+                    except: continue
                 for k, v in pr.items():
                     try:
-                        if k.split("|")[0].upper() == detected_name.upper():
-                            return float(v)
-                    except:
-                        continue
-    except:
-        pass
+                        if k.split("|")[0].upper() == detected_name.upper(): return float(v)
+                    except: continue
+    except: pass
 
-    # Layer 9: Global default
+    # Layer 9
     return reward
 
 
@@ -1396,7 +1497,7 @@ def get_wmethod_display_list():
 
 
 # ==========================================
-# OTP Display Formatter (Group format)
+# Group OTP Display Formatter
 # 🇲🇷MR |📱 | +2222🔹548 |✉️English
 # ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
@@ -1499,10 +1600,10 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
 
 
 # ==========================================
-# 🎯 build_numbers_header — NEW PRESENTATION FORMAT
-# ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀💷0.007$/OTP🪨
+# 🎯 build_numbers_header — EXACT FORMAT
+# ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀💷0.008$/OTP🪨
 #
-# ⚙️THIS IS YOUR📱MAURITANIA ONFIRE🇲🇷NUMBERS☎️
+# ⚙️THIS IS YOUR📱MAURITANIA🇲🇷NUMBERS☎️
 # ==========================================
 def build_numbers_header(country, service=None):
     HEADER_EMOJI_1 = "6282641460093260838"   # ⚙️
@@ -1513,7 +1614,6 @@ def build_numbers_header(country, service=None):
 
     flag_html = get_flag_info_html(country)
 
-    # Payout resolution
     payout_val = float(bot_settings.get("otp_reward", 0.0))
     pr = bot_settings.get("otp_pair_rates", {})
     if service:
@@ -1538,7 +1638,7 @@ def build_numbers_header(country, service=None):
 
     country_display = html.escape(str(country).upper())
 
-    # Leading invisible braille chars for indentation
+    # ⭐ Exact leading braille blanks (19 chars) for indentation
     indent = "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
 
     header = (
@@ -1764,8 +1864,7 @@ def build_group_kb(otp_value, fw=None):
              "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}]
     ch_link = bot_settings.get("main_channel_link", "")
     if ch_link:
-        row2.append([{"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI,
-                     "url": ch_link, "style": "primary"}][0] if False else {"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI,
+        row2.append({"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI,
                      "url": ch_link, "style": "primary"})
     kb.append(row2)
     if fw:
@@ -1959,9 +2058,7 @@ def main_menu(user_id):
             {"text": "REFER", "icon_custom_emoji_id": "5332724926216428039", "style": "primary"},
             {"text": "BALANCE", "icon_custom_emoji_id": "5215420556089776398", "style": "danger"}
         ],
-        [
-            {"text": "SUPPORT", "icon_custom_emoji_id": "5420145051336485498", "style": "success"}
-        ]
+        [{"text": "SUPPORT", "icon_custom_emoji_id": "5420145051336485498", "style": "success"}]
     ]
     if is_admin(user_id):
         kb.append([{"text": "Admin Panel", "icon_custom_emoji_id": "5420155432272438703", "style": "danger"}])
@@ -1971,8 +2068,19 @@ def get_admin_text():
     users_count = len(all_known_users)
     total_files = len(number_batches)
     available_nums = sum(len(b["numbers"]) for b in number_batches.values())
-    maint_status = "🟢 OFF" if not bot_settings.get("maintenance") else "🔴 ON"
-    fb_status = "🟢 Cloud Sync ON" if db else "🟡 Local Only"
+
+    if bot_settings.get("maintenance"):
+        maint_status = "🟢 RUNNING"
+    else:
+        maint_status = "🔴 OFF"
+
+    yellow_icon = '<tg-emoji emoji-id="5339082633160703625">🟡</tg-emoji>'
+    green_icon = '<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>'
+    if db:
+        fb_status = f"{green_icon} <b>CLOUD SYNC ON</b>"
+    else:
+        fb_status = f"{yellow_icon} <b>LOCAL ONLY</b>"
+
     txt = f"""
 {PEM['admin']} <b>ADMIN CONTROL PANEL</b> {PEM['admin']}
 ━━━━━━━━━━━━━━━━━━
@@ -1990,7 +2098,7 @@ def get_admin_text():
 [██████░░░░░░░░░] {available_nums} free
 
 {PEM['gear']} <b>MAINTENANCE:</b> {maint_status}
-{PEM['world']} <b>DATABASE:</b> {fb_status}
+{PEM['file']} <b>DATABASE:</b> {fb_status}
 """
     return render_body_text(txt)
 
@@ -2301,7 +2409,7 @@ def handle_message(msg):
     text = msg.get("text", "")
     register_user_local(chat_id)
 
-    # ---------- /dmotp (Admin test) ----------
+    # ---------- /dmotp ----------
     if text.startswith("/dmotp"):
         if not is_admin(chat_id): return
         parts = text.split(maxsplit=4)
@@ -2324,7 +2432,7 @@ def handle_message(msg):
         send_message(chat_id, render_body_text(dm_text), reply_markup=dm_kb)
         return
 
-    # ---------- /setservice (Admin: add emoji to service) ----------
+    # ---------- /setservice ----------
     if text.startswith("/setservice"):
         if not is_admin(chat_id): return
         raw = text.replace("/setservice", "", 1).strip()
@@ -2371,7 +2479,7 @@ def handle_message(msg):
             send_message(chat_id, render_body_text(maint_msg))
             return
 
-    # ---------- Save referral (before force-join) ----------
+    # ---------- Save referral ----------
     if text.startswith("/start"):
         parts = text.split()
         if len(parts) > 1 and parts[1].isdigit():
@@ -2390,7 +2498,7 @@ def handle_message(msg):
         send_force_join_msg(chat_id)
         return
 
-    # ---------- Reset state on main menu cmds ----------
+    # ---------- Reset state on main menu ----------
     MAIN_MENU_CMDS = ["GET NUMBER", "SEARCH NUMBER", "TRAFFIC", "REFER", "BALANCE", "SUPPORT", "Admin Panel", "2FA ONLINE"]
     is_main_cmd = False
     if text in MAIN_MENU_CMDS or text.startswith("/start"):
@@ -2398,7 +2506,7 @@ def handle_message(msg):
         if chat_id in temp_data: del temp_data[chat_id]
         is_main_cmd = True
 
-    # ---------- State machine ----------
+    # ---------- State Machine ----------
     if chat_id in user_states and not is_main_cmd:
         state = user_states[chat_id]
 
@@ -3074,22 +3182,20 @@ def handle_message(msg):
                 edit_message(chat_id, msg_id, render_body_text("🕹 <b>STORM</b>\n\n❌ <b>Invalid!</b>"), reply_markup=storm_control_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
-        # ========== PAYOUT VALUE (with SUCCESS/FAIL confirmation) ==========
+        # ========== PAYOUT VALUE (SUCCESS/FAIL Confirmation) ==========
         elif state == "set_payout_value" and text:
             msg_id_to_edit = temp_data[chat_id].get("msg_id")
             service = temp_data[chat_id].get("service", "?")
             country = temp_data[chat_id].get("country", "?")
-            
-            # Delete user input
+
             try: delete_message(chat_id, msg.get("message_id"))
             except: pass
-            
-            # Validate input
+
+            # Validate
             try:
                 new_val = float(text.strip())
                 if new_val < 0: raise ValueError("negative")
             except:
-                # FAILURE message
                 fail_txt = (
                     f"━━━━━━━━━━━━━━━\n"
                     f"❌ <b>PAYOUT UPDATE FAILED</b>\n"
@@ -3107,18 +3213,17 @@ def handle_message(msg):
                 else:
                     send_message(chat_id, render_body_text(fail_txt), reply_markup=get_cancel_kb())
                 return
-            
-            # Update payout
+
+            # Update
             try:
                 if "otp_pair_rates" not in bot_settings: bot_settings["otp_pair_rates"] = {}
                 key = f"{str(country).upper()}|{str(service).upper()}"
                 old_val = bot_settings["otp_pair_rates"].get(key, "None")
                 bot_settings["otp_pair_rates"][key] = new_val
                 save_db()
-                
+
                 country_flag = get_flag_info_html(country)
-                
-                # SUCCESS message
+
                 ok_txt = (
                     f"━━━━━━━━━━━━━━━\n"
                     f"✅ <b>PAYOUT UPDATED SUCCESSFULLY</b>\n"
@@ -3126,11 +3231,11 @@ def handle_message(msg):
                     f"🌍 <b>Country:</b> <code>{country}</code> {country_flag}\n"
                     f"🔧 <b>Service:</b> <code>{service}</code>\n"
                     f"━━━━━━━━━━━━━━━\n"
-                    f"💰 <b>Old Payout:</b> <code>${old_val}</code>\n"
-                    f"💵 <b>New Payout:</b> <code>${new_val}</code>\n"
+                    f"💵 <b>Old Payout:</b> <code>${old_val}</code>\n"
+                    f"💷 <b>New Payout:</b> <code>${new_val}</code>\n"
                     f"━━━━━━━━━━━━━━━"
                 )
-                
+
                 if msg_id_to_edit:
                     try:
                         edit_message(
@@ -3145,7 +3250,7 @@ def handle_message(msg):
                         send_message(chat_id, render_body_text(ok_txt), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
                 else:
                     send_message(chat_id, render_body_text(ok_txt), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
-                    
+
             except Exception as e:
                 fail_txt = (
                     f"━━━━━━━━━━━━━━━\n"
@@ -3162,8 +3267,7 @@ def handle_message(msg):
                 else:
                     send_message(chat_id, render_body_text(fail_txt), reply_markup=get_cancel_kb())
                 return
-            
-            # Cleanup
+
             del user_states[chat_id]
             del temp_data[chat_id]
             return
@@ -3188,116 +3292,144 @@ def handle_message(msg):
             if chat_id in user_states: del user_states[chat_id]
             return
 
-        # ========== SEARCH NUMBER ==========
+        # ========== SEARCH NUMBER — NEW FLOW (Prefix → Country → Services → Numbers) ==========
         elif state == "wait_for_search" and text:
             query = text.strip().replace("+", "")
             if not query.isdigit() or len(query) < 3 or len(query) > 9:
-                send_message(chat_id, render_body_text("❌ <b>3-9 digit number required!</b>")); return
-            wait_msg = send_message(chat_id, render_body_text("⌛ <i>Processing...</i>"))
-            wait_msg_id = wait_msg.get("result", {}).get("message_id")
-            found_indices = []
-            for b_id, b_data in number_batches.items():
-                for idx, n_obj in enumerate(b_data["numbers"]):
-                    if n_obj["num"].replace("+", "").startswith(query) and chat_id not in n_obj.get("used_by", []):
-                        found_indices.append((b_id, idx))
-            fetched_nums = []
-            if not found_indices:
-                stex_allowed = bot_settings.get("search_countries", [])
-                voltx_allowed = bot_settings.get("voltx_search_countries", [])
-                is_stex_allowed = any(query.startswith(c) for c in stex_allowed) if stex_allowed else False
-                is_voltx_allowed = any(query.startswith(c) for c in voltx_allowed) if voltx_allowed else False
-                if not is_stex_allowed and not is_voltx_allowed:
-                    if wait_msg_id: delete_message(chat_id, wait_msg_id)
-                    send_message(chat_id, render_body_text("❌ <b>Country not allowed!</b>"), reply_markup=main_menu(chat_id))
-                    del user_states[chat_id]; return
-                if wait_msg_id: edit_message(chat_id, wait_msg_id, render_body_text("⌛ <i>Fetching via API...</i>"))
-                is_voltx_used = False
-                req_count = bot_settings.get("num_req", 1)
-                if is_voltx_allowed:
-                    for _ in range(req_count):
-                        if len(fetched_nums) >= req_count: break
-                        for api_key in bot_settings.get("voltx_keys", []):
-                            try:
-                                res = requests.post(f"{VOLTX_BASE_URL}/getnum", json={"rid": query}, headers={"mauthapi": api_key}, timeout=10)
-                                resp_data = res.json()
-                                if resp_data.get("meta", {}).get("code") == 200 and resp_data.get("data"):
-                                    num_str = str(resp_data["data"].get("no_plus_number", "")).replace("+", "")
-                                    if not num_str: num_str = str(resp_data["data"].get("national_number", ""))
-                                    fetched_nums.append(num_str); voltx_assigned_numbers[num_str] = chat_id
-                                    is_voltx_used = True; total_assigned_stats += 1; break
-                            except: continue
-                if len(fetched_nums) < req_count and is_stex_allowed:
-                    for _ in range(req_count - len(fetched_nums)):
-                        for api_key in bot_settings.get("stex_keys", []):
-                            try:
-                                res = requests.post(f"{STEX_BASE_URL}/getnum", json={"rid": query}, headers={"mauthapi": api_key}, timeout=10)
-                                data = res.json()
-                                if data.get("meta", {}).get("code") == 200 and data.get("data"):
-                                    num_str = str(data["data"].get("no_plus_number", "")).replace("+", "")
-                                    if not num_str: num_str = str(data["data"].get("national_number", ""))
-                                    fetched_nums.append(num_str); stex_assigned_numbers[num_str] = chat_id
-                                    total_assigned_stats += 1; break
-                            except: continue
-                if not fetched_nums:
-                    if wait_msg_id: delete_message(chat_id, wait_msg_id)
-                    send_message(chat_id, render_body_text("❌ <b>Out of stock!</b>"), reply_markup=main_menu(chat_id))
-                    del user_states[chat_id]; return
-                save_db()
-            else:
-                random.shuffle(found_indices)
-                for b_id, idx in found_indices:
-                    if len(fetched_nums) >= bot_settings.get("num_req", 1): break
-                    n_obj = number_batches[b_id]["numbers"][idx]
-                    num_str = n_obj["num"]; fetched_nums.append(num_str)
-                    n_obj["shares"] += 1; n_obj["used_by"].append(chat_id)
-                    total_assigned_stats += 1
-                    cn = num_str.replace("+", "").strip()
-                    bd_country = number_batches[b_id]["country"]; bd_service = number_batches[b_id]["service"]
-                    bd_iso = number_batches[b_id].get("country_iso", "")
-                    _pv = float(bot_settings.get("otp_reward", 0.0))
-                    _pr = bot_settings.get("otp_pair_rates", {}); _pk = f"{str(bd_country).upper()}|{str(bd_service).upper()}"
-                    if _pk in _pr:
-                        try: _pv = float(_pr[_pk])
-                        except: pass
-                    if "payout" in number_batches[b_id]:
-                        try: _pv = float(number_batches[b_id]["payout"])
-                        except: pass
-                    assigned_number_meta[cn] = {"country": bd_country, "service": bd_service, "iso": bd_iso, "payout": _pv}
-                    if n_obj["shares"] >= bot_settings.get("num_share", 1):
-                        n_obj["to_remove"] = True; used_numbers_list.append(num_str)
-                for b_id in number_batches:
-                    number_batches[b_id]["numbers"] = [n for n in number_batches[b_id]["numbers"] if not n.get("to_remove")]
-                save_db()
-            if wait_msg_id: edit_message(chat_id, wait_msg_id, render_body_text(f"{PEM['ok']} <b>Number Found!</b>"))
-            kb = []
-            flags_db = bot_settings.get("premium_flags", {})
-            for num in fetched_nums:
-                _, iso = get_flag_and_code(num)
-                display_num = f"+{num}" if not num.startswith("+") else num
-                emoji_id = "5780471598932337683"
-                for flag_code, flag_data in flags_db.items():
-                    if iso == flag_data.get("iso"):
-                        if "id" in flag_data: emoji_id = flag_data["id"]
+                send_message(chat_id, render_body_text(
+                    "━━━━━━━━━━━━━━━\n"
+                    "❌ <b>INVALID INPUT</b>\n"
+                    "━━━━━━━━━━━━━━━\n"
+                    "📌 <b>3 to 9 digits required!</b>\n"
+                    "━━━━━━━━━━━━━━━"
+                ), reply_markup=main_menu(chat_id))
+                del user_states[chat_id]
+                return
+
+            # Step 1: Detect country
+            _, iso_det, dial_code = get_country_from_num(query)
+            country_name_det = ""
+            country_flag_html = "🌍"
+            if iso_det and iso_det != "XX":
+                for _c, fdata in bot_settings.get("premium_flags", {}).items():
+                    if fdata.get("iso", "").upper() == iso_det.upper():
+                        country_name_det = fdata.get("name", "")
+                        eid = fdata.get("id"); char = fdata.get("char")
+                        if eid:
+                            country_flag_html = f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
+                        else:
+                            country_flag_html = char
                         break
-                kb.append([{"text": f"{display_num}", "icon_custom_emoji_id": emoji_id, "copy_text": {"text": display_num}, "style": "primary"}])
-            vtx_field = "vtx" if 'is_voltx_used' in locals() and is_voltx_used else ""
-            kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n_s|{query}||{vtx_field}", "style": "danger"},
-                       {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
-            kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
-            hdr_country = ""
-            if fetched_nums:
-                try:
-                    _, iso_x, _ = get_country_from_num(fetched_nums[0])
-                    if iso_x and iso_x != "XX":
-                        for cn2, ci2 in COUNTRY_DB.items():
-                            if ci2["iso"] == iso_x: hdr_country = ci2["name"]; break
-                    else: hdr_country = query
-                except: hdr_country = query
-            else: hdr_country = query
-            text_numbers = build_numbers_header(hdr_country)
-            if wait_msg_id:
-                edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
-                user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
+                if not country_name_det:
+                    for _c, cinfo in COUNTRY_DB.items():
+                        if cinfo["iso"].upper() == iso_det.upper():
+                            country_name_det = cinfo["name"]
+                            country_flag_html = get_flag_emoji(iso_det)
+                            break
+
+            # Step 2: Find services
+            services_found = {}
+
+            # Local
+            for b_id, b_data in number_batches.items():
+                b_nums = b_data.get("numbers", [])
+                if not b_nums: continue
+                b_country = b_data.get("country", "").upper()
+                b_iso = b_data.get("country_iso", "").upper()
+                b_service = b_data.get("service", "").upper()
+                if not b_service: continue
+                matched = False
+                if country_name_det and b_country == country_name_det.upper(): matched = True
+                if not matched and iso_det and iso_det != "XX" and b_iso == iso_det.upper(): matched = True
+                if not matched:
+                    for n_obj in b_nums[:5]:
+                        if n_obj["num"].replace("+", "").startswith(query):
+                            matched = True; break
+                if matched:
+                    services_found.setdefault(b_service, []).append(("local", b_id))
+
+            # Stex
+            for srv_name, c_dict in bot_settings.get("stex_services", {}).items():
+                srv_up = srv_name.upper()
+                for c_name, r_list in c_dict.items():
+                    matched = False
+                    if country_name_det and c_name.upper() == country_name_det.upper(): matched = True
+                    if not matched and iso_det and iso_det != "XX" and c_name.upper() == iso_det.upper(): matched = True
+                    if not matched:
+                        for r in r_list:
+                            if query.startswith(r): matched = True; break
+                    if matched:
+                        services_found.setdefault(srv_up, []).append(("stex", c_name))
+
+            # Voltx
+            for srv_name, c_dict in bot_settings.get("voltx_services", {}).items():
+                srv_up = srv_name.upper()
+                for c_name, r_list in c_dict.items():
+                    matched = False
+                    if country_name_det and c_name.upper() == country_name_det.upper(): matched = True
+                    if not matched and iso_det and iso_det != "XX" and c_name.upper() == iso_det.upper(): matched = True
+                    if not matched:
+                        for r in r_list:
+                            if query.startswith(r): matched = True; break
+                    if matched:
+                        services_found.setdefault(srv_up, []).append(("voltx", c_name))
+
+            if not services_found:
+                send_message(chat_id, render_body_text(
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"❌ <b>NO SERVICES FOUND</b>\n"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"📌 <b>Prefix:</b> <code>{query}</code>\n"
+                    f"{country_flag_html} <b>Country:</b> {country_name_det or iso_det or 'Unknown'}\n"
+                    f"━━━━━━━━━━━━━━━\n"
+                    f"💡 <b>Try another prefix!</b>"
+                ), reply_markup=main_menu(chat_id))
+                del user_states[chat_id]
+                return
+
+            # Show services
+            apps_db = bot_settings.get("premium_apps", {})
+            kb = []
+            for srv_name in sorted(services_found.keys()):
+                sources = services_found[srv_name]
+                total_cnt = 0
+                for src_type, src_id in sources:
+                    if src_type == "local":
+                        total_cnt += len(number_batches.get(src_id, {}).get("numbers", []))
+                    else:
+                        total_cnt += 1
+                svc_emoji_id = "5352694861990501856"
+                svc_display = srv_name.title()
+                for ak, ad in apps_db.items():
+                    if srv_name.upper() == ak or srv_name.upper() in ak or ak in srv_name.upper():
+                        if "id" in ad: svc_emoji_id = ad["id"]
+                        svc_display = ad.get("name", ak.title())
+                        break
+                kb.append([{
+                    "text": f"{svc_display} | {total_cnt}",
+                    "icon_custom_emoji_id": svc_emoji_id,
+                    "callback_data": f"s_srv|{query}|{srv_name}",
+                    "style": "success"
+                }])
+            kb.append([{"text": "Cancel", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
+
+            temp_data[chat_id] = {
+                "search_query": query,
+                "search_country": country_name_det,
+                "search_iso": iso_det
+            }
+            del user_states[chat_id]
+
+            txt = (
+                f"━━━━━━━━━━━━━━━\n"
+                f"🔍 <b>SEARCH RESULT</b>\n"
+                f"━━━━━━━━━━━━━━━\n"
+                f"📌 <b>Prefix:</b> <code>{query}</code>\n"
+                f"{country_flag_html} <b>Country:</b> <b>{country_name_det.upper() if country_name_det else iso_det}</b>\n"
+                f"━━━━━━━━━━━━━━━\n"
+                f"🎯 <b>Available Services:</b>"
+            )
+            send_message(chat_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
             return
 
         # ========== WITHDRAW AMOUNT ==========
@@ -3479,14 +3611,13 @@ def handle_message(msg):
 
 
 # ==========================================
-# 📦 Database ZIP — Each section in SEPARATE block
-# 12 separate files inside ZIP
+# 📦 Database ZIP — 12 SEPARATE BLOCKS
 # ==========================================
 def build_data_zip():
     mem = io.BytesIO()
     try:
         with zipfile.ZipFile(mem, 'w', zipfile.ZIP_DEFLATED) as zf:
-            # Block 1: Settings
+            # Block 1
             settings_block = {
                 "bot_settings_non_fs": {k: v for k, v in bot_settings.items() if k not in FS_KEYS},
                 "custom_messages": bot_settings.get("custom_messages", {}),
@@ -3500,7 +3631,7 @@ def build_data_zip():
             }
             zf.writestr("01_SETTINGS.json", json.dumps(settings_block, default=str, indent=4))
 
-            # Block 2: Stock
+            # Block 2
             stock_block = {
                 "number_batches": number_batches,
                 "used_numbers_list": used_numbers_list,
@@ -3509,7 +3640,7 @@ def build_data_zip():
             }
             zf.writestr("02_STOCK.json", json.dumps(stock_block, default=str, indent=4))
 
-            # Block 3: Assigned Numbers
+            # Block 3
             assigned_block = {
                 "stex_assigned_numbers": stex_assigned_numbers,
                 "voltx_assigned_numbers": voltx_assigned_numbers,
@@ -3517,21 +3648,21 @@ def build_data_zip():
             }
             zf.writestr("03_ASSIGNED_NUMBERS.json", json.dumps(assigned_block, default=str, indent=4))
 
-            # Block 4: Traffic
+            # Block 4
             traffic_block = {"recent_traffic": recent_traffic}
             zf.writestr("04_TRAFFIC.json", json.dumps(traffic_block, default=str, indent=4))
 
-            # Block 5: Users List
+            # Block 5
             users_block = {"all_known_users": list(all_known_users)}
             zf.writestr("05_USERS_LIST.json", json.dumps(users_block, default=str, indent=4))
 
-            # Block 6: User Cache
+            # Block 6
             user_cache_block = {}
             for uid, udata in user_cache.items():
                 user_cache_block[str(uid)] = udata
             zf.writestr("06_USER_CACHE.json", json.dumps(user_cache_block, default=str, indent=4))
 
-            # Block 7: Local DB raw
+            # Block 7
             if os.path.exists(DB_FILE):
                 try:
                     with open(DB_FILE, "r", encoding='utf-8') as f:
@@ -3539,7 +3670,7 @@ def build_data_zip():
                     zf.writestr("07_LOCAL_DB_RAW.json", db_content)
                 except: pass
 
-            # Block 8: users_list.json raw
+            # Block 8
             if os.path.exists("users_list.json"):
                 try:
                     with open("users_list.json", "r") as f:
@@ -3547,7 +3678,7 @@ def build_data_zip():
                     zf.writestr("08_USERS_LIST_RAW.json", ul_content)
                 except: pass
 
-            # Block 9-11: Firestore (if available)
+            # Block 9-11
             if db:
                 try:
                     fs_users = {}
@@ -3567,7 +3698,7 @@ def build_data_zip():
                         zf.writestr("11_FIRESTORE_SETTINGS.json", json.dumps(stg.to_dict(), default=str, indent=4))
                 except: pass
 
-            # Block 12: Firebase Status
+            # Block 12
             fb_info = {
                 "firebase_connected": db is not None,
                 "firebase_status": "CLOUD_SYNC" if db else "LOCAL_ONLY",
@@ -3626,7 +3757,7 @@ def handle_callback(call):
     chat_type = call["message"]["chat"].get("type", "private")
     data = call.get("data", "")
 
-    if not data.startswith("test_p_conn_") and not data.startswith("c_n") and not data.startswith("g_c|") and not data.startswith("g_bs|"):
+    if not data.startswith("test_p_conn_") and not data.startswith("c_n") and not data.startswith("g_c|") and not data.startswith("g_bs|") and not data.startswith("s_srv|"):
         try: threading.Thread(target=answer_callback, args=(call["id"],)).start()
         except: pass
 
@@ -3719,6 +3850,175 @@ def handle_callback(call):
         txt, markup = build_traffic_ui()
         edit_message(chat_id, msg_id, txt, reply_markup=markup)
         answer_callback(call["id"], "✅ Refreshed!", show_alert=False)
+
+    # ⭐ NEW: SEARCH — Service Selected → Get Number
+    elif data.startswith("s_srv|"):
+        parts = data.split("|", 2)
+        query = parts[1] if len(parts) > 1 else ""
+        service = parts[2] if len(parts) > 2 else ""
+
+        now = time.time()
+        if now - user_cooldowns.get(chat_id, 0) < bot_settings["cooldown"]:
+            answer_callback(call["id"], f"⌛ Wait {int(bot_settings['cooldown'] - (now - user_cooldowns.get(chat_id, 0)))}s", show_alert=True)
+            return
+        user_cooldowns[chat_id] = now
+        expire_previous_number(chat_id)
+
+        search_iso = temp_data.get(chat_id, {}).get("search_iso", "")
+        search_country = temp_data.get(chat_id, {}).get("search_country", "")
+
+        edit_message(chat_id, msg_id, render_body_text("⌛ <i>Processing...</i>"))
+        wait_msg_id = msg_id
+
+        fetched_nums = []
+        req_count = bot_settings.get("num_req", 1)
+
+        # 1. Local stock
+        for b_id, b_data in number_batches.items():
+            if b_data.get("service", "").upper() != service.upper(): continue
+            b_country = b_data.get("country", "").upper()
+            b_iso = b_data.get("country_iso", "").upper()
+            matched_country = False
+            if search_country and b_country == search_country.upper(): matched_country = True
+            if not matched_country and search_iso and search_iso != "XX" and b_iso == search_iso.upper(): matched_country = True
+            if not matched_country:
+                for n_obj in b_data["numbers"][:5]:
+                    if n_obj["num"].replace("+", "").startswith(query):
+                        matched_country = True
+                        break
+            if not matched_country: continue
+
+            for idx, n_obj in enumerate(b_data["numbers"]):
+                if len(fetched_nums) >= req_count: break
+                if chat_id in n_obj.get("used_by", []): continue
+                if not n_obj["num"].replace("+", "").startswith(query): continue
+
+                num_str = n_obj["num"]
+                fetched_nums.append(num_str)
+                n_obj["shares"] += 1
+                n_obj["used_by"].append(chat_id)
+                total_assigned_stats += 1
+
+                cn = num_str.replace("+", "").strip()
+                _pv = float(bot_settings.get("otp_reward", 0.0))
+                _pr = bot_settings.get("otp_pair_rates", {})
+                _pk = f"{str(b_country).upper()}|{str(service).upper()}"
+                if _pk in _pr:
+                    try: _pv = float(_pr[_pk])
+                    except: pass
+                if "payout" in b_data:
+                    try: _pv = float(b_data["payout"])
+                    except: pass
+                assigned_number_meta[cn] = {
+                    "country": b_data.get("country", ""),
+                    "service": b_data.get("service", ""),
+                    "iso": b_data.get("country_iso", ""),
+                    "payout": _pv
+                }
+                if n_obj["shares"] >= bot_settings.get("num_share", 1):
+                    n_obj["to_remove"] = True
+                    used_numbers_list.append(num_str)
+
+            if len(fetched_nums) >= req_count: break
+
+        for b_id in list(number_batches.keys()):
+            number_batches[b_id]["numbers"] = [n for n in number_batches[b_id]["numbers"] if not n.get("to_remove")]
+
+        # 2. Stex fallback
+        if len(fetched_nums) < req_count:
+            stex_srv_data = bot_settings.get("stex_services", {}).get(service, {})
+            stex_range = None
+            for c_name, r_list in stex_srv_data.items():
+                if search_country and c_name.upper() == search_country.upper():
+                    for r in r_list:
+                        if query.startswith(r): stex_range = r; break
+                if stex_range: break
+            if not stex_range:
+                for c_name, r_list in stex_srv_data.items():
+                    for r in r_list:
+                        if query.startswith(r): stex_range = r; break
+                    if stex_range: break
+
+            if stex_range:
+                for _ in range(req_count - len(fetched_nums)):
+                    for api_key in bot_settings.get("stex_keys", []):
+                        try:
+                            res = requests.post(f"{STEX_BASE_URL}/getnum", json={"rid": query}, headers={"mauthapi": api_key}, timeout=10)
+                            rd = res.json()
+                            if rd.get("meta", {}).get("code") == 200 and rd.get("data"):
+                                ns = str(rd["data"].get("no_plus_number", "")).replace("+", "")
+                                if not ns: ns = str(rd["data"].get("national_number", ""))
+                                fetched_nums.append(ns)
+                                stex_assigned_numbers[ns] = chat_id
+                                total_assigned_stats += 1
+                                break
+                        except: continue
+
+        # 3. Voltx fallback
+        if len(fetched_nums) < req_count:
+            voltx_srv_data = bot_settings.get("voltx_services", {}).get(service, {})
+            voltx_range = None
+            for c_name, r_list in voltx_srv_data.items():
+                if search_country and c_name.upper() == search_country.upper():
+                    for r in r_list:
+                        if query.startswith(r): voltx_range = r; break
+                if voltx_range: break
+            if not voltx_range:
+                for c_name, r_list in voltx_srv_data.items():
+                    for r in r_list:
+                        if query.startswith(r): voltx_range = r; break
+                    if voltx_range: break
+
+            if voltx_range:
+                for _ in range(req_count - len(fetched_nums)):
+                    for api_key in bot_settings.get("voltx_keys", []):
+                        try:
+                            res = requests.post(f"{VOLTX_BASE_URL}/getnum", json={"rid": query}, headers={"mauthapi": api_key}, timeout=10)
+                            rd = res.json()
+                            if rd.get("meta", {}).get("code") == 200 and rd.get("data"):
+                                ns = str(rd["data"].get("no_plus_number", "")).replace("+", "")
+                                if not ns: ns = str(rd["data"].get("national_number", ""))
+                                fetched_nums.append(ns)
+                                voltx_assigned_numbers[ns] = chat_id
+                                total_assigned_stats += 1
+                                break
+                        except: continue
+
+        save_db()
+
+        if not fetched_nums:
+            answer_callback(call["id"], "❌ Out of stock!", show_alert=True)
+            delete_message(chat_id, wait_msg_id)
+            return
+
+        kb = []
+        app_full_name, _ = get_service_info_html(service)
+        emoji_id_srv = "5337302974806922068"
+        for app_key, app_data in bot_settings.get("premium_apps", {}).items():
+            if service.upper() == app_key or service.upper() in app_key or app_key in service.upper():
+                if "id" in app_data: emoji_id_srv = app_data["id"]; break
+        kb.append([{"text": f"{app_full_name}", "icon_custom_emoji_id": emoji_id_srv, "callback_data": "ignore", "style": "success"}])
+
+        flags_db = bot_settings.get("premium_flags", {})
+        for num in fetched_nums:
+            _, iso = get_flag_and_code(num)
+            display_num = f"+{num}" if not str(num).startswith("+") else str(num)
+            emoji_id = "5780471598932337683"
+            for flag_code, flag_data in flags_db.items():
+                if iso == flag_data.get("iso"):
+                    if "id" in flag_data: emoji_id = flag_data["id"]
+                    break
+            kb.append([{"text": f"{display_num}", "icon_custom_emoji_id": emoji_id, "copy_text": {"text": display_num}, "style": "primary"}])
+
+        kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"s_srv|{query}|{service}", "style": "danger"},
+                   {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
+        kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
+
+        hdr_country = search_country or query
+        text_numbers = build_numbers_header(hdr_country, service)
+        edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
+        user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
+        return
 
     # ---------- Broadcast Stock "Get Numbers" ----------
     elif data.startswith("g_bs|"):
@@ -3951,7 +4251,7 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['ok']} <b>{method}</b>\n💰 <b>${bal}</b>\n\n<b>Enter amount:</b>"), reply_markup=get_cancel_kb())
         answer_callback(call["id"])
 
-    # ---------- Test Message Flow ----------
+    # ---------- Test Message ----------
     elif data == "test_message_flow":
         user_states[chat_id] = "wait_for_test_service"
         temp_data[chat_id] = {}
@@ -3962,7 +4262,7 @@ def handle_callback(call):
         user_states[chat_id] = "wait_for_broadcast"
         edit_message(chat_id, msg_id, render_body_text("📢 <b>Send message to broadcast:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
 
-    # ---------- Upload Number File ----------
+    # ---------- Upload ----------
     elif data == "upload_num":
         user_states[chat_id] = "wait_for_txt"
         edit_message(chat_id, msg_id, render_body_text("📂 <b>Upload a</b> <b>.txt</b> <b>file:</b>"), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
@@ -4001,7 +4301,7 @@ def handle_callback(call):
         send_document(chat_id, "unused_numbers.txt", "\n".join(unused_list).encode('utf-8'))
         answer_callback(call["id"])
 
-    # ---------- Leaderboard (LOCAL + FIREBASE modes) ----------
+    # ---------- Leaderboard (LOCAL + FIREBASE) ----------
     elif data == "lb_main":
         txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
@@ -4015,7 +4315,6 @@ def handle_callback(call):
         sub = data.replace("lb_", "")
         edit_message(chat_id, msg_id, render_body_text("⌛ <i>Fetching...</i>"))
         try:
-            # ⭐ LOCAL MODE (if Firebase not available)
             if not db:
                 all_users = []
                 for uid, udata in user_cache.items():
@@ -4057,7 +4356,6 @@ def handle_callback(call):
                 edit_message(chat_id, msg_id, render_body_text(final_msg), reply_markup={"inline_keyboard": kb})
                 return
 
-            # ⭐ FIREBASE MODE
             if sub == "top_refs":
                 title, field, limit = "TOP 5 REFERRERS", "total_refers", 5
                 users = db.collection('users').order_by(field, direction="DESCENDING").limit(limit).stream()
@@ -4103,7 +4401,7 @@ def handle_callback(call):
     elif data == "system_settings":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['gear']} <b>System Settings</b>"), reply_markup=system_settings_keyboard())
 
-    # ---------- Maintenance Toggle ----------
+    # ---------- Maintenance ----------
     elif data == "toggle_maintenance":
         current = bot_settings.get("maintenance", False)
         bot_settings["maintenance"] = not current
@@ -4129,11 +4427,7 @@ def handle_callback(call):
 
     # ---------- Database Menu ----------
     elif data == "database_menu":
-        txt = (
-            f'{PEM["file"]} <b>DATABASE MANAGEMENT</b>\n'
-            f'━━━━━━━━━━━━━━━\n'
-            f'<i>Choose an option below:</i>'
-        )
+        txt = f'{PEM["file"]} <b>DATABASE MANAGEMENT</b>\n━━━━━━━━━━━━━━━\n<i>Choose an option:</i>'
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=database_menu_keyboard())
     elif data == "db_download":
         wait = send_message(chat_id, render_body_text("⏳ <i>Preparing database zip...</i>"))
@@ -4151,12 +4445,9 @@ def handle_callback(call):
             send_message(chat_id, render_body_text(f'❌ Error: {html.escape(str(e))}'))
     elif data == "db_upload":
         user_states[chat_id] = "wait_for_data_zip"
-        edit_message(chat_id, msg_id, render_body_text("📂 Send the <code>STR_BOT_DATA.zip</code> file to restore:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "database_menu", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text("📂 Send <code>STR_BOT_DATA.zip</code>:"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "database_menu", "style": "danger"}]]})
     elif data == "db_delete_confirm":
-        txt = (
-            f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> '
-            f'<b>DO YOU REALY WANT TO REMOVE ALL THE DATA\'S ?</b>'
-        )
+        txt = f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> <b>DO YOU REALLY WANT TO REMOVE ALL DATA?</b>'
         kb = {"inline_keyboard": [
             [{"text": "✅YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
             [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
@@ -4164,7 +4455,7 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
     elif data == "db_delete_yes":
         delete_all_data()
-        edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>All data has been removed successfully!</b>'), reply_markup=database_menu_keyboard())
+        edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>All data removed!</b>'), reply_markup=database_menu_keyboard())
     elif data == "db_delete_no":
         edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>Cancelled.</b>'), reply_markup=database_menu_keyboard())
 
@@ -4175,7 +4466,7 @@ def handle_callback(call):
         voltx_srvs = set(bot_settings.get("voltx_services", {}).keys())
         all_services = sorted(local_srvs.union(stex_srvs).union(voltx_srvs))
         if not all_services:
-            edit_message(chat_id, msg_id, render_body_text(f'{PEM["no"]} <b>No services available!</b>'), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "primary"}]]})
+            edit_message(chat_id, msg_id, render_body_text(f'{PEM["no"]} <b>No services!</b>'), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "primary"}]]})
             return
         apps_db = bot_settings.get("premium_apps", {})
         kb = []; row = []
@@ -4185,28 +4476,21 @@ def handle_callback(call):
                 if s.upper() == ak or s.upper() in ak or ak in s.upper():
                     if "id" in ad: emoji_id = ad["id"]; break
             row.append({"text": f"{s}", "icon_custom_emoji_id": emoji_id, "callback_data": f"cp_srv|{s}", "style": "primary"})
-            if len(row) == 2:
-                kb.append(row); row = []
+            if len(row) == 2: kb.append(row); row = []
         if row: kb.append(row)
         kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "primary"}])
-        txt = (
-            f'<tg-emoji emoji-id="5190899075968441286">💳</tg-emoji> '
-            f'<b>CHANGE PAYOUT</b>\n'
-            f'━━━━━━━━━━━━━━━\n'
-            f'📌 <b>Select a Service</b> to change its payout:'
-        )
+        txt = f'<tg-emoji emoji-id="5190899075968441286">💳</tg-emoji> <b>CHANGE PAYOUT</b>\n━━━━━━━━━━━━━━━\n📌 <b>Select Service:</b>'
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
     elif data.startswith("cp_srv|"):
         srv = data.replace("cp_srv|", "")
         local_cnts = set()
         for b in number_batches.values():
-            if b["service"] == srv and b["numbers"]:
-                local_cnts.add(b["country"])
+            if b["service"] == srv and b["numbers"]: local_cnts.add(b["country"])
         stex_cnts = set(bot_settings.get("stex_services", {}).get(srv, {}).keys())
         voltx_cnts = set(bot_settings.get("voltx_services", {}).get(srv, {}).keys())
         all_countries = sorted(local_cnts.union(stex_cnts).union(voltx_cnts))
         if not all_countries:
-            edit_message(chat_id, msg_id, render_body_text(f'{PEM["no"]} <b>No countries found for {srv}!</b>'), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
+            edit_message(chat_id, msg_id, render_body_text(f'{PEM["no"]} <b>No countries!</b>'), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "primary"}]]})
             return
         flags_db = bot_settings.get("premium_flags", {})
         kb = []
@@ -4218,13 +4502,8 @@ def handle_callback(call):
                     if "id" in fd: emoji_id = fd["id"]; break
             kb.append([{"text": f"{c}", "icon_custom_emoji_id": emoji_id, "callback_data": f"cp_cnt|{srv}|{c}", "style": "primary"}])
         kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "change_payout_menu", "style": "danger"}])
-        txt = (
-            f'<tg-emoji emoji-id="5336972142066047577">🌐</tg-emoji> '
-            f'<b>Select a Country for {srv}:</b>'
-        )
+        txt = f'<tg-emoji emoji-id="5336972142066047577">🌐</tg-emoji> <b>Select Country for {srv}:</b>'
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
-
-    # ---------- Country Payout Edit (Confirmation Flow) ----------
     elif data.startswith("cp_cnt|"):
         parts = data.split("|", 2)
         srv = parts[1]; country = parts[2]
@@ -4242,11 +4521,9 @@ def handle_callback(call):
                 except: pass
             if current_payout is None:
                 current_payout = float(bot_settings.get("otp_reward", 0.0))
-
         country_flag = get_flag_info_html(country)
         user_states[chat_id] = "set_payout_value"
         temp_data[chat_id] = {"msg_id": msg_id, "service": srv, "country": country}
-
         txt = (
             f'<b>{country}</b>{country_flag} <b>Payout :</b> <code>${current_payout}</code>\n\n'
             f'<b>Send The New Value</b> <code>country_payout</code> :'
@@ -4254,7 +4531,7 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=get_cancel_kb())
         answer_callback(call["id"])
 
-    # ---------- StexSMS Control ----------
+    # ---------- StexSMS ----------
     elif data == "stex_control":
         edit_message(chat_id, msg_id, render_body_text(f"🌐 <b>StexSMS Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('stex_keys', []))}</b>"), reply_markup=stex_control_keyboard())
     elif data == "add_stex_key":
@@ -4328,7 +4605,7 @@ def handle_callback(call):
         srv = data.replace("nx_add_cnt_", "")
         user_states[chat_id] = "wait_nx_cnt_name"
         temp_data[chat_id] = {"msg_id": msg_id, "srv": srv}
-        edit_message(chat_id, msg_id, render_body_text(f"🌍 <b>Country for</b> <b>{srv}:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text(f"🌍 <b>Country for {srv}:</b>"), reply_markup=get_cancel_kb())
     elif data.startswith("nx_cnt_"):
         parts = data.split("_"); srv, cnt = parts[2], parts[3]
         ranges = bot_settings["stex_services"][srv].get(cnt, [])
@@ -4345,7 +4622,7 @@ def handle_callback(call):
         parts = data.split("_"); srv, cnt = parts[2], parts[3]
         user_states[chat_id] = "wait_nx_addr"
         temp_data[chat_id] = {"msg_id": msg_id, "srv": srv, "cnt": cnt}
-        edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New Range for</b> <b>{cnt}:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"nx_cnt_{srv}_{cnt}", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New Range for {cnt}:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"nx_cnt_{srv}_{cnt}", "style": "danger"}]]})
     elif data.startswith("nx_dr_"):
         parts = data.split("_"); srv, cnt, rng = parts[2], parts[3], parts[4]
         if rng in bot_settings["stex_services"].get(srv, {}).get(cnt, []):
@@ -4363,7 +4640,7 @@ def handle_callback(call):
         save_db()
         handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": f"nx_srv_{srv}", "id": call["id"]})
 
-    # ---------- Voltx Control ----------
+    # ---------- Voltx ----------
     elif data == "voltx_control":
         edit_message(chat_id, msg_id, render_body_text(f"⚡ <b>Voltx Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('voltx_keys', []))}</b>"), reply_markup=voltx_control_keyboard())
     elif data == "add_voltx_key":
@@ -4437,7 +4714,7 @@ def handle_callback(call):
         srv = data.replace("vx_add_cnt_", "")
         user_states[chat_id] = "wait_vx_cnt_name"
         temp_data[chat_id] = {"msg_id": msg_id, "srv": srv}
-        edit_message(chat_id, msg_id, render_body_text(f"🌍 <b>Country for</b> <b>{srv}:</b>"), reply_markup=get_cancel_kb())
+        edit_message(chat_id, msg_id, render_body_text(f"🌍 <b>Country for {srv}:</b>"), reply_markup=get_cancel_kb())
     elif data.startswith("vx_cnt_"):
         parts = data.split("_"); srv, cnt = parts[2], parts[3]
         ranges = bot_settings["voltx_services"][srv].get(cnt, [])
@@ -4454,7 +4731,7 @@ def handle_callback(call):
         parts = data.split("_"); srv, cnt = parts[2], parts[3]
         user_states[chat_id] = "wait_vx_addr"
         temp_data[chat_id] = {"msg_id": msg_id, "srv": srv, "cnt": cnt}
-        edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New Range for</b> <b>{cnt}:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"vx_cnt_{srv}_{cnt}", "style": "danger"}]]})
+        edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New Range for {cnt}:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"vx_cnt_{srv}_{cnt}", "style": "danger"}]]})
     elif data.startswith("vx_dr_"):
         parts = data.split("_"); srv, cnt, rng = parts[2], parts[3], parts[4]
         if rng in bot_settings["voltx_services"].get(srv, {}).get(cnt, []):
