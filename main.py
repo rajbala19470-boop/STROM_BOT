@@ -2688,7 +2688,7 @@ def admin_panel_keyboard():
          {"text": "Delete files", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "delete_files", "style": "danger"}],
         [{"text": "Broadcast", "icon_custom_emoji_id": "5789428375261023681", "callback_data": "broadcast_msg", "style": "success"},
          {"text": "System", "icon_custom_emoji_id": "5420155432272438703", "callback_data": "system_settings", "style": "primary"}],
-        [{"text": "📁DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
+        [{"text": "DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
         [maint_btn],
         [{"text": "Used number", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "show_used", "style": "success"},
          {"text": "Unused number", "icon_custom_emoji_id": "5352597830089347330", "callback_data": "show_unused", "style": "success"}],
@@ -5419,8 +5419,8 @@ def handle_callback(call):
     elif data == "db_delete_confirm":
         txt = f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> <b>DO YOU REALLY WANT TO REMOVE ALL DATA?</b>'
         kb = {"inline_keyboard": [
-            [{"text": "✅YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
-            [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
+            [{"text": "YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
+            [{"text": "NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
         ]}
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
     elif data == "db_delete_yes":
