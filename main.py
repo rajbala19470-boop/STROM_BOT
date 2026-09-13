@@ -15,10 +15,10 @@ import random
 import re
 import html
 import pyotp
-from collections import Counter 
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
-from datetime import datetime 
+from datetime import datetime
 from urllib.parse import urljoin
 
 # ==========================================
@@ -421,7 +421,7 @@ COUNTRY_DB = {
 DEFAULT_CUSTOM_MESSAGES = {
     "start": {"text": "<blockquote>👋 <b>WELCOME TO 𝐒𝐓𝐎𝐑𝐌 𝐗 𝐎𝐍𝐄</b> 🤔</blockquote>\n\n📩 <b>RECEIVE OTP'S AND START EARNING MONEY</b> 🤑", "buttons": []},
     "get_number": {"text": f"{PEM['pin']} Select a service:", "buttons": []},
-    "select_country": {"text": f"📌 Select a country for {{service}}:", "buttons": []}, 
+    "select_country": {"text": f"📌 Select a country for {{service}}:", "buttons": []},
     "search_number": {"text": "╔═══════════╗\n     🔍 <b>SEARCH NUMBER</b>\n╚═══════════╝\n✅ Enter 3 to 9 digits  \nto search for a number.\n━━━━━━━━━━━━━\n📝 Example:\n➥ 880\n➥ 9227373\n━━━━━━━━━━━━━\n🔍 Fast Number Lookup System", "buttons": []},
     "traffic": {"text": f"{PEM['graph']} <b>Traffic Overview</b>\n\n{PEM['ok']} Available Numbers: {{avail}}\n{PEM['rocket']} Assigned Numbers: {{assigned}}", "buttons": []},
     "refer": {"text": f"➖➖➖➖➖➖➖\n« {PEM['gift']} REFER & EARN »\n➖➖➖➖➖➖➖\n{PEM['link']} YOUR LINK:\n<code>{{ref_link}}</code>\n➖➖➖➖➖➖➖\n{PEM['user']} TOTAL REFERS: <b>{{total_ref}}</b>\n➖➖➖➖➖➖➖\n{PEM['money']} PER REFER: <b>${{ref_reward}}</b>\n➖➖➖➖➖➖➖", "buttons": []},
@@ -430,23 +430,20 @@ DEFAULT_CUSTOM_MESSAGES = {
 }
 
 # ==========================================
-# 🔥 Firebase Setup — FILE-BASED (Bulletproof)
-# Bot works even if Firebase is down!
+# 🔥 Firebase Setup — OPTIONAL with 15s Timeout
+# Bot works fine WITHOUT Firebase (local-only mode)
 # ==========================================
 db = None
+_fb_result = {"db": None, "done": False}
 
-def _init_firebase():
-    """Initialize Firebase from JSON file. Returns db or None."""
-    global db
+def _try_firebase_init():
+    """Try to initialize Firebase. Bot works with local DB if unavailable."""
     try:
-        # Auto-detect Firebase JSON file (firebase-adminsdk / serviceAccount)
-        json_files = (glob.glob("*firebase-adminsdk*.json") 
-                      + glob.glob("*storm_bot_data*.json") 
+        json_files = (glob.glob("*firebase-adminsdk*.json")
+                      + glob.glob("*storm_bot_data*.json")
                       + glob.glob("*storm-bot-data*.json")
                       + glob.glob("*sadikul*.json")
                       + glob.glob("*serviceAccount*.json"))
-        
-        # Filter only valid firebase credential files
         valid_files = []
         for f in json_files:
             try:
@@ -454,41 +451,49 @@ def _init_firebase():
                     d = json.load(fh)
                     if d.get("type") == "service_account" and "private_key" in d:
                         valid_files.append(f)
-            except: pass
-        
+            except:
+                pass
+
         if not valid_files:
-            print("⚠️ Firebase JSON file not found — running in LOCAL-ONLY mode")
-            print("   → Firebase Console থেকে key download করে bot.py-এর পাশে রাখুন")
-            db = None
+            print("⚠️  Firebase JSON not found — LOCAL-ONLY mode")
+            print("   → Bot will work with bot_data.json (all features enabled)")
+            _fb_result["done"] = True
             return
-        
+
         creds_path = valid_files[0]
         print(f"📁 Firebase credentials: {creds_path}")
-        
         cred = credentials.Certificate(creds_path)
         firebase_admin.initialize_app(cred)
-        db = firestore.client()
-        
-        # Quick verification with timeout — hang হবে না
-        try:
-            db.collection('_health_check_').document('x').get(timeout=6.0)
-            print("✅ Firebase Connected & VERIFIED! (Full Sync Enabled)")
-        except Exception as _ve:
-            print(f"⚠️ Firebase connected but health-check failed: {type(_ve).__name__}")
-            print("⚠️ Running in LOCAL-ONLY mode (bot still works)")
-            db = None
-            
+        _db = firestore.client()
+        # Verify connectivity with strict timeout
+        _db.collection('_health_check_').document('x').set({'t': time.time()}, timeout=10.0)
+        _fb_result["db"] = _db
+        _fb_result["done"] = True
+        print("✅ Firebase Connected & VERIFIED! (Cloud Sync ENABLED)")
     except Exception as e:
-        print(f"❌ Firebase Init Error: {type(e).__name__}: {str(e)[:150]}")
-        print("⚠️ Running in LOCAL-ONLY mode (bot still works)")
-        db = None
+        print(f"⚠️  Firebase unavailable: {type(e).__name__}")
+        print("✅ Running in LOCAL-ONLY mode (all features work)")
+        _fb_result["done"] = True
 
-_init_firebase()
+_fb_thread = threading.Thread(target=_try_firebase_init, daemon=True)
+_fb_thread.start()
+_fb_thread.join(timeout=15.0)
 
+if _fb_result["done"] and _fb_result["db"] is not None:
+    db = _fb_result["db"]
+else:
+    if not _fb_result["done"]:
+        print("⏱️  Firebase timeout (15s) — LOCAL-ONLY mode")
+        print("✅ All features work with local DB")
+    db = None
+
+# ==========================================
+# Bot Settings
+# ==========================================
 bot_settings = {
     "admins": [OWNER_ID],
-    "panels": [], 
-    "fw_groups": [], 
+    "panels": [],
+    "fw_groups": [],
     "otp_link": "https://t.me/your_otp_group",
     "main_channel_link": "",
     "withdraw_on": True,
@@ -497,13 +502,13 @@ bot_settings = {
     "refer_reward": 0.2,
     "cooldown": 10,
     "num_req": 3,
-    "num_share": 1, 
+    "num_share": 1,
     "support_link": "https://t.me/your_support",
     "w_methods": ["bKash", "Nagad"],
-    "w_group": "", 
+    "w_group": "",
     "fj_on": False,
-    "fj_channels": [], 
-    "stex_keys": [], 
+    "fj_channels": [],
+    "stex_keys": [],
     "voltx_keys": [],
     "search_countries": [],
     "stex_services": {},
@@ -516,8 +521,8 @@ bot_settings = {
 }
 
 FS_KEYS = [
-    "admins", "panels", "fw_groups", "otp_link", "main_channel_link", "withdraw_on", 
-    "min_withdraw", "otp_reward", "refer_reward", "cooldown", 
+    "admins", "panels", "fw_groups", "otp_link", "main_channel_link", "withdraw_on",
+    "min_withdraw", "otp_reward", "refer_reward", "cooldown",
     "num_req", "num_share", "support_link", "w_methods", "w_group", "stex_keys", "voltx_keys",
     "search_countries", "stex_services", "voltx_services", "fj_on", "fj_channels",
     "otp_pair_rates", "maintenance"
@@ -525,13 +530,13 @@ FS_KEYS = [
 
 number_batches = {}
 used_numbers_list = []
-stex_assigned_numbers = {} 
+stex_assigned_numbers = {}
 voltx_assigned_numbers = {}
 STEX_BASE_URL = "https://api.2oo9.cloud/MXS47FLFX0U/tness/@public/api"
 VOLTX_BASE_URL = "https://api.2oo9.cloud/MXS47FLFX0U/tnevs/@public/api"
 total_uploaded_stats = 0
 total_assigned_stats = 0
-processed_otps = set() 
+processed_otps = set()
 recent_traffic = []
 user_banned_cache = {}
 panel_sessions = {}
@@ -726,6 +731,7 @@ def load_db():
     global bot_settings, number_batches, used_numbers_list, total_uploaded_stats, total_assigned_stats, recent_traffic
     global stex_assigned_numbers, voltx_assigned_numbers
     print("Loading DB...")
+
     if db:
         try:
             print("   -> Fetching Firestore config...")
@@ -742,8 +748,7 @@ def load_db():
                     print("✅ Firestore Config Initialized!")
                 except: pass
         except Exception as e:
-            print(f"Firestore load skipped ({type(e).__name__}): {str(e)[:100]}")
-            print("   -> Continuing with local DB only.")
+            print(f"Firestore load skipped ({type(e).__name__}) — continuing with local DB")
 
     if os.path.exists(DB_FILE):
         try:
@@ -803,7 +808,7 @@ def save_local_db():
     }
     try:
         with open(DB_FILE, "w", encoding='utf-8') as f:
-            json.dump(local_data, f, indent=4)
+            json.dump(local_data, f, indent=4, default=str)
     except Exception as e:
         pass
 
@@ -1007,7 +1012,7 @@ def extract_premium_html(msg):
             b_text = b_text[:offset] + replacement + b_text[offset+length:]
         return b_text.decode('utf-16-le')
     except Exception as e:
-        return text 
+        return text
 
 
 def get_flag_info_from_num(num):
@@ -1144,19 +1149,19 @@ def extract_otp_code(text):
     if digit_matches: return digit_matches[0]
     return None
     # ==========================================
-# User Cache / Balance / OTP Credit — with timeouts
+# User Cache / Balance / OTP Credit (Firebase Optional)
 # ==========================================
 user_cache = {}
 
 def get_user(user_id):
     if user_id in user_cache: return user_cache[user_id]
-    if not db: 
+    if not db:
         new_user = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
         user_cache[user_id] = new_user
         return new_user
     try:
         doc_ref = db.collection('users').document(str(user_id))
-        doc = doc_ref.get(timeout=5.0)                        # ⭐ timeout
+        doc = doc_ref.get(timeout=5.0)
         if doc.exists:
             data = doc.to_dict()
             if "total_otps" not in data: data["total_otps"] = 0
@@ -1167,7 +1172,7 @@ def get_user(user_id):
         else:
             new_user = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
             try:
-                doc_ref.set(new_user, timeout=5.0)             # ⭐ timeout
+                doc_ref.set(new_user, timeout=5.0)
             except: pass
             user_cache[user_id] = new_user
             return new_user
@@ -1178,6 +1183,7 @@ def get_user(user_id):
 
 
 def update_balance(user_id, amount):
+    """Update balance atomically. Cache first, then DB if available."""
     if user_id not in user_cache:
         get_user(user_id)
     if user_id in user_cache:
@@ -1185,12 +1191,12 @@ def update_balance(user_id, amount):
     if not db: return
     try:
         doc_ref = db.collection('users').document(str(user_id))
-        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True, timeout=5.0)   # ⭐ timeout
+        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True, timeout=5.0)
     except: pass
 
 
 def credit_otp_to_user(owner_id, reward, app_full_name=""):
-    """Atomically credit balance AND increment OTP count in cache + DB."""
+    """Atomically credit balance AND increment OTP count in cache + DB (if Firebase)."""
     try:
         reward = float(reward)
     except:
@@ -1209,7 +1215,7 @@ def credit_otp_to_user(owner_id, reward, app_full_name=""):
                 "user_id": owner_id,
                 "balance": firestore.Increment(reward),
                 "total_otps": firestore.Increment(1)
-            }, merge=True, timeout=5.0)                        # ⭐ timeout
+            }, merge=True, timeout=5.0)
         except Exception as e:
             print(f"credit_otp_to_user DB error for {owner_id}: {type(e).__name__}")
 
@@ -1217,43 +1223,49 @@ def credit_otp_to_user(owner_id, reward, app_full_name=""):
 
 
 def add_referral(inviter_id, new_user_id):
-    if not db:
-        reward = bot_settings.get("refer_reward", 0.2)
-        update_balance(inviter_id, reward)
-        ref_msg = (
-            f"{PEM['gift']} <b>New Referral !</b>\n"
-            f"------------------\n"
-            f"<b>You Received ${reward}</b>\n"
-            f"------------------\n"
-            f"<b>From User ID:</b> <code>{new_user_id}</code>"
-        )
-        send_message(inviter_id, render_body_text(ref_msg))
-        return
-    try:
-        doc = db.collection('users').document(str(new_user_id)).get(timeout=5.0)   # ⭐
-        if not doc.exists:
-            get_user(new_user_id)
-            reward = bot_settings.get("refer_reward", 0.2)
-            update_balance(inviter_id, reward)
-            db.collection('users').document(str(inviter_id)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)   # ⭐
-            ref_msg = (
-                f"{PEM['gift']} <b>New Referral !</b>\n"
-                f"------------------\n"
-                f"<b>You Received ${reward}</b>\n"
-                f"------------------\n"
-                f"<b>From User ID:</b> <code>{new_user_id}</code>"
-            )
-            send_message(inviter_id, render_body_text(ref_msg))
-    except: pass
+    reward = bot_settings.get("refer_reward", 0.2)
+    update_balance(inviter_id, reward)
+    if db:
+        try:
+            db.collection('users').document(str(inviter_id)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)
+        except: pass
+    else:
+        if inviter_id in user_cache:
+            user_cache[inviter_id]["total_refers"] = user_cache[inviter_id].get("total_refers", 0) + 1
+        else:
+            get_user(inviter_id)
+            if inviter_id in user_cache:
+                user_cache[inviter_id]["total_refers"] = 1
+    ref_msg = (
+        f"{PEM['gift']} <b>New Referral !</b>\n"
+        f"━━━━━━━━━━━━━━━\n"
+        f"🔥 <b>You Received ${reward}</b>\n"
+        f"━━━━━━━━━━━━━━━\n"
+        f"{PEM['user']} <b>From User ID:</b> <code>{new_user_id}</code>"
+    )
+    send_message(inviter_id, render_body_text(ref_msg))
 
 
 # ==========================================
-# Payout Lookup — Multi-fallback
+# Payout Lookup — Multi-fallback (11 layers)
 # ==========================================
 def get_payout_for_number(clean_api_num, service_hint=""):
+    """
+    Resolve payout for a number using multiple fallback layers:
+    1. Stored payout in assigned_number_meta
+    2. Exact country|service key
+    3. ISO match with service
+    4. ISO match (any service)
+    5. Country name match with service
+    6. Country name match (any service)
+    7. Detected ISO + name + service
+    8. Detected ISO + name (any)
+    9. Global default
+    """
     reward = float(bot_settings.get("otp_reward", 0.0))
     meta = assigned_number_meta.get(clean_api_num, {})
 
+    # Layer 1: Stored payout at assignment time
     if "payout" in meta:
         try:
             return float(meta["payout"])
@@ -1263,9 +1275,9 @@ def get_payout_for_number(clean_api_num, service_hint=""):
     oc = str(meta.get("country", "") or "").strip()
     osvc = str(meta.get("service", "") or service_hint or "").strip()
     meta_iso = str(meta.get("iso", "") or "").strip().upper()
-
     pr = bot_settings.get("otp_pair_rates", {})
 
+    # Layer 2: Exact country|service
     if oc and osvc:
         key = f"{oc.upper()}|{osvc.upper()}"
         if key in pr:
@@ -1274,16 +1286,19 @@ def get_payout_for_number(clean_api_num, service_hint=""):
             except:
                 pass
 
+    # Layer 3: ISO + service
     if meta_iso:
         for k, v in pr.items():
             try:
                 kc, ks = k.split("|", 1)
                 if kc.upper() == meta_iso:
-                    if osvc and ks.upper() != osvc.upper():
-                        continue
+                    if osvc and ks.upper() != osvc.upper(): continue
                     return float(v)
             except:
                 continue
+
+    # Layer 4: ISO (any service)
+    if meta_iso:
         for k, v in pr.items():
             try:
                 kc, ks = k.split("|", 1)
@@ -1292,16 +1307,19 @@ def get_payout_for_number(clean_api_num, service_hint=""):
             except:
                 continue
 
+    # Layer 5: Country name + service
     if oc:
         for k, v in pr.items():
             try:
                 kc, ks = k.split("|", 1)
                 if kc.upper() == oc.upper():
-                    if osvc and ks.upper() != osvc.upper():
-                        continue
+                    if osvc and ks.upper() != osvc.upper(): continue
                     return float(v)
             except:
                 continue
+
+    # Layer 6: Country name (any service)
+    if oc:
         for k, v in pr.items():
             try:
                 if k.split("|")[0].upper() == oc.upper():
@@ -1309,6 +1327,7 @@ def get_payout_for_number(clean_api_num, service_hint=""):
             except:
                 continue
 
+    # Layer 7-8: Detect from number
     try:
         _, iso_det, _ = get_country_from_num(clean_api_num)
         if iso_det and iso_det != "XX":
@@ -1328,18 +1347,17 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                 try:
                     kc, ks = k.split("|", 1)
                     if kc.upper() == iso_det:
-                        if osvc and ks.upper() != osvc.upper():
-                            continue
+                        if osvc and ks.upper() != osvc.upper(): continue
                         return float(v)
                 except:
                     continue
+
             if detected_name:
                 for k, v in pr.items():
                     try:
                         kc, ks = k.split("|", 1)
                         if kc.upper() == detected_name.upper():
-                            if osvc and ks.upper() != osvc.upper():
-                                continue
+                            if osvc and ks.upper() != osvc.upper(): continue
                             return float(v)
                     except:
                         continue
@@ -1352,11 +1370,12 @@ def get_payout_for_number(clean_api_num, service_hint=""):
     except:
         pass
 
+    # Layer 9: Global default
     return reward
 
 
 # ==========================================
-# Withdrawal method emoji helpers
+# Withdrawal Method Emoji Helpers
 # ==========================================
 def get_wmethod_emoji_html(method_name):
     for m in bot_settings.get("w_methods", []):
@@ -1389,7 +1408,8 @@ def get_wmethod_display_list():
 
 
 # ==========================================
-# OTP Display Formatter (group format)
+# Group OTP display format
+# 🇲🇷MR |📱 | +2222🔹548 |✉️English
 # ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
     clean = str(num).lstrip('+').replace(" ", "")
@@ -1423,7 +1443,7 @@ def format_otp_display(num, app_full_name, lang, masked=True):
 
 
 # ==========================================
-# Deliver OTP to user DM
+# Deliver OTP to User DM
 # ==========================================
 def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balance, reward, lang):
     app = get_premium_app(service_name)
@@ -1491,13 +1511,13 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
 
 
 # ==========================================
-# 🎯 build_numbers_header — FIXED FORMAT
-# Old:
+# 🎯 build_numbers_header — FIXED PRESENTATION STYLE
+# Old format:
 #   ⚙️ THIS IS YOUR📱BANGLADESH🇧🇩 NUMBERS📱
 #   💰0.004/OTP🪨 📵
 #
-# NEW (as requested):
-#                  💰{country_payout}/OTP📵
+# NEW format (as requested):
+#                  💰{country_payout}/OTP🪨
 #
 #   ⚙️THIS IS YOUR📱{country_name}{country_flag_emoji}NUMBERS📱
 # ==========================================
@@ -1505,9 +1525,9 @@ def build_numbers_header(country, service=None):
     HEADER_EMOJI_1 = "6282641460093260838"   # ⚙️
     HEADER_EMOJI_2 = "6267315814190290529"   # 📱
     PHONE_ICON     = "5197474438970363734"   # 📱
-    NOPHONE_ICON   = "6266787022111773140"   # 📵
     flag_html = get_flag_info_html(country)
 
+    # Payout resolution
     payout_val = float(bot_settings.get("otp_reward", 0.0))
     pr = bot_settings.get("otp_pair_rates", {})
     if service:
@@ -1525,22 +1545,24 @@ def build_numbers_header(country, service=None):
     payout_str = fmt_payout(payout_val)
 
     money_icon = f'<tg-emoji emoji-id="{TAKA_EMOJI}">💰</tg-emoji>'
-    no_phone_icon = f'<tg-emoji emoji-id="{NOPHONE_ICON}">📵</tg-emoji>'
-    gear_icon = f'<tg-emoji emoji-id="{HEADER_EMOJI_1}">⚙️</tg-emoji>'
+    rock_icon  = f'<tg-emoji emoji-id="{ROCK_EMOJI}">🪨</tg-emoji>'
+    gear_icon  = f'<tg-emoji emoji-id="{HEADER_EMOJI_1}">⚙️</tg-emoji>'
     phone_icon_2 = f'<tg-emoji emoji-id="{HEADER_EMOJI_2}">📱</tg-emoji>'
     phone_icon_end = f'<tg-emoji emoji-id="{PHONE_ICON}">📱</tg-emoji>'
 
+    country_display = html.escape(str(country).upper())
+
     header = (
-        f"               {money_icon}{payout_str}/OTP{no_phone_icon}\n"
+        f"{money_icon}<b>{payout_str}/OTP</b>{rock_icon}\n"
         f"\n"
-        f"{gear_icon}<b>THIS IS YOUR</b>{phone_icon_2}<b>{html.escape(str(country).upper())}</b>"
+        f"{gear_icon}<b>THIS IS YOUR</b>{phone_icon_2}<b>{country_display}</b>"
         f"{flag_html}<b>NUMBERS</b>{phone_icon_end}"
     )
     return render_body_text(header)
 
 
 # ==========================================
-# Service keyword DB + detectors
+# Service Keyword Database
 # ==========================================
 SERVICE_SMS_KEYWORDS = {
     "whatsapp": ["whatsapp", "wa", "wap", "w/a", "whatsapp business", "wa.me", "wa code", "wh"],
@@ -1736,9 +1758,12 @@ def is_user_banned(user_id):
     banned = False
     if db:
         try:
-            doc = db.collection('users').document(str(user_id)).get(timeout=5.0)   # ⭐
+            doc = db.collection('users').document(str(user_id)).get(timeout=5.0)
             banned = doc.exists and doc.to_dict().get("banned", False)
         except: pass
+    else:
+        if user_id in user_cache:
+            banned = user_cache[user_id].get("banned", False)
     user_banned_cache[user_id] = {'banned': banned, 'time': time.time()}
     return banned
 
@@ -1784,7 +1809,7 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
 
 
 # ==========================================
-# Panel monitor
+# Panel Monitor — Firebase optional safe
 # ==========================================
 def panel_monitor_thread():
     global processed_otps, recent_traffic, panel_sessions
@@ -1957,6 +1982,7 @@ def get_admin_text():
     total_files = len(number_batches)
     available_nums = sum(len(b["numbers"]) for b in number_batches.values())
     maint_status = "🟢 OFF" if not bot_settings.get("maintenance") else "🔴 ON"
+    fb_status = "🟢 Cloud Sync ON" if db else "🟡 Local Only"
     txt = f"""
 {PEM['admin']} <b>ADMIN CONTROL PANEL</b> {PEM['admin']}
 ━━━━━━━━━━━━━━━━━━
@@ -1974,6 +2000,7 @@ def get_admin_text():
 [██████░░░░░░░░░] {available_nums} free
 
 {PEM['gear']} <b>MAINTENANCE:</b> {maint_status}
+{PEM['world']} <b>DATABASE:</b> {fb_status}
 """
     return render_body_text(txt)
 
@@ -2274,7 +2301,7 @@ def expire_previous_number(chat_id):
         except: pass
         del user_active_sessions[chat_id]
         # ==========================================
-# Message Handler
+# Message Handler — All States
 # ==========================================
 def handle_message(msg):
     global total_uploaded_stats
@@ -2284,11 +2311,15 @@ def handle_message(msg):
     text = msg.get("text", "")
     register_user_local(chat_id)
 
+    # ---------- /dmotp (Admin test) ----------
     if text.startswith("/dmotp"):
         if not is_admin(chat_id): return
         parts = text.split(maxsplit=4)
         if len(parts) < 5:
-            send_message(chat_id, render_body_text("📝 <b>Usage:</b> <code>/dmotp SERVICE NUMBER OTP LANG</code>\n\n<b>Example:</b>\n<code>/dmotp WhatsApp +8801712345678 556677 EN</code>"))
+            send_message(chat_id, render_body_text(
+                "📝 <b>Usage:</b> <code>/dmotp SERVICE NUMBER OTP LANG</code>\n\n"
+                "<b>Example:</b>\n<code>/dmotp WhatsApp +8801712345678 556677 EN</code>"
+            ))
             return
         srv_test = parts[1].strip()
         num_test = parts[2].strip()
@@ -2303,13 +2334,15 @@ def handle_message(msg):
         send_message(chat_id, render_body_text(dm_text), reply_markup=dm_kb)
         return
 
+    # ---------- /setservice (Admin: add emoji to service) ----------
     if text.startswith("/setservice"):
         if not is_admin(chat_id): return
         raw = text.replace("/setservice", "", 1).strip()
         if "|" not in raw:
             send_message(chat_id, render_body_text(
                 "📝 <b>Usage:</b> <code>/setservice SERVICE_NAME | EMOJI_ID</code>\n\n"
-                "<b>Example:</b>\n<code>/setservice Facebook | 5334807341109908955</code>\n"
+                "<b>Examples:</b>\n"
+                "<code>/setservice Facebook | 5334807341109908955</code>\n"
                 "<code>/setservice Instagram | 5420130255174145507</code>"
             ))
             return
@@ -2329,10 +2362,15 @@ def handle_message(msg):
         ))
         return
 
+    # ---------- Banned check ----------
     if is_user_banned(chat_id):
-        send_message(chat_id, render_body_text("🚫 <b>You are banned from using this bot!</b>\n<i>If you think this is a mistake, please contact support.</i>"))
+        send_message(chat_id, render_body_text(
+            "🚫 <b>You are banned from using this bot!</b>\n"
+            "<i>If you think this is a mistake, please contact support.</i>"
+        ))
         return
 
+    # ---------- Maintenance check ----------
     if bot_settings.get("maintenance", False) and not is_admin(chat_id):
         if not text.startswith("/start") and text != "SUPPORT":
             maint_msg = (
@@ -2343,6 +2381,7 @@ def handle_message(msg):
             send_message(chat_id, render_body_text(maint_msg))
             return
 
+    # ---------- Save referral (before force-join) ----------
     if text.startswith("/start"):
         parts = text.split()
         if len(parts) > 1 and parts[1].isdigit():
@@ -2356,10 +2395,12 @@ def handle_message(msg):
                             db.collection('users').document(str(chat_id)).update({"referred_by": inviter, "ref_paid": False}, timeout=5.0)
                     except: pass
 
+    # ---------- Force-join check ----------
     if not check_force_join(chat_id):
         send_force_join_msg(chat_id)
         return
 
+    # ---------- Reset state on main menu cmds ----------
     MAIN_MENU_CMDS = ["GET NUMBER", "SEARCH NUMBER", "TRAFFIC", "REFER", "BALANCE", "SUPPORT", "Admin Panel", "2FA ONLINE"]
     is_main_cmd = False
     if text in MAIN_MENU_CMDS or text.startswith("/start"):
@@ -2367,9 +2408,11 @@ def handle_message(msg):
         if chat_id in temp_data: del temp_data[chat_id]
         is_main_cmd = True
 
+    # ---------- State machine ----------
     if chat_id in user_states and not is_main_cmd:
         state = user_states[chat_id]
 
+        # ========== AUTO CAPTCHA PANEL SETUP ==========
         if state == "wait_for_cpanel_url" and text:
             temp_data[chat_id]["p_data"]["login_url"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_user"
@@ -2383,43 +2426,43 @@ def handle_message(msg):
         elif state == "wait_for_cpanel_pass" and text:
             temp_data[chat_id]["p_data"]["password"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_msg_link"
-            send_message(chat_id, render_body_text("4️⃣ <b>Message Link</b>\n➡️ <i>যেখান থেকে SMS/OTP ডাটা (JSON) আসবে সেই Link দিন:</i>"), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("4️⃣ <b>Message Link</b>\n➡️ <i>যেখান থেকে SMS/OTP ডাটা আসবে সেই Link:</i>"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_msg_link" and text:
             temp_data[chat_id]["p_data"]["msg_link"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_num_col_name"
-            send_message(chat_id, render_body_text("5️⃣ <b>Number Column Name</b>\n➡️ <i>Data তে Number column এর নাম কী? (যেমন: number, phone):</i>"), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("5️⃣ <b>Number Column Name</b>\n➡️ <i>(যেমন: number, phone):</i>"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_num_col_name" and text:
             temp_data[chat_id]["p_data"]["num_col_name"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_num_col_idx"
-            send_message(chat_id, render_body_text("6️⃣ <b>Number Column Serial</b>\n➡️ <i>Number Column এর Serial Number কত? (যেমন: 3, 5):</i>"), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("6️⃣ <b>Number Column Serial</b>\n➡️ <i>(যেমন: 3, 5):</i>"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_num_col_idx" and text:
             if text.isdigit():
                 temp_data[chat_id]["p_data"]["num_col_idx"] = int(text)
                 user_states[chat_id] = "wait_for_cpanel_msg_col_name"
-                send_message(chat_id, render_body_text("7️⃣ <b>Message Column Name</b>\n➡️ <i>Message/OTP column এর নাম কী? (যেমন: message, sms):</i>"), reply_markup=get_cancel_kb())
+                send_message(chat_id, render_body_text("7️⃣ <b>Message Column Name</b>\n➡️ <i>(যেমন: message, sms):</i>"), reply_markup=get_cancel_kb())
             else:
                 send_message(chat_id, render_body_text("❌ <b>Please enter a valid number serial!</b>"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_msg_col_name" and text:
             temp_data[chat_id]["p_data"]["msg_col_name"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_msg_col_idx"
-            send_message(chat_id, render_body_text("8️⃣ <b>Message Column Serial</b>\n➡️ <i>Message Column এর Serial Number কত? (যেমন: 5, 7):</i>"), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("8️⃣ <b>Message Column Serial</b>\n➡️ <i>(যেমন: 5, 7):</i>"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_msg_col_idx" and text:
             if text.isdigit():
                 temp_data[chat_id]["p_data"]["msg_col_idx"] = int(text)
                 user_states[chat_id] = "wait_for_cpanel_service_col_name"
-                send_message(chat_id, render_body_text("9️⃣ <b>Service Column Name</b>\n➡️ <i>Service/App column এর নাম কী? (যেমন: service, app, type):</i>"), reply_markup=get_cancel_kb())
+                send_message(chat_id, render_body_text("9️⃣ <b>Service Column Name</b>\n➡️ <i>(যেমন: service, app, type):</i>"), reply_markup=get_cancel_kb())
             else:
                 send_message(chat_id, render_body_text("❌ <b>Please enter a valid number serial!</b>"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_service_col_name" and text:
             temp_data[chat_id]["p_data"]["service_col_name"] = text.strip()
             user_states[chat_id] = "wait_for_cpanel_service_col_idx"
-            send_message(chat_id, render_body_text("ℹ️🅾️ <b>Service Col Serial</b>\n➡️ <i>Service Column এর Serial Number কত? (যেমন: 4, 6):</i>"), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("ℹ️🅾️ <b>Service Col Serial</b>\n➡️ <i>(যেমন: 4, 6):</i>"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_cpanel_service_col_idx" and text:
             if text.isdigit():
@@ -2428,7 +2471,7 @@ def handle_message(msg):
                 bot_settings["panels"].append(temp_data[chat_id]["p_data"])
                 save_db()
                 send_message(chat_id, render_body_text(
-                    f"{PEM['ok']} <b>Auto Captcha Panel Added Successfully!</b>\n\n"
+                    f"{PEM['ok']} <b>Auto Captcha Panel Added!</b>\n\n"
                     f"📌 <b>Name:</b> <b>{temp_data[chat_id]['p_data'].get('name', 'Panel')}</b>\n"
                     f"🔐 <b>Status:</b> <b>Pending Auto-Login</b>"
                 ), reply_markup=main_menu(chat_id))
@@ -2439,6 +2482,7 @@ def handle_message(msg):
                 send_message(chat_id, render_body_text("❌ <b>Please enter a valid number serial!</b>"), reply_markup=get_cancel_kb())
             return
 
+        # ========== API PANEL FIELD EDIT ==========
         elif state == "wait_for_api_pf_value" and text:
             idx = temp_data[chat_id]["p_idx"]; field = temp_data[chat_id]["p_field"]
             new_value = text.strip()
@@ -2448,8 +2492,11 @@ def handle_message(msg):
                 send_message(chat_id, render_body_text(f"⚙️ <b>Configure</b> <b>{p['name']}</b>"), reply_markup=panel_config_keyboard(idx))
                 return
             if field in ["interval_sec", "records"]:
-                try: new_value = int(new_value)
-                except ValueError: send_message(chat_id, render_body_text("❌ <b>Please send a valid number.</b>")); return
+                try:
+                    new_value = int(new_value)
+                except ValueError:
+                    send_message(chat_id, render_body_text("❌ <b>Please send a valid number.</b>"))
+                    return
             bot_settings["panels"][idx][field] = new_value
             save_db()
             del user_states[chat_id]; del temp_data[chat_id]
@@ -2458,6 +2505,7 @@ def handle_message(msg):
             send_message(chat_id, render_body_text(f"⚙️ <b>Configure</b> <b>{p['name']}</b>"), reply_markup=panel_config_keyboard(idx))
             return
 
+        # ========== USER MANAGEMENT ==========
         elif state == "wait_for_um_bal_uid" and text:
             target_uid_str = text.strip()
             if not target_uid_str.isdigit():
@@ -2465,7 +2513,7 @@ def handle_message(msg):
             target_uid = int(target_uid_str)
             if db:
                 try:
-                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)   # ⭐
+                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)
                     if not doc.exists:
                         send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
                     current_bal = doc.to_dict().get('balance', 0.0)
@@ -2478,12 +2526,24 @@ def handle_message(msg):
                     ), reply_markup=get_cancel_kb())
                 except Exception as e:
                     send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {type(e).__name__}"), reply_markup=get_cancel_kb())
+            else:
+                if target_uid in user_cache:
+                    current_bal = user_cache[target_uid].get('balance', 0.0)
+                    temp_data[chat_id]["target_uid"] = target_uid
+                    user_states[chat_id] = "wait_for_um_bal_amt"
+                    send_message(chat_id, render_body_text(
+                        f"{PEM['ok']} <b>User found (local):</b>\n💰 <b>${current_bal}</b>\n\n📝 <b>Amount (with +/-):</b>"
+                    ), reply_markup=get_cancel_kb())
+                else:
+                    temp_data[chat_id]["target_uid"] = target_uid
+                    user_states[chat_id] = "wait_for_um_bal_amt"
+                    send_message(chat_id, render_body_text("📝 <b>User not in cache. Amount:</b>"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_um_bal_amt" and text:
             try:
                 amt = float(text.strip()); target_uid = temp_data[chat_id]["target_uid"]
                 update_balance(target_uid, amt)
-                send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Balance updated for</b> <b>{target_uid}!</b>"), reply_markup=main_menu(chat_id))
+                send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Balance updated for</b> <b>{target_uid}</b>!"), reply_markup=main_menu(chat_id))
                 send_message(target_uid, render_body_text(f"🔔 <b>Your balance adjusted by</b> <b>${amt}</b>"))
                 del user_states[chat_id]; del temp_data[chat_id]
             except ValueError:
@@ -2497,12 +2557,12 @@ def handle_message(msg):
             if db:
                 try:
                     doc_ref = db.collection('users').document(str(target_uid))
-                    doc = doc_ref.get(timeout=5.0)   # ⭐
+                    doc = doc_ref.get(timeout=5.0)
                     if not doc.exists:
                         send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
                     current_status = doc.to_dict().get("banned", False)
                     new_status = not current_status
-                    doc_ref.update({"banned": new_status}, timeout=5.0)   # ⭐
+                    doc_ref.update({"banned": new_status}, timeout=5.0)
                     user_banned_cache[target_uid] = {'banned': new_status, 'time': time.time()}
                     if target_uid in user_cache:
                         user_cache[target_uid]["banned"] = new_status
@@ -2511,19 +2571,34 @@ def handle_message(msg):
                     del user_states[chat_id]; del temp_data[chat_id]
                 except Exception as e:
                     send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {type(e).__name__}"), reply_markup=get_cancel_kb())
+            else:
+                if target_uid in user_cache:
+                    new_status = not user_cache[target_uid].get("banned", False)
+                    user_cache[target_uid]["banned"] = new_status
+                    user_banned_cache[target_uid] = {'banned': new_status, 'time': time.time()}
+                    status_str = "🚫 <b>BANNED</b>" if new_status else "✅ <b>UNBANNED</b>"
+                    send_message(chat_id, render_body_text(f"{PEM['ok']} <b>{target_uid}</b> → {status_str}"), reply_markup=main_menu(chat_id))
+                    del user_states[chat_id]; del temp_data[chat_id]
+                else:
+                    send_message(chat_id, render_body_text("❌ <b>User not in cache!</b>"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_um_prof_uid" and text:
             target_uid_str = text.strip()
             if not target_uid_str.isdigit():
                 send_message(chat_id, render_body_text("❌ <b>Invalid ID!</b>"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
+            data = None
             if db:
                 try:
-                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)   # ⭐
-                    if not doc.exists:
-                        send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
-                    data = doc.to_dict()
-                    prof_text = f"""➖➖➖➖➖➖➖➖
+                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)
+                    if doc.exists:
+                        data = doc.to_dict()
+                except: pass
+            if data is None and target_uid in user_cache:
+                data = user_cache[target_uid]
+            if not data:
+                send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
+            prof_text = f"""➖➖➖➖➖➖➖➖
 👤 <b>USER PROFILE</b>
 ➖➖➖➖➖➖➖➖
 🆔 <b>ID:</b> <code>{target_uid}</code>
@@ -2532,13 +2607,12 @@ def handle_message(msg):
 🔐 <b>OTPs:</b> <b>{data.get('total_otps', 0)}</b>
 🚫 <b>Banned:</b> <b>{data.get('banned', False)}</b>
 ➖➖➖➖➖➖➖➖"""
-                    kb = {"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "user_management", "style": "primary"}]]}
-                    send_message(chat_id, render_body_text(prof_text), reply_markup=kb)
-                    del user_states[chat_id]; del temp_data[chat_id]
-                except Exception as e:
-                    send_message(chat_id, render_body_text(f"❌ <b>DB error:</b> {type(e).__name__}"), reply_markup=get_cancel_kb())
+            kb = {"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "user_management", "style": "primary"}]]}
+            send_message(chat_id, render_body_text(prof_text), reply_markup=kb)
+            del user_states[chat_id]; del temp_data[chat_id]
             return
 
+        # ========== MENU DESIGN ==========
         elif state == "wait_for_menu_text" and text:
             try:
                 menu_key = temp_data[chat_id]["menu_key"]
@@ -2583,6 +2657,7 @@ def handle_message(msg):
                 if chat_id in temp_data: del temp_data[chat_id]
             return
 
+        # ========== TEST MESSAGE FLOW ==========
         elif state == "wait_for_test_service" and text:
             temp_data[chat_id]["service"] = text.strip()
             user_states[chat_id] = "wait_for_test_number"
@@ -2596,7 +2671,7 @@ def handle_message(msg):
         elif state == "wait_for_test_otp" and text:
             temp_data[chat_id]["otp"] = text.strip()
             user_states[chat_id] = "wait_for_test_lang"
-            send_message(chat_id, render_body_text("📝 <b>Send the Language (EN, AR):</b>"), reply_markup=get_cancel_kb())
+            send_message(chat_id, render_body_text("📝 <b>Send Language (EN, AR):</b>"), reply_markup=get_cancel_kb())
             return
         elif state == "wait_for_test_lang" and text:
             lang = text.strip().upper()
@@ -2611,6 +2686,7 @@ def handle_message(msg):
             del user_states[chat_id]; del temp_data[chat_id]
             return
 
+        # ========== BROADCAST ==========
         elif state == "wait_for_broadcast":
             msg_id = msg["message_id"]
             send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Broadcast started...</b>"))
@@ -2618,6 +2694,7 @@ def handle_message(msg):
             del user_states[chat_id]
             return
 
+        # ========== UPLOAD NUMBER FILE ==========
         elif state == "wait_for_txt" and "document" in msg:
             doc = msg["document"]
             if not doc["file_name"].endswith(".txt"):
@@ -2741,7 +2818,8 @@ def handle_message(msg):
             try:
                 payout_val = float(text.strip())
                 if payout_val < 0: raise ValueError()
-                if payout_val > 1000: send_message(chat_id, render_body_text("❌ <b>Max $1000.</b>")); return
+                if payout_val > 1000:
+                    send_message(chat_id, render_body_text("❌ <b>Max $1000.</b>")); return
             except:
                 send_message(chat_id, render_body_text("❌ <b>Invalid amount.</b>")); return
             country_name = temp_data[chat_id]["country_name"]
@@ -2815,6 +2893,7 @@ def handle_message(msg):
             del user_states[chat_id]; del temp_data[chat_id]
             return
 
+        # ========== STEX/VOLTX KEY ADD ==========
         elif state == "wait_for_add_stex_key" and text:
             bot_settings["stex_keys"].append(text.strip()); save_db()
             delete_message(chat_id, msg["message_id"])
@@ -2825,6 +2904,8 @@ def handle_message(msg):
             delete_message(chat_id, msg["message_id"])
             edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text(f"{PEM['ok']} <b>Voltx Key Added! Total:</b> <b>{len(bot_settings.get('voltx_keys', []))}</b>"), reply_markup=voltx_control_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
+
+        # ========== SEARCH COUNTRY / SERVICE / ADDRESS ==========
         elif state == "wait_for_add_sc" and text:
             code = text.strip().replace("+", "")
             if "search_countries" not in bot_settings: bot_settings["search_countries"] = []
@@ -2888,6 +2969,7 @@ def handle_message(msg):
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": temp_data[chat_id]["msg_id"]}, "data": f"vx_cnt_{srv}_{cnt}", "id": "internal"})
             del user_states[chat_id]; return
 
+        # ========== WITHDRAWAL METHOD ==========
         elif state == "wait_for_add_wm" and text:
             raw = text.strip()
             if "|" in raw:
@@ -2903,17 +2985,23 @@ def handle_message(msg):
             delete_message(chat_id, msg["message_id"])
             edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("💳 <b>WITHDRAWAL METHODS</b>"), reply_markup=w_methods_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
+
+        # ========== FORCE JOIN ==========
         elif state == "wait_for_add_fj" and text:
             bot_settings["fj_channels"].append(parse_chat_id(text)); save_db()
             delete_message(chat_id, msg["message_id"])
             edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🔗 <b>FORCE JOIN SYSTEM</b>"), reply_markup=fj_settings_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
+
+        # ========== ADMIN MANAGEMENT ==========
         elif state == "wait_for_add_adm" and text:
             if text.isdigit():
                 bot_settings["admins"].append(int(text)); save_db()
             delete_message(chat_id, msg["message_id"])
             edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("👥 <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
+
+        # ========== FORWARD GROUP ==========
         elif state == "wait_for_add_fw_id" and text:
             bot_settings["fw_groups"].append({"chat_id": text.strip(), "buttons": []}); save_db()
             delete_message(chat_id, msg["message_id"])
@@ -2952,6 +3040,7 @@ def handle_message(msg):
             edit_message(chat_id, temp_data[chat_id]["msg_id"], render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
+        # ========== PANEL NAME ==========
         elif state == "wait_for_panel_name" and text:
             p_name = text.strip()
             t_key = temp_data[chat_id].get("add_type", "api")
@@ -2963,9 +3052,7 @@ def handle_message(msg):
                     "name": p_name, "type": "Auto Captcha Panel", "status": "ON", "records": 0,
                     "login_status": "Pending First Login"
                 }}
-                edit_message(chat_id, msg_id, render_body_text(
-                    "1️⃣ <b>Login URL</b>\n➡️ <i>Panel এর Login Link দিন:</i>"
-                ), reply_markup=get_cancel_kb())
+                edit_message(chat_id, msg_id, render_body_text("1️⃣ <b>Login URL</b>\n➡️ <i>Panel এর Login Link দিন:</i>"), reply_markup=get_cancel_kb())
                 return
             else:
                 bot_settings["panels"].append({
@@ -2982,6 +3069,7 @@ def handle_message(msg):
                 if chat_id in temp_data: del temp_data[chat_id]
                 return
 
+        # ========== DXA CONTROL ==========
         elif state == "set_dxa":
             msg_id = temp_data[chat_id]["msg_id"]; key = temp_data[chat_id]["key"]
             try:
@@ -2996,6 +3084,7 @@ def handle_message(msg):
                 edit_message(chat_id, msg_id, render_body_text("🕹 <b>STORM</b>\n\n❌ <b>Invalid!</b>"), reply_markup=storm_control_keyboard())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
+        # ========== PAYOUT VALUE ==========
         elif state == "set_payout_value" and text:
             msg_id = temp_data[chat_id]["msg_id"]
             service = temp_data[chat_id]["service"]
@@ -3020,6 +3109,7 @@ def handle_message(msg):
                 send_message(chat_id, render_body_text("❌ <b>Invalid value!</b> Please send a number."), reply_markup=get_cancel_kb())
             del user_states[chat_id]; del temp_data[chat_id]; return
 
+        # ========== DATA ZIP RESTORE ==========
         elif state == "wait_for_data_zip" and "document" in msg:
             doc = msg["document"]
             if doc["file_name"] != "STR_BOT_DATA.zip":
@@ -3039,6 +3129,7 @@ def handle_message(msg):
             if chat_id in user_states: del user_states[chat_id]
             return
 
+        # ========== SEARCH NUMBER ==========
         elif state == "wait_for_search" and text:
             query = text.strip().replace("+", "")
             if not query.isdigit() or len(query) < 3 or len(query) > 9:
@@ -3144,12 +3235,14 @@ def handle_message(msg):
                     else: hdr_country = query
                 except: hdr_country = query
             else: hdr_country = query
+            # ⭐ FIXED header
             text_numbers = build_numbers_header(hdr_country)
             if wait_msg_id:
                 edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
                 user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
             return
 
+        # ========== WITHDRAW AMOUNT ==========
         elif state == "wait_for_withdraw_amount" and text:
             msg_id_to_edit = temp_data[chat_id].get("msg_id")
             try:
@@ -3168,6 +3261,8 @@ def handle_message(msg):
             except ValueError:
                 if msg_id_to_edit: edit_message(chat_id, msg_id_to_edit, render_body_text("❌ <b>Invalid amount!</b>"), reply_markup=get_cancel_kb())
             return
+
+        # ========== 2FA ==========
         elif state == "wait_for_2fa_key" and text:
             msg_id_to_edit = temp_data.get(chat_id, {}).get("msg_id")
             delete_message(chat_id, msg.get("message_id"))
@@ -3192,6 +3287,8 @@ def handle_message(msg):
                 cancel_kb = {"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_2fa", "style": "danger"}]]}
                 edit_message(chat_id, msg_id_to_edit, render_body_text(error_txt), reply_markup=cancel_kb)
             return
+
+        # ========== WITHDRAW NUMBER ==========
         elif state == "wait_for_withdraw_number":
             msg_id_to_edit = temp_data[chat_id].get("msg_id")
             method = temp_data[chat_id]["method"]; amount = temp_data[chat_id]["amount"]
@@ -3205,7 +3302,7 @@ def handle_message(msg):
                     db.collection('withdrawals').document(req_id).set({
                         "user_id": str(chat_id), "amount": amount, "method": method,
                         "status": "pending", "timestamp": firestore.SERVER_TIMESTAMP
-                    }, timeout=5.0)   # ⭐
+                    }, timeout=5.0)
                 except: pass
             if bot_settings["w_group"]:
                 admin_msg = build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id)
@@ -3217,20 +3314,18 @@ def handle_message(msg):
             else: send_message(chat_id, render_body_text(success_text), reply_markup=kb)
             del user_states[chat_id]; del temp_data[chat_id]; return
 
+    # ========== MAIN MENU COMMANDS ==========
     if text.startswith("/start"):
         get_user(chat_id)
         if db:
             try:
-                doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)   # ⭐
+                doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
                 if doc.exists:
                     u_data = doc.to_dict()
                     if u_data.get("referred_by") and not u_data.get("ref_paid"):
                         inviter = u_data["referred_by"]
-                        db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)   # ⭐
-                        reward = bot_settings.get("refer_reward", 0.2)
-                        update_balance(inviter, reward)
-                        db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)   # ⭐
-                        send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+${reward}</b>\n👤 <code>{chat_id}</code>"))
+                        db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)
+                        add_referral(inviter, chat_id)
             except: pass
         c_msg = bot_settings["custom_messages"].get("start", {})
         start_text = c_msg.get("text", "").strip()
@@ -3279,8 +3374,7 @@ def handle_message(msg):
         txt = render_body_text(raw_txt)
         kb = []
         for m_name, m_emoji_html, m_icon_id in get_wmethod_display_list():
-            kb.append([{"text": m_name.strip(), "icon_custom_emoji_id": m_icon_id,
-                        "callback_data": f"sel_wm_{m_name.strip()}", "style": "primary"}])
+            kb.append([{"text": m_name.strip(), "icon_custom_emoji_id": m_icon_id, "callback_data": f"sel_wm_{m_name.strip()}", "style": "primary"}])
         kb.append([{"text": "Cancel", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
     elif text == "Admin Panel" and is_admin(chat_id):
@@ -3327,34 +3421,111 @@ def handle_message(msg):
 
 
 # ==========================================
-# Database Helpers
+# 📦 Database ZIP — Each Section in SEPARATE Blocks
+# 12 separate files inside ZIP — one per data type
 # ==========================================
 def build_data_zip():
     mem = io.BytesIO()
     try:
         with zipfile.ZipFile(mem, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # ─── Block 1: Settings (all bot config) ───
+            settings_block = {
+                "bot_settings_non_fs": {k: v for k, v in bot_settings.items() if k not in FS_KEYS},
+                "custom_messages": bot_settings.get("custom_messages", {}),
+                "premium_flags": bot_settings.get("premium_flags", {}),
+                "premium_apps": bot_settings.get("premium_apps", {}),
+                "otp_link": bot_settings.get("otp_link", ""),
+                "main_channel_link": bot_settings.get("main_channel_link", ""),
+                "support_link": bot_settings.get("support_link", ""),
+                "w_methods": bot_settings.get("w_methods", []),
+                "w_group": bot_settings.get("w_group", "")
+            }
+            zf.writestr("01_SETTINGS.json", json.dumps(settings_block, default=str, indent=4))
+
+            # ─── Block 2: Stock batches ───
+            stock_block = {
+                "number_batches": number_batches,
+                "used_numbers_list": used_numbers_list,
+                "total_uploaded_stats": total_uploaded_stats,
+                "total_assigned_stats": total_assigned_stats
+            }
+            zf.writestr("02_STOCK.json", json.dumps(stock_block, default=str, indent=4))
+
+            # ─── Block 3: Assigned numbers (Stex/Voltx) ───
+            assigned_block = {
+                "stex_assigned_numbers": stex_assigned_numbers,
+                "voltx_assigned_numbers": voltx_assigned_numbers,
+                "assigned_number_meta": assigned_number_meta
+            }
+            zf.writestr("03_ASSIGNED_NUMBERS.json", json.dumps(assigned_block, default=str, indent=4))
+
+            # ─── Block 4: Traffic stats ───
+            traffic_block = {"recent_traffic": recent_traffic}
+            zf.writestr("04_TRAFFIC.json", json.dumps(traffic_block, default=str, indent=4))
+
+            # ─── Block 5: User list ───
+            users_block = {"all_known_users": list(all_known_users)}
+            zf.writestr("05_USERS_LIST.json", json.dumps(users_block, default=str, indent=4))
+
+            # ─── Block 6: User cache (runtime balance data) ───
+            user_cache_block = {}
+            for uid, udata in user_cache.items():
+                user_cache_block[str(uid)] = udata
+            zf.writestr("06_USER_CACHE.json", json.dumps(user_cache_block, default=str, indent=4))
+
+            # ─── Block 7: Local DB file raw ───
             if os.path.exists(DB_FILE):
-                zf.write(DB_FILE, DB_FILE)
+                try:
+                    with open(DB_FILE, "r", encoding='utf-8') as f:
+                        db_content = f.read()
+                    zf.writestr("07_LOCAL_DB_RAW.json", db_content)
+                except: pass
+
+            # ─── Block 8: users_list.json raw ───
             if os.path.exists("users_list.json"):
-                zf.write("users_list.json", "users_list.json")
+                try:
+                    with open("users_list.json", "r") as f:
+                        ul_content = f.read()
+                    zf.writestr("08_USERS_LIST_RAW.json", ul_content)
+                except: pass
+
+            # ─── Block 9: Firestore Users (if Firebase) ───
             if db:
                 try:
-                    all_users_data = {}
+                    fs_users = {}
                     for doc in db.collection('users').stream():
-                        all_users_data[doc.id] = doc.to_dict()
-                    zf.writestr("firestore_users.json", json.dumps(all_users_data, default=str, indent=2))
+                        fs_users[doc.id] = doc.to_dict()
+                    zf.writestr("09_FIRESTORE_USERS.json", json.dumps(fs_users, default=str, indent=4))
                 except: pass
+
+                # ─── Block 10: Firestore Withdrawals ───
                 try:
-                    all_wd = {}
+                    fs_wd = {}
                     for doc in db.collection('withdrawals').stream():
-                        all_wd[doc.id] = doc.to_dict()
-                    zf.writestr("firestore_withdrawals.json", json.dumps(all_wd, default=str, indent=2))
+                        fs_wd[doc.id] = doc.to_dict()
+                    zf.writestr("10_FIRESTORE_WITHDRAWALS.json", json.dumps(fs_wd, default=str, indent=4))
                 except: pass
+
+                # ─── Block 11: Firestore Settings ───
                 try:
-                    stg = db.collection('settings').document('bot_config').get(timeout=8.0)   # ⭐
+                    stg = db.collection('settings').document('bot_config').get(timeout=8.0)
                     if stg.exists:
-                        zf.writestr("firestore_settings.json", json.dumps(stg.to_dict(), default=str, indent=2))
+                        zf.writestr("11_FIRESTORE_SETTINGS.json", json.dumps(stg.to_dict(), default=str, indent=4))
                 except: pass
+
+            # ─── Block 12: Firebase Status Info ───
+            fb_info = {
+                "firebase_connected": db is not None,
+                "firebase_status": "CLOUD_SYNC" if db else "LOCAL_ONLY",
+                "exported_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "bot_username": BOT_USERNAME,
+                "owner_id": OWNER_ID,
+                "total_users_known": len(all_known_users),
+                "total_batches": len(number_batches),
+                "total_available_numbers": sum(len(b["numbers"]) for b in number_batches.values())
+            }
+            zf.writestr("12_FIREBASE_STATUS.json", json.dumps(fb_info, default=str, indent=4))
+
         mem.seek(0)
         return mem.getvalue()
     except Exception as e:
@@ -3436,16 +3607,13 @@ def handle_callback(call):
             send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Thanks for joining!</b>"), reply_markup=main_menu(chat_id))
             if db:
                 try:
-                    doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)   # ⭐
+                    doc = db.collection('users').document(str(chat_id)).get(timeout=5.0)
                     if doc.exists:
                         u_data = doc.to_dict()
                         if u_data.get("referred_by") and not u_data.get("ref_paid"):
                             inviter = u_data["referred_by"]
-                            db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)   # ⭐
-                            reward = bot_settings.get("refer_reward", 0.2)
-                            update_balance(inviter, reward)
-                            db.collection('users').document(str(inviter)).update({"total_refers": firestore.Increment(1)}, timeout=5.0)   # ⭐
-                            send_message(inviter, render_body_text(f"{PEM['gift']} <b>New Referral!</b>\n🔥 <b>+${reward}</b>\n👤 <code>{chat_id}</code>"))
+                            db.collection('users').document(str(chat_id)).update({"ref_paid": True}, timeout=5.0)
+                            add_referral(inviter, chat_id)
                 except: pass
         else:
             answer_callback(call["id"], "❌ Join all channels first!", show_alert=True)
@@ -3498,6 +3666,7 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, txt, reply_markup=markup)
         answer_callback(call["id"], "✅ Refreshed!", show_alert=False)
 
+    # ---------- Broadcast stock "Get Numbers" button ----------
     elif data.startswith("g_bs|"):
         user_states.pop(chat_id, None)
         temp_data.pop(chat_id, None)
@@ -3597,6 +3766,7 @@ def handle_callback(call):
         new_call["_edit_in_place"] = msg_id
         handle_callback(new_call); return
 
+    # ---------- Traffic Explore ----------
     elif data.startswith("exp_rng_"):
         srv_query = data.replace("exp_rng_", "")
         country_stats = {}
@@ -3658,6 +3828,7 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(f"📊 <b>Ranges:</b> {prem_app_html} <b>{app_full_name}</b> - {prem_flag_html} <b>{iso_query}</b>"), reply_markup={"inline_keyboard": kb})
         answer_callback(call["id"])
 
+    # ---------- User Management ----------
     elif data == "user_management":
         edit_message(chat_id, msg_id, get_user_management_text(), reply_markup=user_management_keyboard())
     elif data == "um_manage_balance":
@@ -3673,6 +3844,7 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>Send User ID:</b>"), reply_markup=get_cancel_kb())
 
+    # ---------- Menu Design ----------
     elif data == "menu_design_list":
         edit_message(chat_id, msg_id, render_body_text("🎨 <b>Menu Design Editor</b>"), reply_markup=menu_design_list_keyboard())
     elif data == "md_reset_defaults":
@@ -3713,6 +3885,7 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"⚙️ <b>Buttons:</b> <b>{key.upper()}</b>"), reply_markup=menu_buttons_list_keyboard(key))
 
+    # ---------- Withdrawal Method Select ----------
     elif data.startswith("sel_wm_"):
         method = data.replace("sel_wm_", "")
         bal = get_user(chat_id).get('balance', 0.0)
@@ -3724,17 +3897,23 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['ok']} <b>{method}</b>\n💰 <b>${bal}</b>\n\n<b>Enter amount:</b>"), reply_markup=get_cancel_kb())
         answer_callback(call["id"])
 
+    # ---------- Test Message Flow ----------
     elif data == "test_message_flow":
         user_states[chat_id] = "wait_for_test_service"
         temp_data[chat_id] = {}
         edit_message(chat_id, msg_id, render_body_text("🧪 <b>Send Service:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "danger"}]]})
 
+    # ---------- Broadcast ----------
     elif data == "broadcast_msg":
         user_states[chat_id] = "wait_for_broadcast"
         edit_message(chat_id, msg_id, render_body_text("📢 <b>Send message to broadcast:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
+
+    # ---------- Upload Number File ----------
     elif data == "upload_num":
         user_states[chat_id] = "wait_for_txt"
         edit_message(chat_id, msg_id, render_body_text("📂 <b>Upload a</b> <b>.txt</b> <b>file:</b>"), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
+
+    # ---------- Delete Files ----------
     elif data == "delete_files":
         kb = []
         for b_id, b_data in number_batches.items():
@@ -3748,6 +3927,7 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": "delete_files", "id": call["id"]})
 
+    # ---------- Show Used/Unused ----------
     elif data == "show_used":
         kb = {"inline_keyboard": [[{"text": "Download TXT", "icon_custom_emoji_id": "5257969839313526622", "callback_data": "dl_used", "style": "primary"}], [{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]}
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['ok']} <b>Used:</b> <b>{len(used_numbers_list)}</b>"), reply_markup=kb)
@@ -3767,6 +3947,7 @@ def handle_callback(call):
         send_document(chat_id, "unused_numbers.txt", "\n".join(unused_list).encode('utf-8'))
         answer_callback(call["id"])
 
+    # ---------- Leaderboard ----------
     elif data == "lb_main":
         txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
@@ -3821,12 +4002,14 @@ def handle_callback(call):
         except Exception as e:
             edit_message(chat_id, msg_id, render_body_text(f"❌ {type(e).__name__}"), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]})
 
+    # ---------- Back to Admin ----------
     elif data == "back_to_admin":
         if chat_id in user_states: del user_states[chat_id]
         edit_message(chat_id, msg_id, get_admin_text(), reply_markup=admin_panel_keyboard())
     elif data == "system_settings":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['gear']} <b>System Settings</b>"), reply_markup=system_settings_keyboard())
 
+    # ---------- Maintenance Toggle ----------
     elif data == "toggle_maintenance":
         current = bot_settings.get("maintenance", False)
         bot_settings["maintenance"] = not current
@@ -3850,6 +4033,7 @@ def handle_callback(call):
             )
             threading.Thread(target=broadcast_text_all, args=(render_body_text(thanks_msg),), daemon=True).start()
 
+    # ---------- Database Menu ----------
     elif data == "database_menu":
         txt = (
             f'{PEM["file"]} <b>DATABASE MANAGEMENT</b>\n'
@@ -3895,6 +4079,7 @@ def handle_callback(call):
     elif data == "db_delete_no":
         edit_message(chat_id, msg_id, render_body_text(f'{PEM["ok"]} <b>Cancelled.</b>'), reply_markup=database_menu_keyboard())
 
+    # ---------- Change Payout ----------
     elif data == "change_payout_menu":
         local_srvs = set([b["service"] for b in number_batches.values() if b["numbers"]])
         stex_srvs = set(bot_settings.get("stex_services", {}).keys())
@@ -3968,12 +4153,9 @@ def handle_callback(call):
                 except: pass
             if current_payout is None:
                 current_payout = float(bot_settings.get("otp_reward", 0.0))
-
         country_flag = get_flag_info_html(country)
-
         user_states[chat_id] = "set_payout_value"
         temp_data[chat_id] = {"msg_id": msg_id, "service": srv, "country": country}
-
         txt = (
             f'<b>{country}</b>{country_flag} <b>Payout :</b> <code>${current_payout}</code>\n\n'
             f'<b>Send The New Value</b> <code>country_payout</code> :'
@@ -3981,6 +4163,7 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=get_cancel_kb())
         answer_callback(call["id"])
 
+    # ---------- StexSMS Control ----------
     elif data == "stex_control":
         edit_message(chat_id, msg_id, render_body_text(f"🌐 <b>StexSMS Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('stex_keys', []))}</b>"), reply_markup=stex_control_keyboard())
     elif data == "add_stex_key":
@@ -4089,6 +4272,7 @@ def handle_callback(call):
         save_db()
         handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": f"nx_srv_{srv}", "id": call["id"]})
 
+    # ---------- Voltx Control ----------
     elif data == "voltx_control":
         edit_message(chat_id, msg_id, render_body_text(f"⚡ <b>Voltx Control</b>\n\n<b>Keys:</b> <b>{len(bot_settings.get('voltx_keys', []))}</b>"), reply_markup=voltx_control_keyboard())
     elif data == "add_voltx_key":
@@ -4197,6 +4381,7 @@ def handle_callback(call):
         save_db()
         handle_callback({"message": {"chat": {"id": chat_id}, "message_id": msg_id}, "data": f"vx_srv_{srv}", "id": call["id"]})
 
+    # ---------- Force Join ----------
     elif data == "manage_fj":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
     elif data == "toggle_fj":
@@ -4213,6 +4398,7 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
 
+    # ---------- Admin Management ----------
     elif data == "manage_admins":
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['user']} <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
     elif data == "add_adm":
@@ -4226,6 +4412,7 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['user']} <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
 
+    # ---------- OTP Groups ----------
     elif data == "manage_otp_groups":
         edit_message(chat_id, msg_id, render_body_text("🛡 <b>OTP GROUP MANAGEMENT</b>"), reply_markup=otp_groups_list_keyboard())
     elif data == "edit_main_channel_link":
@@ -4265,6 +4452,7 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>OTP Group Link:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_otp_groups", "style": "danger"}]]})
 
+    # ---------- Panel Management ----------
     elif data == "manage_panels":
         api_count = len([p for p in bot_settings["panels"] if p.get("type") == "API Panel"])
         cpt_count = len([p for p in bot_settings["panels"] if p.get("type", "API Panel") == "Auto Captcha Panel"])
@@ -4382,6 +4570,7 @@ def handle_callback(call):
         temp_data[chat_id] = {"msg_id": msg_id, "p_idx": idx}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>Records count (0=Unlimited):</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"conf_pnl_{idx}", "style": "danger"}]]})
 
+    # ---------- Test Panel Connection ----------
     elif data.startswith("test_p_conn_"):
         idx = int(data.split("_")[3])
         p = bot_settings["panels"][idx]
@@ -4389,8 +4578,7 @@ def handle_callback(call):
         wait_msg_id = wait_msg.get("result", {}).get("message_id") if wait_msg else None
         answer_callback(call["id"])
         try:
-            parsed = []
-            raw_text = ""
+            parsed = []; raw_text = ""
             if p["type"] == "Auto Captcha Panel":
                 sess = panel_sessions.get(idx)
                 if not sess:
@@ -4493,6 +4681,7 @@ def handle_callback(call):
             if wait_msg_id: delete_message(chat_id, wait_msg_id)
             send_message(chat_id, render_body_text(f"❌ <b>Failed!</b>\n{html.escape(str(e))}"))
 
+    # ---------- DXA Control ----------
     elif data == "dxa_control":
         if chat_id in user_states: del user_states[chat_id]
         edit_message(chat_id, msg_id, render_body_text("🕹 <b>STORM CONTROL PANEL</b>"), reply_markup=storm_control_keyboard())
@@ -4520,6 +4709,7 @@ def handle_callback(call):
             edit_message(chat_id, msg_id, render_body_text(f"📝 <b>New value for</b> <code>{key_map[key]}</code><b>:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_dxa_edit", "style": "danger"}]]})
             answer_callback(call["id"])
 
+    # ---------- Service → Country Select ----------
     elif data.startswith("g_s|"):
         user_states.pop(chat_id, None); temp_data.pop(chat_id, None)
         service = data.split("g_s|", 1)[1]
@@ -4577,6 +4767,7 @@ def handle_callback(call):
         kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "close_msg", "style": "danger"}])
         edit_message(chat_id, msg_id, txt, reply_markup={"inline_keyboard": kb})
 
+    # ---------- Get Number / Change Number ----------
     elif data.startswith("g_c|") or data.startswith("c_n"):
         now = time.time()
         if now - user_cooldowns.get(chat_id, 0) < bot_settings["cooldown"]:
@@ -4686,6 +4877,7 @@ def handle_callback(call):
                     else: hdr_country = query
                 except: hdr_country = query
             else: hdr_country = query
+            # ⭐ FIXED header
             text_numbers = build_numbers_header(hdr_country, service_from_cb)
             edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
             user_active_sessions[chat_id] = {"msg_id": wait_msg_id, "nums": fetched_nums}
@@ -4757,6 +4949,7 @@ def handle_callback(call):
         kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"c_n|{service}|{country}", "style": "danger"},
                    {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
+        # ⭐ FIXED header
         text_numbers = build_numbers_header(country, service)
         try:
             edit_message(chat_id, msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
@@ -4765,6 +4958,7 @@ def handle_callback(call):
             msg_res = send_message(chat_id, text_numbers, reply_markup={"inline_keyboard": kb})
             if msg_res and "result" in msg_res: user_active_sessions[chat_id] = {"msg_id": msg_res["result"]["message_id"], "nums": fetched_nums}
 
+    # ---------- Withdrawal Approve/Reject ----------
     elif data.startswith("wapp_") or data.startswith("wrej_"):
         user_id_clicked = call["from"]["id"]
         if not is_admin(user_id_clicked):
@@ -4799,7 +4993,7 @@ def handle_callback(call):
             else:
                 send_message(u_id, render_body_text(f"❌ Your ${amt} withdrawal request was rejected."))
             if db:
-                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"}, timeout=5.0)   # ⭐
+                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"}, timeout=5.0)
                 except: pass
             del pending_withdrawals[req_id]
         else:
@@ -4807,7 +5001,7 @@ def handle_callback(call):
 
 
 # ==========================================
-# Voltx SMS Listener — uses credit_otp_to_user
+# Voltx SMS Listener (with credit_otp_to_user)
 # ==========================================
 def voltx_sms_listener():
     global processed_otps, recent_traffic, voltx_assigned_numbers
@@ -4822,8 +5016,7 @@ def voltx_sms_listener():
                             num = str(item.get("number", "")).replace("+", "")
                             msg_text = str(item.get("message", ""))
                             otp = extract_otp_code(msg_text)
-                            if not otp:
-                                otp = "N/A"
+                            if not otp: otp = "N/A"
                             otp_id = str(item.get("otp_id", otp))
                             app_name = "Voltx Service"
                             detected_app = detect_service(msg_text)
@@ -4870,7 +5063,7 @@ def voltx_sms_listener():
 
 
 # ==========================================
-# StexSMS SMS Listener — uses credit_otp_to_user
+# Global (StexSMS) SMS Listener (with credit_otp_to_user)
 # ==========================================
 def global_sms_listener():
     global processed_otps, recent_traffic, stex_assigned_numbers
@@ -4885,8 +5078,7 @@ def global_sms_listener():
                             num = str(item.get("number", "")).replace("+", "")
                             msg_text = str(item.get("message", ""))
                             otp = extract_otp_code(msg_text)
-                            if not otp:
-                                otp = "N/A"
+                            if not otp: otp = "N/A"
                             otp_id = str(item.get("otp_id", otp))
                             app_name = "Stex Service"
                             detected_app = detect_service(msg_text)
