@@ -1,3 +1,6 @@
+import os
+os.environ["GRPC_DNS_RESOLVER"] = "native"
+
 import requests
 import time
 import json
