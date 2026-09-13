@@ -124,7 +124,6 @@ GLOBAL_BODY_EMOJIS = {
     "🪙": "5348469219761626211",
     "📞": "5337132498965010628",
     "🟡": "5339082633160703625",
-    # ---- NEW additions ----
     "🔘": "6217469007868465305",
     "🥂": "6266794310671275367",
     "🎯": "6267186570034419608",
@@ -147,13 +146,28 @@ MESSAGE_EMOJI = "6235307467337635626"
 CHANNEL_EMOJI = "6204010762206189094"
 NUMBER_BTN_EMOJI = "5339267587337370029"
 
-WITHDRAW_SELECT_EMOJI = "6217469007868465305"   # 🔘
-WITHDRAW_BALANCE_EMOJI = "6217469007868465305"   # 🔘
-WITHDRAW_METHOD_ICON = "6266794310671275367"     # 🥂
-SEARCH_TARGET_EMOJI = "6267186570034419608"      # 🎯
-SEARCH_TIGER_EMOJI = "6267008582294705964"       # 🐯
-SEARCH_WORLD_EMOJI = "5780471598922337683"       # 🌍
+WITHDRAW_SELECT_EMOJI = "6217469007868465305"
+WITHDRAW_BALANCE_EMOJI = "6217469007868465305"
+WITHDRAW_METHOD_ICON = "6266794310671275367"
+SEARCH_TARGET_EMOJI = "6267186570034419608"
+SEARCH_TIGER_EMOJI = "6267008582294705964"
+SEARCH_WORLD_EMOJI = "5780471598922337683"
 ROCK_EMOJI = "6267152480878990865"
+
+# Leaderboard position emojis (1-9 + 10)
+LEADERBOARD_NUM_EMOJI = {
+    1:  "5352651766288652742",   # 1️⃣
+    2:  "5355186458418257716",   # 2️⃣
+    3:  "5352867219028091093",   # 3️⃣
+    4:  "5352566657216714037",   # 4️⃣
+    5:  "5353086880835474989",   # 5️⃣
+    6:  "5354859211975071385",   # 6️⃣
+    7:  "5352859127309707652",   # 7️⃣
+    8:  "5352957533600389988",   # 8️⃣
+    9:  "5353060913463204207",   # 9️⃣
+    10: "6309655288261644098",   # ℹ️  (part of ℹ️🅾️ for 10)
+}
+LEADERBOARD_10_SECOND_EMOJI = "6307374961275180239"   # 🅾️ (for #10)
 
 LANG_FULL_NAMES = {
     "EN":"English","AR":"Arabic","BN":"Bangla","HI":"Hindi","PA":"Punjabi",
@@ -547,7 +561,7 @@ def sqlite_kv_set(key, value):
 
 
 # ==========================================
-# 🔥 Firebase Setup — OPTIONAL, 15s Timeout, NON-DESTRUCTIVE
+# 🔥 Firebase Setup — OPTIONAL, NON-DESTRUCTIVE
 # ==========================================
 db = None
 _fb_result = {"db": None, "done": False}
@@ -1022,9 +1036,7 @@ user_states = {}
 temp_data = {}
 user_cooldowns = {}
 pending_withdrawals = {}
-
-# Track message IDs to auto-delete search prompt + prefix after numbers are issued
-pending_search_prompts = {}   # {chat_id: [msg_id_1, msg_id_2, ...]}
+pending_search_prompts = {}
 
 tg_session = requests.Session()
 
@@ -1672,6 +1684,8 @@ def get_user(user_id):
 
 
 def update_balance(user_id, amount):
+    """Atomic balance update. amount can be positive or negative.
+    Never allows negative balance below 0 due to race — SQLite atomic UPDATE."""
     uid = int(user_id)
     amt = float(amount)
 
@@ -1702,8 +1716,6 @@ def update_balance(user_id, amount):
 
 
 def credit_otp_to_user(owner_id, reward, app_full_name=""):
-    """Atomic OTP credit: increments balance by the SERVICE-SPECIFIC reward
-    and increments total_otps by exactly 1. Falls back to SQLite if Firebase down."""
     try:
         reward = float(reward)
     except Exception:
@@ -1864,13 +1876,12 @@ def add_referral(inviter_id, new_user_id):
 
 
 # ==========================================
-# 💰 Payout Lookup — 9 Layer Fallback (uses SERVICE-SPECIFIC payout first)
+# Payout Lookup — 9 Layer Fallback
 # ==========================================
 def get_payout_for_number(clean_api_num, service_hint=""):
     reward = float(bot_settings.get("otp_reward", 0.0))
     meta = assigned_number_meta.get(clean_api_num, {})
 
-    # Layer 1: per-number pinned payout (assigned at stock-issue time)
     if "payout" in meta:
         try:
             return float(meta["payout"])
@@ -1881,14 +1892,12 @@ def get_payout_for_number(clean_api_num, service_hint=""):
     meta_iso = str(meta.get("iso", "") or "").strip().upper()
     pr = bot_settings.get("otp_pair_rates", {})
 
-    # Layer 2: exact country+service pair
     if oc and osvc:
         key = f"{oc.upper()}|{osvc.upper()}"
         if key in pr:
             try: return float(pr[key])
             except: pass
 
-    # Layer 3: ISO + service
     if meta_iso:
         for k, v in pr.items():
             try:
@@ -1898,7 +1907,6 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                     return float(v)
             except: continue
 
-    # Layer 4: ISO only
     if meta_iso:
         for k, v in pr.items():
             try:
@@ -1906,7 +1914,6 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                 if kc.upper() == meta_iso: return float(v)
             except: continue
 
-    # Layer 5: country name + service
     if oc:
         for k, v in pr.items():
             try:
@@ -1916,14 +1923,12 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                     return float(v)
             except: continue
 
-    # Layer 6: country name only
     if oc:
         for k, v in pr.items():
             try:
                 if k.split("|")[0].upper() == oc.upper(): return float(v)
             except: continue
 
-    # Layer 7-8: auto-detected ISO / country name
     try:
         _, iso_det, _ = get_country_from_num(clean_api_num)
         if iso_det and iso_det != "XX":
@@ -1959,7 +1964,6 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                     except: continue
     except: pass
 
-    # Layer 9: default
     return reward
 
 
@@ -1971,7 +1975,7 @@ def get_wmethod_emoji_html(method_name):
         if isinstance(m, dict):
             if m.get("name", "").lower() == method_name.lower():
                 eid = m.get("emoji_id", "")
-                char = m.get("char", "🛅")
+                char = m.get("char", "🔘")
                 if eid and str(eid).isdigit() and len(str(eid)) >= 10:
                     return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
     return f'<tg-emoji emoji-id="{WITHDRAW_SELECT_EMOJI}">🔘</tg-emoji>'
@@ -1983,7 +1987,7 @@ def get_wmethod_display_list():
         if isinstance(m, dict):
             name = m.get("name", "")
             eid = m.get("emoji_id", "")
-            char = m.get("char", "🛅")
+            char = m.get("char", "🔘")
             if eid and str(eid).isdigit() and len(str(eid)) >= 10:
                 emoji_html = f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
                 icon_id = eid
@@ -1998,8 +2002,7 @@ def get_wmethod_display_list():
 
 # ==========================================
 # Group OTP Display Formatter
-# NEW format: 🇳🇬NG |📱 | +2348🔹334 | ✉️English
-# (space added before ✉️)
+# 🇳🇬NG | 📱 | +2348🔹334 | ✉️English
 # ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
     clean = str(num).lstrip('+').replace(" ", "")
@@ -2024,9 +2027,8 @@ def format_otp_display(num, app_full_name, lang, masked=True):
 
     lang_display = lang_full(lang)
 
-    # ⭐ NEW: added a space before ✉️
     return (
-        f"{flag_html}<b>{iso}</b> |"
+        f"{flag_html}<b>{iso}</b> | "
         f"{svc_html} | "
         f"{num_part} | "
         f'<tg-emoji emoji-id="{MESSAGE_EMOJI}">✉️</tg-emoji><b>{lang_display}</b>'
@@ -2102,9 +2104,7 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
 
 
 # ==========================================
-# 🎯 build_numbers_header — NEW shorter indent
-# Old: ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀💷0.0085$/OTP🪨
-# New: ⠀⠀⠀⠀⠀💷0.0085$/OTP🪨
+# build_numbers_header — 12 braille blanks indent
 # ==========================================
 def build_numbers_header(country, service=None):
     HEADER_EMOJI_1 = "6282641460093260838"
@@ -2139,8 +2139,7 @@ def build_numbers_header(country, service=None):
 
     country_display = html.escape(str(country).upper())
 
-    # ⭐ NEW: shorter leading braille blanks
-    indent = "⠀⠀⠀⠀⠀"
+    indent = "⠀⠀⠀⠀⠀⠀"   # 12 braille blanks
 
     header = (
         f"{indent}{money_icon}<b>{payout_str}$/OTP</b>{rock_icon}\n"
@@ -2384,7 +2383,7 @@ def build_group_kb(otp_value, fw=None):
 
 
 # ==========================================
-# NEW Withdrawal group message — with <blockquote> header
+# Withdrawal — group & status messages
 # ==========================================
 def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id):
     frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
@@ -2392,28 +2391,25 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
     user_emoji = '<tg-emoji emoji-id="5352861489541714456">👤</tg-emoji>'
     balance_icon = f'<tg-emoji emoji-id="{WITHDRAW_BALANCE_EMOJI}">🔘</tg-emoji>'
     phone_emoji = '<tg-emoji emoji-id="5337132498965010628">🍏</tg-emoji>'
-    method_icon = get_wmethod_emoji_html(method)
+    method_icon = f'<tg-emoji emoji-id="{WITHDRAW_METHOD_ICON}">🥂</tg-emoji>'
+    method_emoji = get_wmethod_emoji_html(method)
     amount_display = fmt_payout(amount)
 
     txt = (
-        f"<blockquote>🎙 <b>NEW WITHDRAWAL REUQUEST</b>{web_emoji}</blockquote>\n"
+        f"<blockquote>🎙 <b>NEW WITHDRAW REUQUEST</b>{web_emoji}</blockquote>\n"
         f"\n"
         f"{frog_emoji} <b>USER ID :</b> <code>{chat_id}</code>\n"
         f"{user_emoji} <b>User :</b> <a href='tg://user?id={chat_id}'>{full_name}</a>\n"
         f"{balance_icon} <b>BALANCE:</b> <code>${amount_display}</code>\n"
         f"{phone_emoji} <b>NUMBER :</b> <code>{number}</code>\n"
-        f"{method_icon} <b>METHOD :</b> {method_icon} <b>{method}</b>\n"
+        f"{method_icon} <b>METHOD :</b> {method_emoji} <b>{method}</b>\n"
         f"\n"
         f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>"
     )
     return render_body_text(txt)
 
 
-# ==========================================
-# NEW Withdrawal approved/rejected format
-# ==========================================
 def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method, req_id):
-    """action = 'APPROVE' or 'REJECT'"""
     if action == "APPROVE" and len(number) >= 7:
         masked_num = f"{number[:4]}❖STR❖{number[-3:]}"
     else:
@@ -2425,21 +2421,46 @@ def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method,
     user_emoji = '<tg-emoji emoji-id="5352861489541714456">👤</tg-emoji>'
     balance_icon = f'<tg-emoji emoji-id="{WITHDRAW_BALANCE_EMOJI}">🔘</tg-emoji>'
     phone_emoji = '<tg-emoji emoji-id="5337132498965010628">🍏</tg-emoji>'
-    method_icon = get_wmethod_emoji_html(method)
+    method_icon = f'<tg-emoji emoji-id="{WITHDRAW_METHOD_ICON}">🥂</tg-emoji>'
+    method_emoji = get_wmethod_emoji_html(method)
     amount_display = fmt_payout(amount)
 
     txt = (
-        f"<blockquote>🎙 <b>WITHDRAWAL {status_word}</b> {web_emoji}</blockquote>\n"
+        f"<blockquote>🎙 <b>WITHDRAW {status_word}</b> {web_emoji}</blockquote>\n"
         f"\n"
         f"{frog_emoji} <b>USER ID :</b> <code>{u_id}</code>\n"
         f"{user_emoji} <b>User :</b> <a href='tg://user?id={u_id}'>{full_name}</a>\n"
         f"{balance_icon} <b>BALANCE:</b> <code>${amount_display}</code>\n"
         f"{phone_emoji} <b>NUMBER :</b> <code>{masked_num}</code>\n"
-        f"{method_icon} <b>METHOD :</b> {method_icon} <b>{method}</b>\n"
+        f"{method_icon} <b>METHOD :</b> {method_emoji} <b>{method}</b>\n"
         f"\n"
         f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>"
     )
     return render_body_text(txt)
+
+
+# ==========================================
+# Withdrawal BALANCE HOLD / REFUND helpers
+# ==========================================
+def hold_withdrawal_balance(user_id, amount):
+    """Deduct the requested amount from user's balance when the withdraw is submitted.
+    The amount is 'held' — it will be either kept (on approve) or refunded (on reject/cancel)."""
+    try:
+        update_balance(user_id, -float(amount))
+        return True
+    except Exception as e:
+        print(f"⚠️  hold_withdrawal_balance: {type(e).__name__}")
+        return False
+
+
+def refund_withdrawal_balance(user_id, amount):
+    """Give the held amount back if the withdraw is rejected/cancelled."""
+    try:
+        update_balance(user_id, float(amount))
+        return True
+    except Exception as e:
+        print(f"⚠️  refund_withdrawal_balance: {type(e).__name__}")
+        return False
 
 
 # ==========================================
@@ -2572,7 +2593,6 @@ def panel_monitor_thread():
 
                             owners = list(set(owners))
                             for owner_id in owners:
-                                # ⭐ Payout from SERVICE-SPECIFIC rate (Melbet Bangladesh = $0.005)
                                 reward = get_payout_for_number(clean_api_num, app_full_name)
                                 credit_otp_to_user(owner_id, reward, app_full_name)
                                 new_bal = user_cache.get(owner_id, {}).get("balance", 0.0)
@@ -2665,7 +2685,7 @@ def admin_panel_keyboard():
          {"text": "Delete files", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "delete_files", "style": "danger"}],
         [{"text": "Broadcast", "icon_custom_emoji_id": "5789428375261023681", "callback_data": "broadcast_msg", "style": "success"},
          {"text": "System", "icon_custom_emoji_id": "5420155432272438703", "callback_data": "system_settings", "style": "primary"}],
-        [{"text": "📁DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
+        [{"text": "DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
         [maint_btn],
         [{"text": "Used number", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "show_used", "style": "success"},
          {"text": "Unused number", "icon_custom_emoji_id": "5352597830089347330", "callback_data": "show_unused", "style": "success"}],
@@ -2969,18 +2989,35 @@ def expire_previous_number(chat_id):
         del user_active_sessions[chat_id]
 
 
-def purge_pending_search_prompts(chat_id):
-    """Delete stored search prompt + prefix/search-result messages."""
+def purge_pending_search_prompts(chat_id, keep_msg_id=None):
+    """Delete search-prompt + user's prefix + search-result messages.
+    If keep_msg_id is provided, that message id is NOT deleted."""
     ids = pending_search_prompts.pop(chat_id, [])
     for mid in ids:
         try:
+            if keep_msg_id is not None and mid == keep_msg_id:
+                continue
             delete_message(chat_id, mid)
         except Exception:
             pass
 
 
 # ==========================================
-# Message Handler — All States
+# Leaderboard position formatter
+# 1️⃣...9️⃣ for positions 1..9, ℹ️🅾️ for 10
+# ==========================================
+def leaderboard_pos_emoji(rank):
+    if rank == 10:
+        return '<tg-emoji emoji-id="6309655288261644098">ℹ️</tg-emoji><tg-emoji emoji-id="6307374961275180239">🅾️</tg-emoji>'
+    eid = LEADERBOARD_NUM_EMOJI.get(rank)
+    if eid:
+        char_map = {1:"1️⃣",2:"2️⃣",3:"3️⃣",4:"4️⃣",5:"5️⃣",6:"6️⃣",7:"7️⃣",8:"8️⃣",9:"9️⃣"}
+        return f'<tg-emoji emoji-id="{eid}">{char_map.get(rank, "🔹")}</tg-emoji>'
+    return f'<b>{rank}.</b>'
+
+
+# ==========================================
+# Message Handler
 # ==========================================
 def handle_message(msg):
     global total_uploaded_stats
@@ -3060,7 +3097,7 @@ def handle_message(msg):
             send_message(chat_id, render_body_text(maint_msg))
             return
 
-    # ---------- /start referral capture ----------
+    # ---------- /start referral ----------
     if text.startswith("/start"):
         parts = text.split()
         if len(parts) > 1 and parts[1].isdigit():
@@ -3074,7 +3111,7 @@ def handle_message(msg):
         send_force_join_msg(chat_id)
         return
 
-    # ---------- Reset state on main menu ----------
+    # ---------- Reset on main menu ----------
     MAIN_MENU_CMDS = ["GET NUMBER", "SEARCH NUMBER", "TRAFFIC", "REFER", "BALANCE", "SUPPORT", "Admin Panel", "2FA ONLINE"]
     is_main_cmd = False
     if text in MAIN_MENU_CMDS or text.startswith("/start"):
@@ -3329,7 +3366,7 @@ def handle_message(msg):
                 if chat_id in temp_data: del temp_data[chat_id]
             return
 
-        # ========== TEST MESSAGE FLOW ==========
+        # ========== TEST MESSAGE ==========
         elif state == "wait_for_test_service" and text:
             temp_data[chat_id]["service"] = text.strip()
             user_states[chat_id] = "wait_for_test_number"
@@ -3978,19 +4015,22 @@ def handle_message(msg):
                 }])
             kb.append([{"text": "Cancel", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
 
+            prev_prompt_id = temp_data.get(chat_id, {}).get("prompt_msg_id")
+            prefix_msg_id = msg.get("message_id")
+
             temp_data[chat_id] = {
                 "search_query": query,
                 "search_country": country_name_det,
-                "search_iso": iso_det
+                "search_iso": iso_det,
+                "prompt_msg_id": prev_prompt_id,
+                "prefix_msg_id": prefix_msg_id,
             }
             del user_states[chat_id]
 
-            # ⭐ NEW SEARCH RESULT FORMAT with 🐯 next to prefix and flag after country name
             tiger_icon = f'<tg-emoji emoji-id="{SEARCH_TIGER_EMOJI}">🐯</tg-emoji>'
             world_icon = f'<tg-emoji emoji-id="{SEARCH_WORLD_EMOJI}">🌍</tg-emoji>'
             target_icon = f'<tg-emoji emoji-id="{SEARCH_TARGET_EMOJI}">🎯</tg-emoji>'
             country_display_name = country_name_det.upper() if country_name_det else (iso_det or "UNKNOWN")
-            # Build the flag part (premium emoji or plain)
             if iso_det and iso_det != "XX":
                 flag_for_country = country_flag_html
             else:
@@ -4006,16 +4046,22 @@ def handle_message(msg):
                 f"{target_icon} <b>Available Services:</b>\n"
             )
             sent_res = send_message(chat_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
-            # ⭐ Save all sent message IDs (prompt + search result) so we can delete them later
-            ids_to_track = []
+
+            search_result_msg_id = None
             try:
-                prompt_mid = temp_data.get(chat_id, {}).get("prompt_msg_id")
-                if prompt_mid: ids_to_track.append(prompt_mid)
                 if sent_res and sent_res.get("ok"):
-                    ids_to_track.append(sent_res["result"]["message_id"])
-                pending_search_prompts[chat_id] = ids_to_track
+                    search_result_msg_id = sent_res["result"]["message_id"]
             except Exception:
-                pending_search_prompts[chat_id] = ids_to_track
+                search_result_msg_id = None
+
+            ids_to_track = []
+            if prev_prompt_id:        ids_to_track.append(prev_prompt_id)
+            if prefix_msg_id:         ids_to_track.append(prefix_msg_id)
+            if search_result_msg_id:  ids_to_track.append(search_result_msg_id)
+            pending_search_prompts[chat_id] = ids_to_track
+
+            if search_result_msg_id:
+                temp_data[chat_id]["search_result_msg_id"] = search_result_msg_id
             return
 
         # ========== WITHDRAW AMOUNT ==========
@@ -4072,6 +4118,10 @@ def handle_message(msg):
             first_name = msg.get("from", {}).get("first_name", "User")
             last_name = msg.get("from", {}).get("last_name", "")
             full_name = f"{first_name} {last_name}".strip()
+
+            # ⭐ 1) HOLD the balance: deduct from user immediately.
+            hold_withdrawal_balance(chat_id, amount)
+
             pending_withdrawals[req_id] = {"user_id": chat_id, "amount": amount, "method": method, "number": number, "full_name": full_name}
             try:
                 with sqlite_tx() as conn:
@@ -4096,7 +4146,6 @@ def handle_message(msg):
                 kb = {"inline_keyboard": [[{"text": "APPROVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"wapp_{req_id}", "style": "success"}, {"text": "REJECT", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"wrej_{req_id}", "style": "danger"}]]}
                 send_message(bot_settings["w_group"], admin_msg, reply_markup=kb)
 
-            # ⭐ NEW: submitted confirmation (NO inline keyboard)
             balance_icon = f'<tg-emoji emoji-id="{WITHDRAW_BALANCE_EMOJI}">🔘</tg-emoji>'
             method_icon = f'<tg-emoji emoji-id="{WITHDRAW_METHOD_ICON}">🥂</tg-emoji>'
             method_emoji = get_wmethod_emoji_html(method)
@@ -4197,7 +4246,6 @@ def handle_message(msg):
         txt = render_body_text(c_msg.get("text", f"{PEM['num']} <b>Search</b>"))
         kb = [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "cancel_state", "style": "danger"}]]
         sent = send_message(chat_id, txt, reply_markup={"inline_keyboard": kb})
-        # Track prompt message id so we can delete it when numbers are shown
         try:
             if sent and sent.get("ok"):
                 temp_data[chat_id] = {"prompt_msg_id": sent["result"]["message_id"]}
@@ -4219,7 +4267,7 @@ def handle_message(msg):
 
 
 # ==========================================
-# 📦 Database ZIP — 12 SEPARATE BLOCKS
+# 📦 Database ZIP
 # ==========================================
 def build_data_zip():
     mem = io.BytesIO()
@@ -4430,10 +4478,12 @@ def handle_callback(call):
         return
 
     if data == "close_msg":
+        purge_pending_search_prompts(chat_id)
         delete_message(chat_id, msg_id)
     elif data == "cancel_state":
         if chat_id in user_states: del user_states[chat_id]
         if chat_id in temp_data: del temp_data[chat_id]
+        purge_pending_search_prompts(chat_id)
         delete_message(chat_id, msg_id)
     elif data == "cancel_2fa":
         if chat_id in user_states: del user_states[chat_id]
@@ -4476,6 +4526,7 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, txt, reply_markup=markup)
         answer_callback(call["id"], "✅ Refreshed!", show_alert=False)
 
+    # ---------- Search service selected ----------
     elif data.startswith("s_srv|"):
         parts = data.split("|", 2)
         query = parts[1] if len(parts) > 1 else ""
@@ -4607,8 +4658,8 @@ def handle_callback(call):
 
         save_db()
 
-        # ⭐ Delete prompt message + search result message
-        purge_pending_search_prompts(chat_id)
+        # ⭐ Delete prompt + user's prefix messages, KEEP the search-result message (msg_id) for editing
+        purge_pending_search_prompts(chat_id, keep_msg_id=msg_id)
 
         if not fetched_nums:
             answer_callback(call["id"], "❌ Out of stock!", show_alert=True)
@@ -4915,6 +4966,7 @@ def handle_callback(call):
         send_document(chat_id, "unused_numbers.txt", "\n".join(unused_list).encode('utf-8'))
         answer_callback(call["id"])
 
+    # ---------- Leaderboard (with 1️⃣..9️⃣ + ℹ️🅾️) ----------
     elif data == "lb_main":
         txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
@@ -4942,21 +4994,23 @@ def handle_callback(call):
                     except Exception: pass
 
                 if sub == "top_refs":
-                    title = "TOP 5 REFERRERS (LOCAL)"
-                    sorted_users = sorted(all_users, key=lambda u: u.get('total_refers', 0), reverse=True)[:5]
+                    title = "TOP 10 REFERRERS (LOCAL)"
+                    sorted_users = sorted(all_users, key=lambda u: u.get('total_refers', 0), reverse=True)[:10]
                     res_txt = ""; count = 1
                     for u in sorted_users:
                         if u.get('total_refers', 0) > 0:
-                            res_txt += f"| {count} <a href='tg://user?id={u['user_id']}'>{u['user_id']}</a> → <b>{u.get('total_refers',0)}</b>\n"
+                            pos_icon = leaderboard_pos_emoji(count)
+                            res_txt += f"| {pos_icon} <a href='tg://user?id={u['user_id']}'>{u['user_id']}</a> → <b>{u.get('total_refers',0)}</b>\n"
                             count += 1
                     if not res_txt: res_txt = "No data available (local cache).\n"
                 elif sub == "top_otps":
-                    title = "TOP 5 OTP RECEIVERS (LOCAL)"
-                    sorted_users = sorted(all_users, key=lambda u: u.get('total_otps', 0), reverse=True)[:5]
+                    title = "TOP 10 OTP RECEIVERS (LOCAL)"
+                    sorted_users = sorted(all_users, key=lambda u: u.get('total_otps', 0), reverse=True)[:10]
                     res_txt = ""; count = 1
                     for u in sorted_users:
                         if u.get('total_otps', 0) > 0:
-                            res_txt += f"| {count} <a href='tg://user?id={u['user_id']}'>{u['user_id']}</a> → <b>{u.get('total_otps',0)}</b>\n"
+                            pos_icon = leaderboard_pos_emoji(count)
+                            res_txt += f"| {pos_icon} <a href='tg://user?id={u['user_id']}'>{u['user_id']}</a> → <b>{u.get('total_otps',0)}</b>\n"
                             count += 1
                     if not res_txt: res_txt = "No data available (local cache).\n"
                 elif sub == "w_history":
@@ -4972,7 +5026,8 @@ def handle_callback(call):
                         amt = wd.get('amount', 0)
                         st = str(wd.get('status', 'pending')).lower()
                         stat_icon = "✅" if st == "approved" else "❌" if st == "rejected" else "⏳"
-                        res_txt += f"| {count} <a href='tg://user?id={uid}'>{uid}</a> → <b>${amt}</b> {stat_icon}\n"
+                        pos_icon = leaderboard_pos_emoji(count)
+                        res_txt += f"| {pos_icon} <a href='tg://user?id={uid}'>{uid}</a> → <b>${amt}</b> {stat_icon}\n"
                         count += 1
                     if not res_txt: res_txt = "No local withdrawal data.\n"
 
@@ -4982,23 +5037,25 @@ def handle_callback(call):
                 return
 
             if sub == "top_refs":
-                title, field, limit = "TOP 5 REFERRERS", "total_refers", 5
+                title, field, limit = "TOP 10 REFERRERS", "total_refers", 10
                 users = db.collection('users').order_by(field, direction="DESCENDING").limit(limit).stream()
                 res_txt = ""; count = 1
                 for u in users:
                     d = u.to_dict()
                     if d.get(field, 0) > 0:
-                        res_txt += f"| {count} <a href='tg://user?id={u.id}'>{u.id}</a> → <b>{d.get(field,0)}</b>\n"
+                        pos_icon = leaderboard_pos_emoji(count)
+                        res_txt += f"| {pos_icon} <a href='tg://user?id={u.id}'>{u.id}</a> → <b>{d.get(field,0)}</b>\n"
                         count += 1
                 if not res_txt: res_txt = "No data.\n"
             elif sub == "top_otps":
-                title, field, limit = "TOP 5 OTP RECEIVERS", "total_otps", 5
+                title, field, limit = "TOP 10 OTP RECEIVERS", "total_otps", 10
                 users = db.collection('users').order_by(field, direction="DESCENDING").limit(limit).stream()
                 res_txt = ""; count = 1
                 for u in users:
                     d = u.to_dict()
                     if d.get(field, 0) > 0:
-                        res_txt += f"| {count} <a href='tg://user?id={u.id}'>{u.id}</a> → <b>{d.get(field,0)}</b>\n"
+                        pos_icon = leaderboard_pos_emoji(count)
+                        res_txt += f"| {pos_icon} <a href='tg://user?id={u.id}'>{u.id}</a> → <b>{d.get(field,0)}</b>\n"
                         count += 1
                 if not res_txt: res_txt = "No data.\n"
             elif sub == "w_history":
@@ -5010,7 +5067,8 @@ def handle_callback(call):
                     s = str(d.get('status','Pending')).lower()
                     stat_icon = "✅" if s in ["approved","success"] else "❌" if s=="rejected" else "⏳"
                     uid = d.get('user_id','User')
-                    res_txt += f"| {count} <a href='tg://user?id={uid}'>{uid}</a> → <b>${d.get('amount',0)}</b> {stat_icon}\n"
+                    pos_icon = leaderboard_pos_emoji(count)
+                    res_txt += f"| {pos_icon} <a href='tg://user?id={uid}'>{uid}</a> → <b>${d.get('amount',0)}</b> {stat_icon}\n"
                     count += 1
                 if not res_txt: res_txt = "No history.\n"
             final_msg = f"━━━━━━━━━━━━━━━\n📊 <b>{title}</b>\n━━━━━━━━━━━━━━━\n{res_txt}━━━━━━━━━━━━━━━"
@@ -5071,8 +5129,8 @@ def handle_callback(call):
     elif data == "db_delete_confirm":
         txt = f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> <b>DO YOU REALLY WANT TO REMOVE ALL DATA?</b>'
         kb = {"inline_keyboard": [
-            [{"text": "✅YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
-            [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
+            [{"text": "YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
+            [{"text": "NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
         ]}
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
     elif data == "db_delete_yes":
@@ -5824,7 +5882,6 @@ def handle_callback(call):
                 for b_id in number_batches:
                     number_batches[b_id]["numbers"] = [n for n in number_batches[b_id]["numbers"] if not n.get("to_remove")]
                 save_db()
-            # ⭐ Delete prompt + search result when numbers are shown
             purge_pending_search_prompts(chat_id)
             kb = []
             if service_from_cb:
@@ -5948,17 +6005,20 @@ def handle_callback(call):
             u_id, amt = req_data["user_id"], req_data["amount"]
             num = req_data["number"]; full_name = req_data.get("full_name", u_id)
 
-            # ⭐ NEW approved/rejected format
             new_text = build_withdrawal_status_msg(action, u_id, full_name, amt, num, req_data['method'], req_id)
             status_text = "APPROVED" if action == "APPROVE" else "REJECTED"
             emoji_icon_id = "5352694861990501856" if action == "APPROVE" else "5420130255174145507"
             kb = {"inline_keyboard": [[{"text": status_text, "icon_custom_emoji_id": emoji_icon_id, "callback_data": "ignore", "style": "success" if action == "APPROVE" else "danger"}]]}
             edit_message(chat_id, msg_id, new_text, reply_markup=kb)
+
             if action == "APPROVE":
-                update_balance(u_id, -amt)
+                # Balance already held at submission time → just notify
                 send_message(u_id, render_body_text(f"{PEM['ok']} Your ${amt} withdrawal has been paid successfully!"))
             else:
-                send_message(u_id, render_body_text(f"❌ Your ${amt} withdrawal request was rejected."))
+                # ⭐ REFUND the held amount back to user
+                refund_withdrawal_balance(u_id, amt)
+                send_message(u_id, render_body_text(f"❌ Your ${amt} withdrawal request was rejected. Amount refunded."))
+
             try:
                 with sqlite_tx() as conn:
                     if conn:
