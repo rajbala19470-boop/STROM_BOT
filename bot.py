@@ -188,9 +188,8 @@ def lang_full(lang_code):
     return LANG_FULL_NAMES.get(code, code.title() if code else "English")
 
 def fmt_payout(val):
-    """Exact balance display with up to 20 decimal places.
-    Preserves tiny values like 0.000000001 (1e-9) or 0.00000000001 (1e-11).
-    Falls back gracefully for zero/invalid."""
+    """faaaa. bot Dev BY Rakesh ⚠️
+    """
     try:
         f = float(val)
     except Exception:
@@ -199,20 +198,25 @@ def fmt_payout(val):
     if f == 0:
         return "0.00"
 
-    try:
-        s = f"{f:.20f}"
+    s = repr(f)
+
+    if 'e' in s or 'E' in s:
+        s = f"{f:.20f}".rstrip('0').rstrip('.')
+
+    if '.' in s:
         s = s.rstrip('0').rstrip('.')
-        if not s:
-            s = "0"
-        if '.' not in s:
-            s += ".00"
-        else:
-            int_part, dec_part = s.split('.')
-            if len(dec_part) == 1:
-                s = f"{int_part}.{dec_part}0"
-        return s
-    except Exception:
-        return "0.00"
+
+    if not s:
+        s = "0"
+
+    if '.' not in s:
+        s += ".00"
+    else:
+        int_part, dec_part = s.split('.')
+        if len(dec_part) == 1:
+            s = f"{int_part}.{dec_part}0"
+
+    return s
 
 def get_by_path(obj, path):
     if not path or not str(path).strip(): return None
