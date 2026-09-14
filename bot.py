@@ -188,7 +188,20 @@ def lang_full(lang_code):
     return LANG_FULL_NAMES.get(code, code.title() if code else "English")
 
 def fmt_payout(val):
-    """faaaa. bot Dev BY Rakesh ⚠️
+    """Show EXACTLY what admin set / what user earned.
+    No rounding, no float noise, no '0.008 → 0.01'.
+
+    Examples:
+        0.008       → '0.008'
+        0.0003      → '0.0003'
+        0.00000002  → '0.00000002'
+        0.000000001 → '0.000000001'
+        0.009       → '0.009'
+        0.025       → '0.025'
+        0.003       → '0.003'
+        0.1         → '0.10'
+        30          → '30.00'
+        30.5        → '30.50'
     """
     try:
         f = float(val)
