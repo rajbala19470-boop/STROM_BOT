@@ -37,21 +37,19 @@ BOT_USERNAME = ""
 # ==========================================
 # 🔥 Firebase Credentials (embedded — no external JSON file needed)
 # ==========================================
-firebase_credentials_json = r"""
-{
+FIREBASE_STORM_DATA = {
   "type": "service_account",
-  "project_id": "storm-bot-data",
-  "private_key_id": "3a3497bedc3e04d0df5df52287c2a35bd14809bb",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDmTJW/65KafRDk\nNs31OdxuRw+BeTascR83HEQ8ThTRK+22faoOYzGo0Q4kvpQ5oFPesZzzzu0fs3N7\nMWOPQaipSApJKdyX1X2zZWv2vwWYiOBkIkk6U3N2be4yo0pkeqLewyQWKQ602Wja\nalC9dFW+Xi9cY+kBmlq/lppyQsWEg1Y/aRrdyx5jT92d2wnd/0AJr+b3dxXnzIz0\n5M/fDOXaUxyZ0wGUK1ZR9l+1D2GNAbyk539bHYxlVc2SdF/kJpZ1d6e2k/Mx0PXb\ne8bvi1sHU4KlbUfaZo160N+n8mNioebQ1TkTP3MGW0dcA6rzjBtNJComM0pwtgN0\neAvVaSh5AgMBAAECggEAWvHmdyZXvCNkfsL3vX4OgwwT3vzXruxzN8e1WJ07EklH\nM/hXJhxc+X4pGDCch089n6VDRnKyaIDsuzsLRoDW0pbM3QynfNxFqgkExCm2U4DG\nIDT79wkKgTuzQ5MBZ0GYvOCSCSBImvl6MzqlzNM6oxU9nb4kv0nNyXf3YOTmbEfT\nbwkNrn6EC7xdcdaZV2ZVIHFwGEN6co+86cQ3dJO0hPQXN7sHFYzrB+1Wbno+Rz2+\nJk5DcYPWr/kT9SICt/yTvO67adwjK1VjGJYmYeylX77DAFr64kALu+owatLNIPKL\nzgePNj0Loom8dxZVDV812lrJQzzSaGCYoBxTjQbIEwKBgQD7IQVzWgAzOFsRWRJ5\nG05YyEkJAPvRjzCFBk+3WJcwcKAPQGh1kw0yriv5h3RmWnQLotL1k02KxxZtYdrg\nu6d8kkIzvqf69j/kGmsaswVq4UbqnB1mf3cidpBhzpII++Z2pzT0h4Bp7GRDBdrk\nWo/9RV5WTC6j5Jhr2eQURU3i2wKBgQDqxCIilLXW1UVfjYfqwmhLLYir2E5w5wwE\n6Pe2iTVEzNoWdM8Ax3HTkZYeTrdCQ5JhkrELvSB1MZSgmNZ4WQvrwMBr/rErLL+c\nMAbgHgHcvMa8olr2I+JWJo/PJzTXIxdxSNhnvgSQorKwyKghA81DcJfFYUU2M4k/\nYiWUdxegOwKBgQC7Sz9zbpZjnQ5ee94JMNJX6Nh/vJoTCwYW0EQ36/ymhfj6JwFB\nXzEisT/e1KV9iMyvuPo5aWkVrbIOVkMWBR6/C54QVYuW4n14NDPZL9dEhUuMwm4y\n+bHypBa+u3+y75xMthwKm9ysI0ALtJwyX1CwhkH7fsnyNhVvqowuihmyrQKBgQDS\nwEnog1mOR5zkf7ihPe7Edlb39dHNNw0qJz2hRyFj5wZtHGVsTJ9Zj5uVD5MiUGjL\nYRXA9QJ7Uowbc7ktBrtV446aJGVF3gERJGg3r5h6YZmDY7iGuIYKUsnM7GRaMa1s\nzDlBQGr2sKf7XdbY9IHDZgNJdN3eH3u5Q9F6q0KxWwKBgQCBAlXUkGVJJRQtXy6M\nBgTBQsjQCbdewU5L+g96z6prpMF9KA1YdJH696L4SAxTLeMXwjhwSPfsVDTc1tsW\no+iXbLO7U2Q8oImHHu//Usd7ZWIysPlW+ajo6x0nt81JbYHIQqoKWUPH9QftO7XD\nYRSU1680oncEnkduEr6QyGHcfw==\n-----END PRIVATE KEY-----\n",
-  "client_email": "firebase-adminsdk-fbsvc@storm-bot-data.iam.gserviceaccount.com",
-  "client_id": "107047454026730826535",
+  "project_id": "storm-3738seh",
+  "private_key_id": "5df1211da354e4fae8c66e53dfdf02b2c2d6fdf0",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCyfPR0PtNpSbJ3\n56otJtYrupZgMustpJZebm64tXjliS1zb5xLK7bdGeITIBpkUMlqs/Y1bfZtIq+F\nBedde4GA6coYkHZZXJr+ozVbG6TEB+d5SjmCZYSCxvmTgM86GzL7VXuDSXN5uOH3\nKZKce11QbfclG8oQuK4AWcDiFo90sFn/6aepSfG9PLKxHuIj3tBV8d5mURlR/4KX\nVZ6P7crxZ4KSBg6URNEZh6gZVij/rVlX+z9ebAkehKl/Km+guHzeCtGTvCZ/ztFa\n8wmEAo72nKieCOMKk/J3pC8X/00QAXpvN+5tEIRV2fK1iHxlRw7gjad+4jja+oyK\ns2XNGbQNAgMBAAECggEAENSTCXYWIc669y7/X0ATAG8Y+Gu8vOJQ8okXxC+KfZxs\njn7G/liaJummpXaIvo5Wm8rp67pZewuDAPhgS3KWsNT6w0u1+TGwBNRXduaZqAl1\nxHxhBWB0uQ8xn/zMrZY8fbIfEi9mJeNu3UtMgZhpYWjpHdTrvh1n/Oz5sOf/MXm6\nPmUAd0SE7vkfQXJHRwH6ag1S1iyRDtjBm25kbJYTw9ND1S1pNaKiFKsA1I7jRhuh\nRJpmLEAtFvOCetHr7kZlyLzZtAjtvkHJCVIA9s79b3fmWjfW26/3g2X/KYCncNUI\nhl1wzEaIAz5v2/xUwg45pdXkDQwSgyEJz0vJScsP+QKBgQDegVH2qo6Ht3jcIw9k\nBVZIQMCsqYCEp56cOoRewVEbmi6yeYpyk1HvNDHE7OD4Wy9YGhto6hKO3oWZLDAJ\nzFa/D9n3E46TWPRpKPMCD8zTy0rbSfJ9JA97jT0kFRfHe60/mudSZi8Hh1I6QvV4\nJeDKQgAnLR9oDlVlvW94qGv5SQKBgQDNW1mRr9PGQcnV2QzCeFVfyOWjeMGoazZO\nTVMAExv4qGJDVXDf3giR899WcsIlIwKSbclaVk0uRSZT6B/zN6z/vTNkrjzkCbgq\nvGwTeaN3xX3oNXSmBrZfw6il+WpIvHDB3EJ6Aeq0AV8xDRV/SVT8McnFFqbhxosJ\nBg5Ox7nIpQKBgQDBcWrh6bxKr68KrAyIZ79wx6L7Oc47BkN2DcXhX251ceFhVxuP\nqxbTwOv4Cf04zoXlsaTc3IvP3BQIbAtDqXxNVampDj6pSfALsQc8ZqIsDBUDe1Gv\njHdNciiSwyfOTW782l58G8yNXg+WCXrBvySkkybw6GDipXuHHV/ZZYuhyQKBgASE\nuAnOlphMJkbASdmVkDtVTkg0hf5QrZc3eFYOFZV5DwBwRtWGKyYa+ZULXV430Pyr\n0bxdHcGg3+EEwH83gGT4IsNaWhiiZhz6nF4pVQFzpPuRAYoNp8GfqnxMapxDGTAK\nyqOomyNuzEtmAE0WrfoGlmvxvaZGGhUOvw3YsyvJAoGASC4IPy52bVK7GhTQ/DXc\nUIQ8aXQM49oMIYi2IaVwPw24Hm4KsBTC1+cYWiaBmk7pRCmKLJiCEY2bqEg0qefs\nAqKjWR7H41dTYNdjvjbyjQ/fQVlYAyywIxWqOgjlTM8ZJCSrmI3hfRmmGYMhWeyx\nAv3XBMbXFlfDyhuaEf0JVXM=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@storm-3738seh.iam.gserviceaccount.com",
+  "client_id": "103858492642850467623",
   "auth_uri": "https://accounts.google.com/o/oauth2/auth",
   "token_uri": "https://oauth2.googleapis.com/token",
   "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40storm-bot-data.iam.gserviceaccount.com",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40storm-3738seh.iam.gserviceaccount.com",
   "universe_domain": "googleapis.com"
 }
-"""
 # ⚠️ BOT DEV BY : ARGHO .
 
 # ==========================================
@@ -594,13 +592,14 @@ def sqlite_kv_set(key, value):
 
 
 # ==========================================
-# 🔥 Firebase Setup — from EMBEDDED dict (no JSON file needed)
+# 🔥 Firebase Init — test.py Style (direct try/except)
 # ==========================================
+db = None
 current_db_mode = "sqlite"
 try:
-    cred_dict = json.loads(firebase_credentials_json)
-    cred = credentials.Certificate(cred_dict)
-    firebase_admin.initialize_app(cred)
+    cred = credentials.Certificate(FIREBASE_STORM_DATA)
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(cred)
     db = firestore.client()
     current_db_mode = "firebase"
     print("✅ Firebase Connected! (Full Sync Enabled)")
@@ -608,7 +607,9 @@ except Exception as e:
     print(f"❌ Firebase Error: {e}")
     db = None
     current_db_mode = "sqlite"
-    # ==========================================
+
+
+# ==========================================
 # Bot Settings
 # ==========================================
 bot_settings = {
@@ -628,7 +629,6 @@ bot_settings = {
     "premium_flags": {}, "premium_apps": {},
     "custom_messages": DEFAULT_CUSTOM_MESSAGES.copy()
 }
-
 FS_KEYS = [
     "admins","panels","fw_groups","otp_link","main_channel_link","withdraw_on",
     "min_withdraw","otp_reward","refer_reward","cooldown","num_req","num_share",
@@ -3064,7 +3064,7 @@ def admin_panel_keyboard():
          {"text": "Delete files", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "delete_files", "style": "danger"}],
         [{"text": "Broadcast", "icon_custom_emoji_id": "5789428375261023681", "callback_data": "broadcast_msg", "style": "success"},
          {"text": "System", "icon_custom_emoji_id": "5420155432272438703", "callback_data": "system_settings", "style": "primary"}],
-        [{"text": "DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
+        [{"text": "📁DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
         [maint_btn],
         [{"text": "Used number", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "show_used", "style": "success"},
          {"text": "Unused number", "icon_custom_emoji_id": "5352597830089347330", "callback_data": "show_unused", "style": "success"}],
@@ -5813,8 +5813,8 @@ def handle_callback(call):
     elif data == "db_delete_confirm":
         txt = f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> <b>DO YOU REALLY WANT TO REMOVE ALL DATA?</b>'
         kb = {"inline_keyboard": [
-            [{"text": "YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
-            [{"text": "NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
+            [{"text": "✅YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
+            [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
         ]}
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
     elif data == "db_delete_yes":
