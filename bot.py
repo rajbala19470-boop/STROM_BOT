@@ -37,11 +37,12 @@ BOT_USERNAME = ""
 # ==========================================
 # 🔥 Firebase Credentials (embedded — no external JSON file needed)
 # ==========================================
-FIREBASE_STORM_DATA = {
+firebase_credentials_json = r"""
+{
   "type": "service_account",
   "project_id": "storm-bot-data",
-  "private_key_id": "0ed6228c9958b7b56d301c3c25f84c39ee0e7944",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCwwJqPTjJ37dEg\n+s+lb8V1vsWpr5Fb5D1Jz1Wb/o8e/OnvNEEk/YTxwY676BgF8/B7SpzGM1bR3+eK\nh/2+//NRvrN9y5xWHCcJVA7xEfjwIQ393vxLolRDQTvAXYIMOq5NvzEcdqyTRHzZ\nkyB233U/yWbvxTa4byuCv5c1siIp6wxwjpN10O3PgIhz4plvI7dR2BsFFQcRULlz\nMKZQoXgj9g/r1d7HTdtN/lXUdb0HZInYSTaeL3Wl7YLLXsl+omfegPsAPWRozVEE\nb9QBmK8r9npGKhqOAWpHz5RzvLiVNbPv/690rEPCFrnmIYk8Wmq5ST04lD0ceDOd\nT83qv7wDAgMBAAECggEADR5bz7YV6y55/pt5okWaShkc3PFxyvhfj3pgLWymh74Y\nHiUVOV8dqRSHeQKKwepZ7MoGunPgsOwQPd5xDWY8KNLhdJKSVGvQ0+bqwvwQAMFF\n+L6ToDN4qJM6EZbUdP7n+qTtoAyzgKytIuLsyRXgbcRk1k1KDe9RCJUaw8/9rCRX\n1Tr3b2zlfL6kx7b494rK661c/NqtxXVU1GKXPY4oB5KW5ndXaFDnsJ+v1Z1rykxs\nahM7kZspBs1s19xLX0sU759Dq8WZIDkMkIXPJinXOFu5DRf5gE/C0xsSaCpVR7jl\nHTqrDOqRxeMpNXzH3mY1zSqmFEeUuK2OV7YPuCE1vQKBgQDdXnc4KuLRAN/ANRug\nsguD7D0xOUMq1C21zHW3NGroj+9OYEPlAnrpTrzngrJL+7VTr4Gq7TkNBIoRO8/l\ngqatLJli+O0wHmjHkjAZ9N2PNT6dVBM1qLgfAy+99VZ0w0HHKQE3/4Nu9ub+TXcS\nkw99zdkoFcSaBPQwcgcRWqSZ7QKBgQDMZ0z1yMkZ0T5u8t8uN++yAhf2MlM1e6EV\nHys7B50vN/Y9kHg4VB5R0R1SAZhICRXmCg/wamQ496R1w8/yPgt9FMAY6r9a3m5a\n0kCWCyuOlMA6KaOIjycT1p/zg+4140s8z9jmi7+4N88btUMNt4HgwEr09OaVZzw0\n7NyKzNgvrwKBgQC+QMML1efsIukqozokaQD2l6Gb3Y/5jjPe7GM7WmSLjbDpVljj\nyLbkL1SxUCV2olUcIFm8EneW1ZDn8NTjdt9TNGJ7ql8HnQsGgoCuvkFxJBy1UJ3V\n3zSnCrEMfH+aiHnO9lHi08odIzwx0VgF8bg9sh3xkovOp3VK8aVbZ+DRnQKBgB3C\ntJvcnhsaMiLpTcFm94lNcLux3BefZnay0RKJK0OivEF+dWKOLNPwxHoaLVffqsaR\nlHyGoQ0CUXmsBuzYR8fwa3+1PiM2245xqmGuQqtB0TMmuN67KQ9kYmmMPfSuoVe7\nU3NNyZ5C0e7Q13B51XkpxkAgICqEm2mBSyMSbC+VAoGAP1Is5zgEL2BQ8wzkT+jg\n7XS9382wndt1Pum43V2Qqd/ZlA7NWknZdSbo7NDqsMRtGVtRisZGW++Wb8onsBDD\nfOUMgV1rVVT93Xce6i0HZu24XxEGAile8FMeK4e9fU30WkKLZwhh7+/y4xmJav08\nJY14MRv6F0ZJERr5CPobO/g=\n-----END PRIVATE KEY-----\n",
+  "private_key_id": "3bfad8e65e828fb75bb5efbd7f40067efc142251",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDTu+yoK9N91xLz\nxWSzBTkIPEqfIMelJzszFR2sK93A1OIJVyCizhSoZ9CLbNh3Z3W1uHU5ClwrZjrY\nD1AKL2odeg7RaK9C2x1NGoIEOMQrAto44fOYR+czMQIFOwaK1nYqC+KNmZTbSb1D\nd0MSzaB3JLmTcrgHGjtF4HRPu0sfFNWIQdc5jyqUzbVhGBKkzFxx9a+GEXA2pha3\nA4ickDicXqIwcszuXTaposf2xQkAtB4/AFpBR4JSUfNzX7bbkMA5fY8EQaK7McPB\n1ddHoVFIy8twgkyNkwpvMIHp8xcIwm+lSpUbDB994mS3gcDcANtlE+jVzQeGofax\n0DacdXQxAgMBAAECggEAHsPPAq5/h+jgwZfcZmCrZUVxaEa4i4g0Q1tdmN801Oh5\nwXat8Mn12XRgKmoR1+OqCFH5gmS9eLbddPhgnmI+TnMmRQorcRDqZIImAxwGcON0\nttAp92X3M4p66yyk6jZ4K+rXK9D1fplrzSo+jjRfjQBCkKiaEbofg6s160HhC+5U\n4ciIdBuq6v4lCOYdU8+1ZahSA9HiFjpYJWoy+XMh+qfjpDwvxgQ8DTEz1/HdiXod\nnZxNMhF6BjjJV5ZQCL9rnCqYKTffFGYRslQMFf6HMVL8W1K+0AK3pmxFd/6ZLkEN\ndobFOu9J1DUkIl5b9jbwxTaNU9PWYr6QIDXC9bv22QKBgQDqVByp56wXrF9pZfz1\ndTBbjgPwIdWeAi/kHaGOK+pUXAE7LDUbQ0S9FiqDOnkwUR/npEX1X54kwllEl/7C\nB8o3YVzsm5PVkQTFMhha8DKNB9HY1DO7Y8250dk2MPE16NMicapZu5HXPYskWhGA\nGruWwn9qtqco18TLf62ZOF/YJQKBgQDnUN9rwOLzwkSLsa657vCPf6KqIt5jq2yF\n3UuL+/8snVUMCe53sC0o+w8t3fL0utNfwdwLUmutqDLe/t/e+40Z8ljW5BL/QVhz\nBkAaOnZiFBpIrxGoi4vEGmtk7rSqKj0HqjQgLLGg8NVF46tA99H6T5u5KViKNliA\nTWKGtvSYHQKBgQCyMHwLh6yJ4/45++A8F31KYdgExvXWTft1EENGBYcP11boVFmd\n/a1LzItPdyuo3kfQsk6wpKFxeoi/bIXBroLLUjKDilsE0F48RjfXD0ihjgy5QcSE\n/wP2BemTF+yU/hNv4deUnNnuP1KLtiIQtENqBUU3NOYwXMO9q72rAf+AMQKBgQCX\nn00zxlV9TmO75ZYQTmzkwtcPCpgXYPBbtrikY2PaDK8ImyHy1kpjyF0kxY1RmXyg\nEeR4j2gBhnUB8rMv6FePIGnXQdyp8F1X2EsAZj3fACpSZl7+yamtu1uV51oJCHLE\nqW5NgL5WLka97wP8K/U5TCFY958PyZutTgw9HYOqiQKBgD50P7lutDZIm6R20Hff\nzPYMDFoi+XE4vdrtFxVIduuzYdi1y7KrZbEgSKo9WYqmeDXQeas7L36Gus4SuMdA\niAxnhhNQL+ja3eV7F6aiwBQXLtS0f9wa7Tmr4enaq76itYbI6sbIStjafLUdV1+o\n8cYq7hX2QJdPfKRC+lpP2fT7\n-----END PRIVATE KEY-----\n",
   "client_email": "firebase-adminsdk-fbsvc@storm-bot-data.iam.gserviceaccount.com",
   "client_id": "107047454026730826535",
   "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -50,6 +51,7 @@ FIREBASE_STORM_DATA = {
   "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40storm-bot-data.iam.gserviceaccount.com",
   "universe_domain": "googleapis.com"
 }
+"""
 # ⚠️ BOT DEV BY : ARGHO .
 
 # ==========================================
@@ -594,49 +596,16 @@ def sqlite_kv_set(key, value):
 # ==========================================
 # 🔥 Firebase Setup — from EMBEDDED dict (no JSON file needed)
 # ==========================================
-db = None
-_fb_result = {"db": None, "done": False}
-
-
-def _try_firebase_init():
-    global current_db_mode
-    try:
-        if not FIREBASE_STORM_DATA or FIREBASE_STORM_DATA.get("project_id") == "storm-x-one" and FIREBASE_STORM_DATA.get("private_key_id") == "PLACEHOLDER_KEY_ID":
-            # Placeholder values not replaced — skip Firebase
-            print("⚠️  Firebase embedded credentials not configured (still PLACEHOLDER)")
-            print("⚠️  SQLite-only mode active")
-            current_db_mode = "sqlite"
-            _fb_result["done"] = True
-            return
-        cred = credentials.Certificate(FIREBASE_STORM_DATA)
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred)
-        _db = firestore.client()
-        try:
-            _db.collection('_health_check_').document('x').get(timeout=10.0)
-        except Exception:
-            pass
-        _fb_result["db"] = _db
-        _fb_result["done"] = True
-        current_db_mode = "firebase"
-        print("✅ Firebase Connected (Cloud = PRIMARY DB, SQLite = local fallback)")
-    except Exception as e:
-        print(f"⚠️  Firebase unavailable: {type(e).__name__}")
-        print("✅ SQLite-only mode active (local DB will be used)")
-        current_db_mode = "sqlite"
-        _fb_result["done"] = True
-
-
-_fb_thread = threading.Thread(target=_try_firebase_init, daemon=True)
-_fb_thread.start()
-_fb_thread.join(timeout=15.0)
-
-if _fb_result["done"] and _fb_result["db"] is not None:
-    db = _fb_result["db"]
+current_db_mode = "sqlite"
+try:
+    cred_dict = json.loads(firebase_credentials_json)
+    cred = credentials.Certificate(cred_dict)
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
     current_db_mode = "firebase"
-else:
-    if not _fb_result["done"]:
-        print("⏱️  Firebase timeout (15s) — SQLite-only mode")
+    print("✅ Firebase Connected! (Full Sync Enabled)")
+except Exception as e:
+    print(f"❌ Firebase Error: {e}")
     db = None
     current_db_mode = "sqlite"
     # ==========================================
@@ -3095,7 +3064,7 @@ def admin_panel_keyboard():
          {"text": "Delete files", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "delete_files", "style": "danger"}],
         [{"text": "Broadcast", "icon_custom_emoji_id": "5789428375261023681", "callback_data": "broadcast_msg", "style": "success"},
          {"text": "System", "icon_custom_emoji_id": "5420155432272438703", "callback_data": "system_settings", "style": "primary"}],
-        [{"text": "📁DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
+        [{"text": "DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
         [maint_btn],
         [{"text": "Used number", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "show_used", "style": "success"},
          {"text": "Unused number", "icon_custom_emoji_id": "5352597830089347330", "callback_data": "show_unused", "style": "success"}],
@@ -5844,8 +5813,8 @@ def handle_callback(call):
     elif data == "db_delete_confirm":
         txt = f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> <b>DO YOU REALLY WANT TO REMOVE ALL DATA?</b>'
         kb = {"inline_keyboard": [
-            [{"text": "✅YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
-            [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
+            [{"text": "YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
+            [{"text": "NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
         ]}
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
     elif data == "db_delete_yes":
