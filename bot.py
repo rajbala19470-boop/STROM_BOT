@@ -35,6 +35,24 @@ OWNER_ID = 8744359777
 BOT_USERNAME = ""
 
 # ==========================================
+# 🔥 Firebase Credentials (embedded — no external JSON file needed)
+# ==========================================
+FIREBASE_STORM_DATA = {
+  "type": "service_account",
+  "project_id": "storm-3738seh",
+  "private_key_id": "139fa1f783bb53782ad90c27e7b9e4e18e9608f7",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC1PcqGsDf0CXKS\nYooe3snJ8SXNDUFQ7L1OSvjbayzvCvrkOW6Oz5mASDaie6SJxT17ibnGoDlTq2BB\nE3K+RJ6DhL5FftkjwYOeeRghvvS3wXE6vuVjeVCUfvEFPfr+dkMyXOMYz+hl2JLx\n1O/j87IdqGSGiRK9UViCVIuYv0PoXQuhqLRRgiYtk0sgM+nLHWXQzFG7LxwLsNK8\nen4xTkTkE7gRoR9MfYViyWOI0Sowp3TWmCYEk/w2bCEUUdM6e+Ff/PGZBKy5T9Pv\nUkwr1Ltqeb3TiUFhOterwneRUqgEPis6bmg9kMc/G/fdrSfTbyAVsj1J4nCi8wzv\nTxEesryjAgMBAAECggEAO8uVI/bDnxn22OD13NV4Ec4jwJEc+YwBsPD/RbUIcB1Z\nRS7FkQxhAnfQvq64TFPswvNffW6jOz2RVicKdkfBXHbRJ7CAB1HzELe3BHsx1eZW\nayFMIROHSFbRQf9+7bEq3lTS//6oF+HqKSstsjFWlH5YHCLhMeDCqM0n+U8xIlnx\nmw2ebwPKe9/ff79LwIBdGutM/IV1hFY2dHL6HzeoI+fevlsRzO92gADGcW2DuMbS\nC7vPXyPAudlRdSZePevYifYuXxp+i2JYNq9t7ox+yPpinWpMN+xuDZwNzXR/Z8Zi\nQ1wlImaewkiDq2OtudyP6zN1Pqzml1Ra6jy1kLEEgQKBgQDsY71h3uDNIkA7YmEi\nNdK8eqeohyMEwezRLdesuFra64mdxtvoR0AUXcR8DahNuHJ5fWaYxibQg6E072g+\nyhMFme7Parv4P6+TKRFg6duMOr21uUlVnyFRSUa1DtpuoZ0Nvlw0uYkBl6Bz/Ivh\nhN9Ln3rLg1QPbk03/Xy0oIYggwKBgQDERtsJXXVDKxMWL9TGTo8x4aiUvwqHFPaf\nqG4HmgipgiQzpnW+j/a3nWHXYGb1ivRr6iNUtZ29NtRa6WheF01ifTVRvOVZf+P7\nPS074w9/lbt32U8451cLdqg8ra5qorV0mtmHtsFDpIHowW5Edx8eIbw16XtZmg5l\n4V5tquv5YQKBgF9cZRvEU5+tP4g1ScYJPHg4asY7rc7PhH9mJOlSfaRu/Fcfz7rG\nc31Dzm3U/J5N2DBWfDsJRMM9Np0qLz2VO1M5I/OctTOSTXvqR053SNArKjjTBFh8\nF265RsLnuQqEO909e+jxJ+nyhxIDQVK6zXGuZlUPJ6wJ7TC3G8WqNDGNAoGBAJdQ\neLRzlF8/6esE3Og00DgIW8qwrREOnELhulGp8lubtQUMo2FR40YS0scTzswlX+GC\nE9LOYNjqWDPuFUPUexgepuho0/d3nO6nbyPoHJ6jdG8k3OpljrmLtI9y5i/XWESY\nzHLP9ZaMUIp79OJbY2X7Y/m8Ehg1qDvqzr2FM36BAoGAHODUWRpijP5X5qa3EBLH\nfNyEDvflgaDcjen+EaySF4uGaIFQDk+rj4SUVSXynNZ9vWL5vU3PusF1yiMP918n\nNiSe108I4aiA7M7FLeNndFLfFsgKjyJ3cHGpiWcNsJUt1zNIXojCUrk7GSHOjaly\nXm0Qd0Lmh+h4G0sUCuIrZ2U=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@storm-3738seh.iam.gserviceaccount.com",
+  "client_id": "103858492642850467623",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40storm-3738seh.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
+# ⚠️ BOT DEV BY : ARGHO .
+
+# ==========================================
 # Premium Emoji Dictionary
 # ==========================================
 PEM = {
@@ -188,47 +206,25 @@ def lang_full(lang_code):
     return LANG_FULL_NAMES.get(code, code.title() if code else "English")
 
 def fmt_payout(val):
-    """Show EXACTLY what admin set / what user earned.
-    No rounding, no float noise, no '0.008 → 0.01'.
-
-    Examples:
-        0.008       → '0.008'
-        0.0003      → '0.0003'
-        0.00000002  → '0.00000002'
-        0.000000001 → '0.000000001'
-        0.009       → '0.009'
-        0.025       → '0.025'
-        0.003       → '0.003'
-        0.1         → '0.10'
-        30          → '30.00'
-        30.5        → '30.50'
-    """
+    """Show EXACTLY what admin set / what user earned. Kills float noise."""
     try:
         f = float(val)
     except Exception:
         return "0.00"
-
     if f == 0:
         return "0.00"
-
+    f = round(f, 12)
+    if f == 0:
+        return "0.00"
     s = repr(f)
-
     if 'e' in s or 'E' in s:
         s = f"{f:.20f}".rstrip('0').rstrip('.')
-
     if '.' in s:
         s = s.rstrip('0').rstrip('.')
-
     if not s:
         s = "0"
-
     if '.' not in s:
         s += ".00"
-    else:
-        int_part, dec_part = s.split('.')
-        if len(dec_part) == 1:
-            s = f"{int_part}.{dec_part}0"
-
     return s
 
 def get_by_path(obj, path):
@@ -433,7 +429,7 @@ DEFAULT_CUSTOM_MESSAGES = {
 }
 
 # ==========================================
-# 💾 STROM_DATA — Centralized Persistent Storage
+# 💾 STROM_DATA — Local Fallback Storage
 # ==========================================
 STROM_DATA_DIR = "STROM_DATA"
 try:
@@ -596,7 +592,7 @@ def sqlite_kv_set(key, value):
 
 
 # ==========================================
-# 🔥 Firebase Setup — OPTIONAL, NON-DESTRUCTIVE
+# 🔥 Firebase Setup — from EMBEDDED dict (no JSON file needed)
 # ==========================================
 db = None
 _fb_result = {"db": None, "done": False}
@@ -605,27 +601,14 @@ _fb_result = {"db": None, "done": False}
 def _try_firebase_init():
     global current_db_mode
     try:
-        json_files = (glob.glob("*firebase-adminsdk*.json")
-                      + glob.glob("*storm_bot_data*.json")
-                      + glob.glob("*storm-bot-data*.json")
-                      + glob.glob("*sadikul*.json")
-                      + glob.glob("*serviceAccount*.json"))
-        valid_files = []
-        for f in json_files:
-            try:
-                with open(f, "r", encoding="utf-8") as fh:
-                    d = json.load(fh)
-                    if d.get("type") == "service_account" and "private_key" in d:
-                        valid_files.append(f)
-            except Exception:
-                continue
-        if not valid_files:
-            print("⚠️  Firebase JSON not found — SQLite-only mode")
+        if not FIREBASE_STORM_DATA or FIREBASE_STORM_DATA.get("project_id") == "storm-x-one" and FIREBASE_STORM_DATA.get("private_key_id") == "PLACEHOLDER_KEY_ID":
+            # Placeholder values not replaced — skip Firebase
+            print("⚠️  Firebase embedded credentials not configured (still PLACEHOLDER)")
+            print("⚠️  SQLite-only mode active")
+            current_db_mode = "sqlite"
             _fb_result["done"] = True
             return
-        creds_path = valid_files[0]
-        print(f"📁 Firebase credentials: {creds_path}")
-        cred = credentials.Certificate(creds_path)
+        cred = credentials.Certificate(FIREBASE_STORM_DATA)
         if not firebase_admin._apps:
             firebase_admin.initialize_app(cred)
         _db = firestore.client()
@@ -636,10 +619,10 @@ def _try_firebase_init():
         _fb_result["db"] = _db
         _fb_result["done"] = True
         current_db_mode = "firebase"
-        print("✅ Firebase Connected (SQLite remains primary local cache)")
+        print("✅ Firebase Connected (Cloud = PRIMARY DB, SQLite = local fallback)")
     except Exception as e:
         print(f"⚠️  Firebase unavailable: {type(e).__name__}")
-        print("✅ SQLite-only mode active")
+        print("✅ SQLite-only mode active (local DB will be used)")
         current_db_mode = "sqlite"
         _fb_result["done"] = True
 
@@ -786,6 +769,21 @@ def load_service_txt():
     return loaded
 
 
+def _rewrite_service_txt():
+    """Rewrite service.txt from current premium_apps so /setservice changes survive restart."""
+    try:
+        with open(SERVICE_TXT_FILE, "w", encoding='utf-8') as f:
+            f.write("# service.txt\n# Format: ServiceName { \"emoji\": \"📱\", \"id\": \"5334807341109908955\" }\n")
+            for name, data in bot_settings.get("premium_apps", {}).items():
+                char = data.get("char", "📱")
+                eid = data.get("id", "")
+                if not eid:
+                    continue
+                f.write(f'{name} {{ "emoji": "{char}", "id": "{eid}" }}\n')
+    except Exception as e:
+        print(f"⚠️  _rewrite_service_txt: {type(e).__name__}")
+
+
 COUNTRIES_DATA = {}
 try:
     if os.path.exists("countries.json"):
@@ -876,7 +874,7 @@ def fetch_cpt_panel_cdrs(p, session, check_url):
 
 
 # ==========================================
-# 🗄️ load_db / save_db
+# 🗄️ Firebase-First Load/Save Functions
 # ==========================================
 def _load_settings_from_sqlite():
     try:
@@ -923,12 +921,199 @@ def _persist_all_settings_to_sqlite():
         return False
 
 
+def _firestore_load_all_users():
+    """Load all users from Firestore into local cache + SQLite mirror. Non-destructive."""
+    if not db:
+        return 0
+    try:
+        count = 0
+        for doc in db.collection('users').stream():
+            try:
+                uid = int(doc.id)
+            except Exception:
+                continue
+            data = doc.to_dict() or {}
+            user_cache[uid] = {
+                "user_id": uid,
+                "balance": float(data.get("balance", 0.0) or 0.0),
+                "total_refers": int(data.get("total_refers", 0) or 0),
+                "total_otps": int(data.get("total_otps", 0) or 0),
+                "banned": bool(data.get("banned") or False),
+                "verified": bool(data.get("verified") or False),
+            }
+            if data.get("referred_by"):
+                try:
+                    user_cache[uid]["referred_by"] = int(data["referred_by"])
+                except Exception:
+                    pass
+            all_known_users.add(str(uid))
+            # Mirror into SQLite
+            try:
+                with sqlite_tx() as conn:
+                    if conn:
+                        conn.cursor().execute(
+                            "INSERT OR REPLACE INTO users(user_id,balance,total_refers,total_otps,banned,verified,referred_by,ref_paid,created_at,updated_at) "
+                            "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                            (uid,
+                             float(data.get("balance", 0.0) or 0.0),
+                             int(data.get("total_refers", 0) or 0),
+                             int(data.get("total_otps", 0) or 0),
+                             1 if data.get("banned") else 0,
+                             1 if data.get("verified") else 0,
+                             int(data["referred_by"]) if data.get("referred_by") else None,
+                             1 if data.get("ref_paid") else 0,
+                             time.time(), time.time())
+                        )
+            except Exception:
+                pass
+            count += 1
+        print(f"✅ Loaded {count} users from Firestore (mirrored to SQLite)")
+        return count
+    except Exception as e:
+        print(f"⚠️  _firestore_load_all_users: {type(e).__name__}")
+        return 0
+
+
+def _firestore_load_all_withdrawals():
+    """Load all withdrawals from Firestore into SQLite mirror. Non-destructive."""
+    if not db:
+        return 0
+    try:
+        count = 0
+        for doc in db.collection('withdrawals').stream():
+            try:
+                d = doc.to_dict() or {}
+                with sqlite_tx() as conn:
+                    if conn:
+                        conn.cursor().execute(
+                            "INSERT OR REPLACE INTO withdrawals(req_id,user_id,amount,method,number,full_name,status,timestamp) "
+                            "VALUES(?,?,?,?,?,?,?,?)",
+                            (str(doc.id),
+                             int(d.get("user_id") or 0),
+                             float(d.get("amount") or 0),
+                             str(d.get("method") or ""),
+                             str(d.get("number") or ""),
+                             str(d.get("full_name") or ""),
+                             str(d.get("status") or "pending"),
+                             float(d.get("timestamp").timestamp() if hasattr(d.get("timestamp"), "timestamp") else time.time()))
+                        )
+                count += 1
+            except Exception:
+                continue
+        print(f"✅ Loaded {count} withdrawals from Firestore")
+        return count
+    except Exception as e:
+        print(f"⚠️  _firestore_load_all_withdrawals: {type(e).__name__}")
+        return 0
+
+
+def _firestore_load_numbers():
+    """Load number batches + assigned + meta + traffic + stats from Firestore."""
+    global number_batches, used_numbers_list, stex_assigned_numbers, voltx_assigned_numbers
+    global total_uploaded_stats, total_assigned_stats, recent_traffic, assigned_number_meta
+    if not db:
+        return 0
+    loaded = 0
+    try:
+        # Number batches
+        nb_doc = db.collection('numbers').document('all_batches').get(timeout=10.0)
+        if nb_doc.exists:
+            data = nb_doc.to_dict() or {}
+            batches = data.get("batches", {})
+            if batches:
+                number_batches.clear()
+                number_batches.update(batches)
+                loaded += 1
+    except Exception as e:
+        print(f"⚠️  Load numbers: {type(e).__name__}")
+    try:
+        # Assigned numbers
+        asgn_doc = db.collection('assigned_numbers').document('all').get(timeout=10.0)
+        if asgn_doc.exists:
+            data = asgn_doc.to_dict() or {}
+            stex_assigned_numbers.clear()
+            stex_assigned_numbers.update(data.get("stex", {}))
+            voltx_assigned_numbers.clear()
+            voltx_assigned_numbers.update(data.get("voltx", {}))
+            assigned_number_meta.clear()
+            assigned_number_meta.update(data.get("meta", {}))
+            loaded += 1
+    except Exception as e:
+        print(f"⚠️  Load assigned: {type(e).__name__}")
+    try:
+        # Used numbers
+        used_doc = db.collection('used_numbers').document('all').get(timeout=10.0)
+        if used_doc.exists:
+            data = used_doc.to_dict() or {}
+            used_numbers_list.clear()
+            used_numbers_list.extend(data.get("list", []))
+            loaded += 1
+    except Exception as e:
+        print(f"⚠️  Load used: {type(e).__name__}")
+    try:
+        # Traffic
+        tr_doc = db.collection('traffic').document('recent').get(timeout=10.0)
+        if tr_doc.exists:
+            data = tr_doc.to_dict() or {}
+            recent_traffic.clear()
+            recent_traffic.extend(data.get("entries", []))
+            loaded += 1
+    except Exception as e:
+        print(f"⚠️  Load traffic: {type(e).__name__}")
+    try:
+        # Stats
+        st_doc = db.collection('stats').document('counters').get(timeout=10.0)
+        if st_doc.exists:
+            data = st_doc.to_dict() or {}
+            total_uploaded_stats = int(data.get("total_uploaded", 0) or 0)
+            total_assigned_stats = int(data.get("total_assigned", 0) or 0)
+            loaded += 1
+    except Exception as e:
+        print(f"⚠️  Load stats: {type(e).__name__}")
+    try:
+        # Pending referrals
+        for doc in db.collection('pending_referrals').stream():
+            try:
+                data = doc.to_dict() or {}
+                nuid = int(doc.id)
+                iid = int(data.get("inviter_id") or 0)
+                with sqlite_tx() as conn:
+                    if conn:
+                        conn.cursor().execute(
+                            "INSERT OR IGNORE INTO pending_referrals(new_user_id, inviter_id, created_at) VALUES(?,?,?)",
+                            (nuid, iid, float(data.get("created_at") or time.time()))
+                        )
+            except Exception:
+                continue
+        loaded += 1
+    except Exception as e:
+        print(f"⚠️  Load pending referrals: {type(e).__name__}")
+    try:
+        # Referral paid users
+        for doc in db.collection('referral_paid_users').stream():
+            try:
+                with sqlite_tx() as conn:
+                    if conn:
+                        conn.cursor().execute(
+                            "INSERT OR IGNORE INTO referral_paid_users(user_id, paid_at) VALUES(?,?)",
+                            (int(doc.id), float((doc.to_dict() or {}).get("paid_at") or time.time()))
+                        )
+            except Exception:
+                continue
+        loaded += 1
+    except Exception as e:
+        print(f"⚠️  Load paid referrals: {type(e).__name__}")
+    return loaded
+
+
 def load_db():
     global bot_settings, number_batches, used_numbers_list, total_uploaded_stats, total_assigned_stats, recent_traffic
     global stex_assigned_numbers, voltx_assigned_numbers, current_db_mode
     print("Loading DB...")
 
-    if db:
+    if db and current_db_mode == "firebase":
+        # FIREBASE MODE: Firebase is the PRIMARY source
+        print("🔥 Firebase is PRIMARY — loading everything from Firestore...")
         try:
             doc = db.collection('settings').document('bot_config').get(timeout=8.0)
             if doc.exists:
@@ -936,21 +1121,73 @@ def load_db():
                 for k in FS_KEYS:
                     if k in fs_data:
                         bot_settings[k] = fs_data[k]
-                print("✅ Config merged from Firestore (non-destructive)")
+                print("✅ Settings loaded from Firestore")
             else:
                 try:
                     initial = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
                     db.collection('settings').document('bot_config').set(initial, timeout=8.0)
-                    print("✅ Firestore Config Initialized (first-time)")
+                    print("✅ Firestore Settings initialized (first-time)")
                 except Exception as _ie:
                     print(f"⚠️  Firestore init skipped: {type(_ie).__name__}")
         except Exception as e:
-            print(f"⚠️  Firestore load skipped ({type(e).__name__}) — SQLite remains authoritative")
+            print(f"⚠️  Firestore settings load failed: {type(e).__name__}")
 
-    try:
-        _load_settings_from_sqlite()
-    except Exception as e:
-        print(f"⚠️  SQLite settings load skipped: {type(e).__name__}")
+        try:
+            _firestore_load_all_users()
+        except Exception as e:
+            print(f"⚠️  Firestore users load: {type(e).__name__}")
+
+        try:
+            _firestore_load_all_withdrawals()
+        except Exception as e:
+            print(f"⚠️  Firestore withdrawals load: {type(e).__name__}")
+
+        try:
+            _firestore_load_numbers()
+        except Exception as e:
+            print(f"⚠️  Firestore numbers load: {type(e).__name__}")
+
+        # Mirror settings to SQLite too
+        try:
+            _persist_all_settings_to_sqlite()
+        except Exception as e:
+            print(f"⚠️  SQLite settings mirror: {type(e).__name__}")
+
+        # Mirror numbers/traffic to SQLite
+        try:
+            sqlite_kv_set("number_batches", number_batches)
+            sqlite_kv_set("used_numbers_list", used_numbers_list)
+            sqlite_kv_set("stex_assigned_numbers", stex_assigned_numbers)
+            sqlite_kv_set("voltx_assigned_numbers", voltx_assigned_numbers)
+            sqlite_kv_set("assigned_number_meta", assigned_number_meta)
+            sqlite_kv_set("recent_traffic", recent_traffic)
+            sqlite_kv_set("total_uploaded_stats", total_uploaded_stats)
+            sqlite_kv_set("total_assigned_stats", total_assigned_stats)
+            sqlite_kv_set("all_known_users", list(all_known_users))
+        except Exception:
+            pass
+
+        # Load flag.txt & service.txt (always local)
+        try:
+            flag_data = load_flag_txt()
+            if flag_data:
+                for code, fd in flag_data.items():
+                    bot_settings["premium_flags"][code] = fd
+        except Exception as e:
+            print(f"⚠️  Flag load error: {type(e).__name__}")
+        try:
+            service_data = load_service_txt()
+            if service_data:
+                for name, sd in service_data.items():
+                    bot_settings["premium_apps"][name] = sd
+        except Exception as e:
+            print(f"⚠️  Service load error: {type(e).__name__}")
+
+        print("✅ Firebase Mode: Everything loaded from Firestore")
+        return
+
+    # SQLITE FALLBACK MODE
+    print("💾 SQLite is PRIMARY (Firebase unavailable)")
 
     if os.path.exists(DB_FILE):
         try:
@@ -975,9 +1212,37 @@ def load_db():
             stex_assigned_numbers = data.get("stex_assigned_numbers", {}) or {}
             voltx_assigned_numbers = data.get("voltx_assigned_numbers", {}) or {}
             assigned_number_meta.update(data.get("assigned_number_meta", {}) or {})
-            print("✅ Local JSON state loaded")
+            print("✅ Local JSON loaded")
         except Exception as e:
             print(f"⚠️  Local JSON load failed: {type(e).__name__}")
+
+    try:
+        _load_settings_from_sqlite()
+    except Exception as e:
+        print(f"⚠️  SQLite settings load skipped: {type(e).__name__}")
+
+    # Also load KV-store numbers
+    try:
+        kv_nb = sqlite_kv_get("number_batches")
+        if kv_nb and not number_batches:
+            number_batches.update(kv_nb)
+        kv_used = sqlite_kv_get("used_numbers_list")
+        if kv_used and not used_numbers_list:
+            used_numbers_list.extend(kv_used)
+        kv_stex = sqlite_kv_get("stex_assigned_numbers")
+        if kv_stex and not stex_assigned_numbers:
+            stex_assigned_numbers.update(kv_stex)
+        kv_voltx = sqlite_kv_get("voltx_assigned_numbers")
+        if kv_voltx and not voltx_assigned_numbers:
+            voltx_assigned_numbers.update(kv_voltx)
+        kv_meta = sqlite_kv_get("assigned_number_meta")
+        if kv_meta and not assigned_number_meta:
+            assigned_number_meta.update(kv_meta)
+        kv_traf = sqlite_kv_get("recent_traffic")
+        if kv_traf and not recent_traffic:
+            recent_traffic.extend(kv_traf)
+    except Exception as e:
+        print(f"⚠️  KV store load: {type(e).__name__}")
 
     try:
         ul = sqlite_kv_get("all_known_users")
@@ -1009,6 +1274,7 @@ def load_db():
 
 
 def save_local_db():
+    """Save to local JSON + SQLite mirror (always, even in Firebase mode)."""
     local_data = {
         "bot_settings": {k: v for k, v in bot_settings.items() if k not in FS_KEYS},
         "number_batches": number_batches,
@@ -1035,25 +1301,65 @@ def save_local_db():
         sqlite_kv_set("stex_assigned_numbers", stex_assigned_numbers)
         sqlite_kv_set("voltx_assigned_numbers", voltx_assigned_numbers)
         sqlite_kv_set("assigned_number_meta", assigned_number_meta)
+        sqlite_kv_set("all_known_users", list(all_known_users))
     except Exception as e:
         print(f"⚠️  save_local_db (sqlite): {type(e).__name__}")
 
 
-def _sync_fs():
+def _firestore_save_numbers():
+    """Push numbers/assigned/traffic/stats to Firestore (non-destructive merge)."""
+    if not db or current_db_mode != "firebase":
+        return
+    try:
+        db.collection('numbers').document('all_batches').set(
+            {"batches": number_batches}, merge=True, timeout=15.0)
+    except Exception as e:
+        print(f"⚠️  FS save numbers: {type(e).__name__}")
+    try:
+        db.collection('assigned_numbers').document('all').set({
+            "stex": stex_assigned_numbers,
+            "voltx": voltx_assigned_numbers,
+            "meta": assigned_number_meta
+        }, merge=True, timeout=15.0)
+    except Exception as e:
+        print(f"⚠️  FS save assigned: {type(e).__name__}")
+    try:
+        db.collection('used_numbers').document('all').set(
+            {"list": used_numbers_list}, merge=True, timeout=15.0)
+    except Exception as e:
+        print(f"⚠️  FS save used: {type(e).__name__}")
+    try:
+        db.collection('traffic').document('recent').set(
+            {"entries": recent_traffic[-500:]}, merge=True, timeout=15.0)
+    except Exception as e:
+        print(f"⚠️  FS save traffic: {type(e).__name__}")
+    try:
+        db.collection('stats').document('counters').set({
+            "total_uploaded": total_uploaded_stats,
+            "total_assigned": total_assigned_stats
+        }, merge=True, timeout=15.0)
+    except Exception as e:
+        print(f"⚠️  FS save stats: {type(e).__name__}")
+
+
+def _firestore_save_settings():
     if not db:
         return
     try:
         payload = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
         db.collection('settings').document('bot_config').set(payload, merge=True, timeout=8.0)
     except Exception as e:
-        print(f"⚠️  Firestore sync failed: {type(e).__name__}")
+        print(f"⚠️  Firestore settings save failed: {type(e).__name__}")
 
 
 def save_db():
+    """Always mirror to SQLite + JSON. If Firebase active, push to Firebase (main)."""
     save_local_db()
     _persist_all_settings_to_sqlite()
-    if db:
-        threading.Thread(target=_sync_fs, daemon=True).start()
+    if db and current_db_mode == "firebase":
+        # Firestore is MAIN DB
+        threading.Thread(target=_firestore_save_settings, daemon=True).start()
+        threading.Thread(target=_firestore_save_numbers, daemon=True).start()
 
 
 def _bg_load_db():
@@ -1197,6 +1503,17 @@ def _save_users_list():
     try:
         sqlite_kv_set("all_known_users", list(all_known_users))
     except Exception: pass
+    if db and current_db_mode == "firebase":
+        try:
+            # Firestore: just create user doc for each known user_id
+            for uid in list(all_known_users):
+                try:
+                    db.collection('users').document(str(uid)).set(
+                        {"user_id": int(uid)}, merge=True, timeout=5.0)
+                except Exception:
+                    continue
+        except Exception:
+            pass
 
 
 def register_user_local(uid):
@@ -1620,14 +1937,9 @@ def attempt_auto_login(p, idx):
 
 
 # ==========================================
-# User Cache / Balance / OTP Credit
+# User Cache / Balance / OTP Credit — FIREBASE-FIRST
 # ==========================================
 user_cache = {}
-
-
-def _sqlite_user_exists(user_id):
-    row = sqlite_exec("SELECT user_id FROM users WHERE user_id=?", (int(user_id),), fetch="one")
-    return row is not None
 
 
 def _sqlite_ensure_user(user_id):
@@ -1650,28 +1962,12 @@ def _sqlite_ensure_user(user_id):
 
 
 def get_user(user_id):
+    """Read user — Firebase is MAIN when active, SQLite is fallback."""
     if user_id in user_cache:
         return user_cache[user_id]
 
-    row = sqlite_exec(
-        "SELECT user_id,balance,total_refers,total_otps,banned,verified,referred_by,ref_paid "
-        "FROM users WHERE user_id=?", (int(user_id),), fetch="one"
-    )
-    if row:
-        data = {
-            "user_id": int(row["user_id"]),
-            "balance": float(row.get("balance") or 0.0),
-            "total_refers": int(row.get("total_refers") or 0),
-            "total_otps": int(row.get("total_otps") or 0),
-            "banned": bool(row.get("banned") or 0),
-            "verified": bool(row.get("verified") or 0),
-        }
-        if row.get("referred_by"):
-            data["referred_by"] = int(row["referred_by"])
-        user_cache[int(user_id)] = data
-        return data
-
-    if db:
+    # FIREBASE MODE
+    if db and current_db_mode == "firebase":
         try:
             doc_ref = db.collection('users').document(str(user_id))
             doc = doc_ref.get(timeout=5.0)
@@ -1684,6 +1980,7 @@ def get_user(user_id):
                 data.setdefault("banned", False)
                 data.setdefault("verified", False)
                 user_cache[int(user_id)] = data
+                # Mirror into SQLite
                 _sqlite_ensure_user(user_id)
                 try:
                     with sqlite_tx() as conn:
@@ -1703,49 +2000,98 @@ def get_user(user_id):
                 except Exception:
                     pass
                 return data
+            else:
+                # New user — create in Firebase + mirror
+                new_user = {"user_id": int(user_id), "balance": 0.0, "total_refers": 0,
+                            "total_otps": 0, "banned": False, "verified": False}
+                try:
+                    doc_ref.set(new_user, timeout=5.0)
+                except Exception as e:
+                    print(f"⚠️  FS create user: {type(e).__name__}")
+                user_cache[int(user_id)] = new_user
+                _sqlite_ensure_user(user_id)
+                return new_user
         except Exception as e:
-            print(f"⚠️  get_user Firebase read ({user_id}): {type(e).__name__}")
+            print(f"⚠️  Firebase read user ({user_id}): {type(e).__name__} — falling back to SQLite")
+
+    # SQLITE FALLBACK
+    row = sqlite_exec(
+        "SELECT user_id,balance,total_refers,total_otps,banned,verified,referred_by,ref_paid "
+        "FROM users WHERE user_id=?", (int(user_id),), fetch="one"
+    )
+    if row:
+        data = {
+            "user_id": int(row["user_id"]),
+            "balance": float(row.get("balance") or 0.0),
+            "total_refers": int(row.get("total_refers") or 0),
+            "total_otps": int(row.get("total_otps") or 0),
+            "banned": bool(row.get("banned") or 0),
+            "verified": bool(row.get("verified") or 0),
+        }
+        if row.get("referred_by"):
+            data["referred_by"] = int(row["referred_by"])
+        user_cache[int(user_id)] = data
+        return data
 
     new_user = {"user_id": int(user_id), "balance": 0.0, "total_refers": 0,
                 "total_otps": 0, "banned": False, "verified": False}
     user_cache[int(user_id)] = new_user
     _sqlite_ensure_user(user_id)
-    if db:
-        try:
-            db.collection('users').document(str(user_id)).set(new_user, merge=True, timeout=5.0)
-        except Exception as e:
-            print(f"⚠️  get_user Firestore create ({user_id}): {type(e).__name__}")
     return new_user
 
 
 def update_balance(user_id, amount):
+    """Update balance — Firebase is MAIN when active."""
     uid = int(user_id)
     amt = float(amount)
 
+    # Always update cache first
+    if uid not in user_cache:
+        get_user(uid)
+    if uid in user_cache:
+        user_cache[uid]["balance"] = float(user_cache[uid].get("balance", 0.0)) + amt
+
+    # FIREBASE MODE
+    if db and current_db_mode == "firebase":
+        try:
+            db.collection('users').document(str(uid)).set({
+                "user_id": uid,
+                "balance": firestore.Increment(amt)
+            }, merge=True, timeout=5.0)
+        except Exception as e:
+            print(f"⚠️  update_balance Firestore ({uid}): {type(e).__name__}")
+            # fallback to SQLite mirror
+            try:
+                _sqlite_ensure_user(uid)
+                with sqlite_tx() as conn:
+                    if conn:
+                        conn.cursor().execute(
+                            "UPDATE users SET balance = COALESCE(balance,0) + ?, updated_at=? WHERE user_id=?",
+                            (amt, time.time(), uid))
+            except Exception:
+                pass
+        # Always mirror to SQLite too
+        try:
+            _sqlite_ensure_user(uid)
+            with sqlite_tx() as conn:
+                if conn:
+                    conn.cursor().execute(
+                        "UPDATE users SET balance = COALESCE(balance,0) + ?, updated_at=? WHERE user_id=?",
+                        (amt, time.time(), uid))
+        except Exception:
+            pass
+        return
+
+    # SQLITE MODE
     try:
         _sqlite_ensure_user(uid)
         with sqlite_tx() as conn:
             if conn:
                 conn.cursor().execute(
                     "UPDATE users SET balance = COALESCE(balance,0) + ?, updated_at=? WHERE user_id=?",
-                    (amt, time.time(), uid)
-                )
+                    (amt, time.time(), uid))
     except Exception as e:
         print(f"⚠️  update_balance SQLite ({uid}): {type(e).__name__}")
-
-    if uid not in user_cache:
-        get_user(uid)
-    if uid in user_cache:
-        user_cache[uid]["balance"] = float(user_cache[uid].get("balance", 0.0)) + amt
-
-    if db:
-        try:
-            db.collection('users').document(str(uid)).set(
-                {"user_id": uid, "balance": firestore.Increment(amt)},
-                merge=True, timeout=5.0
-            )
-        except Exception as e:
-            print(f"⚠️  update_balance Firestore ({uid}): {type(e).__name__}")
 
 
 def credit_otp_to_user(owner_id, reward, app_full_name=""):
@@ -1755,25 +2101,15 @@ def credit_otp_to_user(owner_id, reward, app_full_name=""):
         reward = 0.0
     uid = int(owner_id)
 
-    try:
-        _sqlite_ensure_user(uid)
-        with sqlite_tx() as conn:
-            if conn:
-                conn.cursor().execute(
-                    "UPDATE users SET balance = COALESCE(balance,0) + ?, "
-                    "total_otps = COALESCE(total_otps,0) + 1, updated_at=? WHERE user_id=?",
-                    (reward, time.time(), uid)
-                )
-    except Exception as e:
-        print(f"⚠️  credit_otp_to_user SQLite ({uid}): {type(e).__name__}")
-
+    # Cache
     if uid not in user_cache:
         get_user(uid)
     if uid in user_cache:
         user_cache[uid]["balance"] = float(user_cache[uid].get("balance", 0.0)) + reward
         user_cache[uid]["total_otps"] = int(user_cache[uid].get("total_otps", 0)) + 1
 
-    if db:
+    # FIREBASE MODE
+    if db and current_db_mode == "firebase":
         try:
             db.collection('users').document(str(uid)).set({
                 "user_id": uid,
@@ -1781,13 +2117,37 @@ def credit_otp_to_user(owner_id, reward, app_full_name=""):
                 "total_otps": firestore.Increment(1)
             }, merge=True, timeout=5.0)
         except Exception as e:
-            print(f"⚠️  credit_otp_to_user Firestore ({uid}): {type(e).__name__}")
+            print(f"⚠️  credit_otp Firestore ({uid}): {type(e).__name__}")
+        # Mirror to SQLite
+        try:
+            _sqlite_ensure_user(uid)
+            with sqlite_tx() as conn:
+                if conn:
+                    conn.cursor().execute(
+                        "UPDATE users SET balance = COALESCE(balance,0) + ?, "
+                        "total_otps = COALESCE(total_otps,0) + 1, updated_at=? WHERE user_id=?",
+                        (reward, time.time(), uid))
+        except Exception:
+            pass
+        return reward
+
+    # SQLITE MODE
+    try:
+        _sqlite_ensure_user(uid)
+        with sqlite_tx() as conn:
+            if conn:
+                conn.cursor().execute(
+                    "UPDATE users SET balance = COALESCE(balance,0) + ?, "
+                    "total_otps = COALESCE(total_otps,0) + 1, updated_at=? WHERE user_id=?",
+                    (reward, time.time(), uid))
+    except Exception as e:
+        print(f"⚠️  credit_otp SQLite ({uid}): {type(e).__name__}")
 
     return reward
 
 
 # ==========================================
-# 🎁 REFERRAL SYSTEM
+# 🎁 REFERRAL SYSTEM — FIREBASE-FIRST
 # ==========================================
 def process_referral_for_user(new_user_id, inviter_id):
     try:
@@ -1795,22 +2155,38 @@ def process_referral_for_user(new_user_id, inviter_id):
         iid = int(inviter_id)
         if nuid == iid:
             return False
-        row = sqlite_exec("SELECT user_id FROM referral_paid_users WHERE user_id=?", (nuid,), fetch="one")
-        if row:
-            return False
-        row2 = sqlite_exec("SELECT inviter_id FROM pending_referrals WHERE new_user_id=?", (nuid,), fetch="one")
-        if row2 and int(row2["inviter_id"]) == iid:
-            return False
-        if row2:
-            return False
-        with sqlite_tx() as conn:
-            if conn is None:
-                return False
-            conn.cursor().execute(
-                "INSERT OR IGNORE INTO pending_referrals(new_user_id, inviter_id, created_at) VALUES(?,?,?)",
-                (nuid, iid, time.time()),
-            )
+
+        # Check Firebase if active
+        if db and current_db_mode == "firebase":
+            try:
+                paid = db.collection('referral_paid_users').document(str(nuid)).get(timeout=5.0)
+                if paid.exists:
+                    return False
+                pend = db.collection('pending_referrals').document(str(nuid)).get(timeout=5.0)
+                if pend.exists:
+                    pd = pend.to_dict() or {}
+                    if int(pd.get("inviter_id") or 0) == iid:
+                        return False
+                    return False
+                # Save to Firebase
+                db.collection('pending_referrals').document(str(nuid)).set({
+                    "new_user_id": nuid,
+                    "inviter_id": iid,
+                    "created_at": time.time()
+                }, timeout=5.0)
+                db.collection('users').document(str(nuid)).set(
+                    {"referred_by": iid, "ref_paid": False}, merge=True, timeout=5.0)
+            except Exception as e:
+                print(f"⚠️  Referral Firebase: {type(e).__name__}")
+
+        # Mirror to SQLite
         try:
+            with sqlite_tx() as conn:
+                if conn:
+                    conn.cursor().execute(
+                        "INSERT OR IGNORE INTO pending_referrals(new_user_id, inviter_id, created_at) VALUES(?,?,?)",
+                        (nuid, iid, time.time()),
+                    )
             _sqlite_ensure_user(nuid)
             with sqlite_tx() as conn:
                 if conn:
@@ -1820,13 +2196,6 @@ def process_referral_for_user(new_user_id, inviter_id):
                     )
         except Exception:
             pass
-        if db:
-            try:
-                db.collection('users').document(str(nuid)).set(
-                    {"referred_by": iid, "ref_paid": False}, merge=True, timeout=5.0
-                )
-            except Exception as e:
-                print(f"⚠️  process_referral Firestore ({nuid}): {type(e).__name__}")
         return True
     except Exception as e:
         print(f"⚠️  process_referral_for_user: {type(e).__name__}")
@@ -1836,58 +2205,69 @@ def process_referral_for_user(new_user_id, inviter_id):
 def check_and_pay_referral_for_user(new_user_id):
     try:
         nuid = int(new_user_id)
-        paid = sqlite_exec("SELECT user_id FROM referral_paid_users WHERE user_id=?", (nuid,), fetch="one")
-        if paid:
-            return False
-        pend = sqlite_exec("SELECT inviter_id FROM pending_referrals WHERE new_user_id=?", (nuid,), fetch="one")
-        if not pend:
-            return False
-        iid = int(pend["inviter_id"])
+        iid = None
         reward = float(bot_settings.get("refer_reward", 0.2))
 
-        try:
-            _sqlite_ensure_user(iid)
-            with sqlite_tx() as conn:
-                if conn is None:
-                    return False
-                cur = conn.cursor()
-                cur.execute(
-                    "INSERT OR IGNORE INTO referral_paid_users(user_id, paid_at) VALUES(?,?)",
-                    (nuid, time.time())
-                )
-                if cur.rowcount == 0:
-                    return False
-                cur.execute(
-                    "UPDATE users SET balance = COALESCE(balance,0) + ?, "
-                    "total_refers = COALESCE(total_refers,0) + 1, updated_at=? WHERE user_id=?",
-                    (reward, time.time(), iid)
-                )
-                cur.execute(
-                    "UPDATE users SET ref_paid=1 WHERE user_id=?", (nuid,)
-                )
-                cur.execute("DELETE FROM pending_referrals WHERE new_user_id=?", (nuid,))
-        except Exception as e:
-            print(f"⚠️  check_and_pay_referral SQLite: {type(e).__name__}")
-            return False
-
-        if iid not in user_cache:
-            get_user(iid)
-        if iid in user_cache:
-            user_cache[iid]["balance"] = float(user_cache[iid].get("balance", 0.0)) + reward
-            user_cache[iid]["total_refers"] = int(user_cache[iid].get("total_refers", 0)) + 1
-
-        if db:
+        # Check Firebase
+        if db and current_db_mode == "firebase":
             try:
+                paid = db.collection('referral_paid_users').document(str(nuid)).get(timeout=5.0)
+                if paid.exists:
+                    return False
+                pend = db.collection('pending_referrals').document(str(nuid)).get(timeout=5.0)
+                if not pend.exists:
+                    return False
+                iid = int((pend.to_dict() or {}).get("inviter_id") or 0)
+                if not iid:
+                    return False
+                # Mark paid + credit inviter (atomic-ish)
+                db.collection('referral_paid_users').document(str(nuid)).set({
+                    "user_id": nuid, "paid_at": time.time()
+                }, timeout=5.0)
                 db.collection('users').document(str(iid)).set({
                     "user_id": iid,
                     "balance": firestore.Increment(reward),
                     "total_refers": firestore.Increment(1)
                 }, merge=True, timeout=5.0)
                 db.collection('users').document(str(nuid)).set(
-                    {"ref_paid": True}, merge=True, timeout=5.0
-                )
+                    {"ref_paid": True}, merge=True, timeout=5.0)
+                try:
+                    db.collection('pending_referrals').document(str(nuid)).delete(timeout=5.0)
+                except Exception:
+                    pass
             except Exception as e:
-                print(f"⚠️  check_and_pay_referral Firestore: {type(e).__name__}")
+                print(f"⚠️  Check-pay referral Firebase: {type(e).__name__}")
+                iid = None
+
+        # SQLite fallback path
+        if iid is None:
+            pend = sqlite_exec("SELECT inviter_id FROM pending_referrals WHERE new_user_id=?", (nuid,), fetch="one")
+            if not pend:
+                return False
+            iid = int(pend["inviter_id"])
+            paid_row = sqlite_exec("SELECT user_id FROM referral_paid_users WHERE user_id=?", (nuid,), fetch="one")
+            if paid_row:
+                return False
+            _sqlite_ensure_user(iid)
+            with sqlite_tx() as conn:
+                if conn:
+                    cur = conn.cursor()
+                    cur.execute("INSERT OR IGNORE INTO referral_paid_users(user_id, paid_at) VALUES(?,?)",
+                                (nuid, time.time()))
+                    if cur.rowcount == 0:
+                        return False
+                    cur.execute("UPDATE users SET balance = COALESCE(balance,0) + ?, "
+                                "total_refers = COALESCE(total_refers,0) + 1, updated_at=? WHERE user_id=?",
+                                (reward, time.time(), iid))
+                    cur.execute("UPDATE users SET ref_paid=1 WHERE user_id=?", (nuid,))
+                    cur.execute("DELETE FROM pending_referrals WHERE new_user_id=?", (nuid,))
+
+        # Cache update
+        if iid not in user_cache:
+            get_user(iid)
+        if iid in user_cache:
+            user_cache[iid]["balance"] = float(user_cache[iid].get("balance", 0.0)) + reward
+            user_cache[iid]["total_refers"] = int(user_cache[iid].get("total_refers", 0)) + 1
 
         ref_msg = (
             f"{PEM['gift']} <b>New Referral !</b>\n"
@@ -2035,7 +2415,7 @@ def get_wmethod_display_list():
 
 # ==========================================
 # Group OTP Display Formatter
-# 🇳🇬NG | 📱 | +2348🔹334 | ✉️English
+# 🇳🇬NG | 📱 | +2348🔹881 | ✉️ English
 # ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
     clean = str(num).lstrip('+').replace(" ", "")
@@ -2064,7 +2444,7 @@ def format_otp_display(num, app_full_name, lang, masked=True):
         f"{flag_html}<b>{iso}</b> | "
         f"{svc_html} | "
         f"{num_part} | "
-        f'<tg-emoji emoji-id="{MESSAGE_EMOJI}">✉️</tg-emoji><b>{lang_display}</b>'
+        f'<tg-emoji emoji-id="{MESSAGE_EMOJI}">✉️</tg-emoji> <b>{lang_display}</b>'
     )
 
 
@@ -2137,7 +2517,7 @@ def build_stock_broadcast_new(country_display, service_name, count, per_otp,
 
 
 # ==========================================
-# build_numbers_header — 10 braille blanks indent
+# build_numbers_header
 # ==========================================
 def build_numbers_header(country, service=None):
     HEADER_EMOJI_1 = "6282641460093260838"
@@ -2172,12 +2552,12 @@ def build_numbers_header(country, service=None):
 
     country_display = html.escape(str(country).upper())
 
-    indent = "⠀⠀⠀⠀"   # 10 braille blanks
+    indent = "⠀⠀⠀⠀⠀"
 
     header = (
         f"{indent}{money_icon}<b>{payout_str}$/OTP</b>{rock_icon}\n"
         f"\n"
-        f"{gear_icon}<b>THIS IS YOUR</b>{phone_icon_2}<b>{country_display}</b>"
+        f"{gear_icon} <b>YOUR</b>{phone_icon_2}<b>{country_display}</b>"
         f"{flag_html}<b>NUMBERS</b>{phone_icon_end}"
     )
     return render_body_text(header)
@@ -2276,7 +2656,7 @@ def get_service_info_html(service_text, msg_text=""):
     clean_s = re.sub(r'[^\w\s]', '', detected_service).strip()
     for app_name, data in apps.items():
         if app_name == detected_service or app_name == clean_s or app_name in detected_service or detected_service in app_name:
-            full_name = data.get("name", app_name.title())
+            full_name = detected_service
             char = data.get("char", "📱")
             if re.match(r'^[A-Za-z0-9#]{1,4}$', str(char)):
                 char = "📱"
@@ -2297,10 +2677,10 @@ def get_premium_app(service_name):
             char = ad.get("char", "📱")
             if re.match(r'^[A-Za-z0-9#]{1,4}$', str(char)):
                 char = "📱"
-            return {"name": ad.get("name", ak.title()), "emoji": char, "id": ad.get("id")}
+            return {"name": service_name, "emoji": char, "id": ad.get("id")}
     for sk in SERVICE_SMS_KEYWORDS.keys():
         if sk.upper() == ku or sk.upper() in ku or ku in sk.upper():
-            return {"name": sk.title(), "emoji": "📱", "id": None}
+            return {"name": service_name, "emoji": "📱", "id": None}
     return {"name": service_name, "emoji": "📱", "id": None}
 
 
@@ -2383,15 +2763,19 @@ def is_user_banned(user_id):
     if user_id in user_banned_cache and time.time() - user_banned_cache[user_id]['time'] < 60:
         return user_banned_cache[user_id]['banned']
     banned = False
-    row = sqlite_exec("SELECT banned FROM users WHERE user_id=?", (int(user_id),), fetch="one")
-    if row is not None:
-        banned = bool(row.get("banned") or 0)
-    elif db:
+    if db and current_db_mode == "firebase":
         try:
             doc = db.collection('users').document(str(user_id)).get(timeout=5.0)
             banned = doc.exists and (doc.to_dict() or {}).get("banned", False)
         except Exception as e:
-            print(f"⚠️  is_user_banned Firestore ({user_id}): {type(e).__name__}")
+            print(f"⚠️  is_user_banned FS ({user_id}): {type(e).__name__}")
+            row = sqlite_exec("SELECT banned FROM users WHERE user_id=?", (int(user_id),), fetch="one")
+            if row is not None:
+                banned = bool(row.get("banned") or 0)
+    else:
+        row = sqlite_exec("SELECT banned FROM users WHERE user_id=?", (int(user_id),), fetch="one")
+        if row is not None:
+            banned = bool(row.get("banned") or 0)
     user_banned_cache[user_id] = {'banned': banned, 'time': time.time()}
     return banned
 
@@ -2415,9 +2799,6 @@ def build_group_kb(otp_value, fw=None):
     return {"inline_keyboard": kb}
 
 
-# ==========================================
-# Withdrawal group message — "NEW WITHDRAW REUQUEST"
-# ==========================================
 def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id):
     frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
     web_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>'
@@ -2442,10 +2823,6 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
     return render_body_text(txt)
 
 
-# ==========================================
-# Withdrawal status message
-# APPROVED → 🕸️  |  REJECTED → ❌
-# ==========================================
 def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method, req_id):
     if action == "APPROVE" and len(number) >= 7:
         masked_num = f"{number[:4]}❖STR❖{number[-3:]}"
@@ -2478,9 +2855,6 @@ def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method,
     return render_body_text(txt)
 
 
-# ==========================================
-# Withdrawal BALANCE HOLD / REFUND helpers
-# ==========================================
 def hold_withdrawal_balance(user_id, amount):
     try:
         update_balance(user_id, -float(amount))
@@ -2638,8 +3012,7 @@ def panel_monitor_thread():
         except Exception:
             pass
         time.sleep(5)
-        
-# ==========================================
+        # ==========================================
 # UI Keyboards
 # ==========================================
 def get_cancel_kb():
@@ -2680,10 +3053,10 @@ def get_admin_text():
     yellow_icon = '<tg-emoji emoji-id="5339082633160703625">🟡</tg-emoji>'
     green_icon = '<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>'
     if db and current_db_mode == "firebase":
-        db_status = f"{green_icon} <b>FIREBASE ACTIVE</b>"
-        db_line2 = f"{green_icon} <b>SQLITE ACTIVE</b>"
+        db_status = f"{green_icon} <b>FIREBASE ACTIVE (MAIN)</b>"
+        db_line2 = f"{green_icon} <b>SQLITE MIRROR</b>"
     else:
-        db_status = f"{green_icon} <b>SQLITE ACTIVE</b>"
+        db_status = f"{green_icon} <b>SQLITE ACTIVE (MAIN)</b>"
         db_line2 = f"{yellow_icon} <b>FIREBASE OFF</b>"
 
     txt = f"""
@@ -2722,7 +3095,7 @@ def admin_panel_keyboard():
          {"text": "Delete files", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "delete_files", "style": "danger"}],
         [{"text": "Broadcast", "icon_custom_emoji_id": "5789428375261023681", "callback_data": "broadcast_msg", "style": "success"},
          {"text": "System", "icon_custom_emoji_id": "5420155432272438703", "callback_data": "system_settings", "style": "primary"}],
-        [{"text": "DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
+        [{"text": "📁DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
         [maint_btn],
         [{"text": "Used number", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "show_used", "style": "success"},
          {"text": "Unused number", "icon_custom_emoji_id": "5352597830089347330", "callback_data": "show_unused", "style": "success"}],
@@ -2740,7 +3113,6 @@ def database_menu_keyboard():
 
 
 def system_settings_keyboard(user_id=None):
-    # ⭐ ADMIN MANAGEMENT row — owner sees it, others don't
     if user_id == OWNER_ID:
         row2 = [
             {"text": "Force Join System", "icon_custom_emoji_id": "5420517437885943844", "callback_data": "manage_fj", "style": "primary"},
@@ -3047,9 +3419,6 @@ def purge_pending_search_prompts(chat_id, keep_msg_id=None):
             pass
 
 
-# ==========================================
-# Leaderboard position formatter
-# ==========================================
 def leaderboard_pos_emoji(rank):
     if rank == 10:
         return '<tg-emoji emoji-id="6309655288261644098">ℹ️</tg-emoji><tg-emoji emoji-id="6307374961275180239">🅾️</tg-emoji>'
@@ -3113,6 +3482,7 @@ def handle_message(msg):
         default_char = svc_name[0] if svc_name else "📱"
         bot_settings["premium_apps"][svc_name] = {"char": default_char, "id": str(eid), "name": svc_name.title()}
         save_db()
+        _rewrite_service_txt()
         send_message(chat_id, render_body_text(
             f"{PEM['ok']} <b>Service emoji saved!</b>\n\n"
             f"📌 <b>Service:</b> <b>{svc_name}</b>\n"
@@ -3142,7 +3512,7 @@ def handle_message(msg):
         if len(parts) > 1 and parts[1].isdigit():
             inviter = int(parts[1])
             if inviter != chat_id:
-                _sqlite_ensure_user(chat_id)
+                get_user(chat_id)
                 process_referral_for_user(chat_id, inviter)
 
     if not check_force_join(chat_id):
@@ -3258,17 +3628,10 @@ def handle_message(msg):
             if not target_uid_str.isdigit():
                 send_message(chat_id, render_body_text("❌ <b>Invalid ID!</b>"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
-            row = sqlite_exec("SELECT balance FROM users WHERE user_id=?", (target_uid,), fetch="one")
-            if row is None and db:
-                try:
-                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)
-                    if doc.exists:
-                        row = {"balance": (doc.to_dict() or {}).get('balance', 0.0)}
-                except Exception as e:
-                    print(f"⚠️  um_bal lookup Firestore: {type(e).__name__}")
-            if row is None:
+            u = get_user(target_uid)
+            if not u:
                 send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
-            current_bal = row.get('balance', 0.0)
+            current_bal = u.get('balance', 0.0)
             temp_data[chat_id]["target_uid"] = target_uid
             user_states[chat_id] = "wait_for_um_bal_amt"
             send_message(chat_id, render_body_text(
@@ -3292,26 +3655,28 @@ def handle_message(msg):
             if not target_uid_str.isdigit():
                 send_message(chat_id, render_body_text("❌ <b>Invalid ID!</b>"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
-            row = sqlite_exec("SELECT banned FROM users WHERE user_id=?", (target_uid,), fetch="one")
-            if row is None:
+            u = get_user(target_uid)
+            if not u:
                 send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
-            current_status = bool(row.get("banned") or 0)
+            current_status = bool(u.get("banned") or False)
             new_status = not current_status
+            # Firebase
+            if db and current_db_mode == "firebase":
+                try:
+                    db.collection('users').document(str(target_uid)).set({"banned": new_status}, merge=True, timeout=5.0)
+                except Exception as e:
+                    print(f"⚠️  ban FS: {type(e).__name__}")
+            # SQLite
             try:
                 with sqlite_tx() as conn:
                     if conn:
                         conn.cursor().execute("UPDATE users SET banned=?, updated_at=? WHERE user_id=?",
                                               (1 if new_status else 0, time.time(), target_uid))
             except Exception as e:
-                print(f"⚠️  um ban SQLite: {type(e).__name__}")
+                print(f"⚠️  ban SQLite: {type(e).__name__}")
             user_banned_cache[target_uid] = {'banned': new_status, 'time': time.time()}
             if target_uid in user_cache:
                 user_cache[target_uid]["banned"] = new_status
-            if db:
-                try:
-                    db.collection('users').document(str(target_uid)).set({"banned": new_status}, merge=True, timeout=5.0)
-                except Exception as e:
-                    print(f"⚠️  um ban Firestore: {type(e).__name__}")
             status_str = "🚫 <b>BANNED</b>" if new_status else "✅ <b>UNBANNED</b>"
             send_message(chat_id, render_body_text(f"{PEM['ok']} <b>User</b> <b>{target_uid}</b> <b>→</b> {status_str}"), reply_markup=main_menu(chat_id))
             del user_states[chat_id]; del temp_data[chat_id]
@@ -3321,25 +3686,7 @@ def handle_message(msg):
             if not target_uid_str.isdigit():
                 send_message(chat_id, render_body_text("❌ <b>Invalid ID!</b>"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
-            data = None
-            row = sqlite_exec(
-                "SELECT user_id,balance,total_refers,total_otps,banned FROM users WHERE user_id=?",
-                (target_uid,), fetch="one"
-            )
-            if row:
-                data = {
-                    "balance": float(row.get("balance") or 0.0),
-                    "total_refers": int(row.get("total_refers") or 0),
-                    "total_otps": int(row.get("total_otps") or 0),
-                    "banned": bool(row.get("banned") or 0),
-                }
-            if data is None and db:
-                try:
-                    doc = db.collection('users').document(str(target_uid)).get(timeout=5.0)
-                    if doc.exists:
-                        data = doc.to_dict() or {}
-                except Exception as e:
-                    print(f"⚠️  um profile Firestore: {type(e).__name__}")
+            data = get_user(target_uid)
             if not data:
                 send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
             prof_text = f"""➖➖➖➖➖➖➖➖
@@ -4165,10 +4512,22 @@ def handle_message(msg):
             last_name = msg.get("from", {}).get("last_name", "")
             full_name = f"{first_name} {last_name}".strip()
 
-            # ⭐ HOLD the balance: deduct from user immediately
             hold_withdrawal_balance(chat_id, amount)
 
             pending_withdrawals[req_id] = {"user_id": chat_id, "amount": amount, "method": method, "number": number, "full_name": full_name}
+
+            # Firebase save
+            if db and current_db_mode == "firebase":
+                try:
+                    db.collection('withdrawals').document(req_id).set({
+                        "user_id": str(chat_id), "amount": amount, "method": method,
+                        "number": number, "full_name": full_name,
+                        "status": "pending", "timestamp": time.time()
+                    }, timeout=5.0)
+                except Exception as e:
+                    print(f"⚠️  withdrawal FS save: {type(e).__name__}")
+
+            # SQLite mirror
             try:
                 with sqlite_tx() as conn:
                     if conn:
@@ -4179,14 +4538,7 @@ def handle_message(msg):
                         )
             except Exception as e:
                 print(f"⚠️  withdrawal SQLite insert: {type(e).__name__}")
-            if db:
-                try:
-                    db.collection('withdrawals').document(req_id).set({
-                        "user_id": str(chat_id), "amount": amount, "method": method,
-                        "status": "pending", "timestamp": firestore.SERVER_TIMESTAMP
-                    }, timeout=5.0)
-                except Exception as e:
-                    print(f"⚠️  withdrawal Firestore set: {type(e).__name__}")
+
             if bot_settings["w_group"]:
                 admin_msg = build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id)
                 kb = {"inline_keyboard": [[{"text": "APPROVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"wapp_{req_id}", "style": "success"}, {"text": "REJECT", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"wrej_{req_id}", "style": "danger"}]]}
@@ -4310,9 +4662,7 @@ def handle_message(msg):
         if sup_link: kb.insert(0, [{"text": "Contact Support", "icon_custom_emoji_id": "5337302974806922068", "url": sup_link, "style": "success"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb} if kb else None)
-
-
-# ==========================================
+        # ==========================================
 # 📦 Database ZIP — FOLDER-STRUCTURED
 # ==========================================
 def build_data_zip():
@@ -4430,7 +4780,7 @@ def build_data_zip():
 
 
 # ==========================================
-# 📥 Restore from ZIP — actually applies data
+# 📥 Restore from ZIP
 # ==========================================
 def restore_data_from_zip(raw_bytes):
     global number_batches, used_numbers_list, stex_assigned_numbers, voltx_assigned_numbers
@@ -4525,6 +4875,18 @@ def restore_data_from_zip(raw_bytes):
     except Exception as e:
         print(f"⚠️  restore users: {type(e).__name__}")
 
+    # Mirror users to Firebase if active
+    if db and current_db_mode == "firebase":
+        try:
+            for uid, udata in user_cache.items():
+                try:
+                    db.collection('users').document(str(uid)).set(udata, merge=True, timeout=5.0)
+                except Exception:
+                    continue
+            restored.append("users→firebase")
+        except Exception as e:
+            print(f"⚠️  restore users to Firebase: {type(e).__name__}")
+
     aku = read_json("USER DETAILS/all_known_users.json")
     if isinstance(aku, list):
         for u in aku:
@@ -4553,6 +4915,19 @@ def restore_data_from_zip(raw_bytes):
             restored.append(f"pending_referrals({len(pend)})")
         except Exception:
             pass
+        if db and current_db_mode == "firebase":
+            try:
+                for row in pend:
+                    if not isinstance(row, dict): continue
+                    try:
+                        db.collection('pending_referrals').document(str(row.get("new_user_id"))).set({
+                            "new_user_id": int(row.get("new_user_id")),
+                            "inviter_id": int(row.get("inviter_id")),
+                            "created_at": float(row.get("created_at") or time.time())
+                        }, timeout=5.0)
+                    except Exception: continue
+            except Exception:
+                pass
 
     paid_list = read_json("USER DETAILS/referral_paid_users.json", []) or []
     if isinstance(paid_list, list) and paid_list:
@@ -4735,6 +5110,16 @@ def delete_all_data():
                 except Exception: pass
         except Exception as _e:
             print(f"⚠️  delete fs withdrawals: {type(_e).__name__}")
+        try:
+            for doc in db.collection('pending_referrals').stream():
+                try: doc.reference.delete()
+                except Exception: pass
+        except Exception: pass
+        try:
+            for doc in db.collection('referral_paid_users').stream():
+                try: doc.reference.delete()
+                except Exception: pass
+        except Exception: pass
     try:
         with sqlite_tx() as conn:
             if conn:
@@ -5297,7 +5682,6 @@ def handle_callback(call):
         send_document(chat_id, "unused_numbers.txt", "\n".join(unused_list).encode('utf-8'))
         answer_callback(call["id"])
 
-    # ---------- Leaderboard ----------
     elif data == "lb_main":
         txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
@@ -5311,7 +5695,7 @@ def handle_callback(call):
         sub = data.replace("lb_", "")
         edit_message(chat_id, msg_id, render_body_text("⌛ <i>Fetching...</i>"))
         try:
-            if not db:
+            if not db or current_db_mode != "firebase":
                 all_users = []
                 for uid, udata in user_cache.items():
                     u_copy = dict(udata)
@@ -5460,8 +5844,8 @@ def handle_callback(call):
     elif data == "db_delete_confirm":
         txt = f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> <b>DO YOU REALLY WANT TO REMOVE ALL DATA?</b>'
         kb = {"inline_keyboard": [
-            [{"text": "YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
-            [{"text": "NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
+            [{"text": "✅YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
+            [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
         ]}
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
     elif data == "db_delete_yes":
@@ -5773,7 +6157,6 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
 
-    # ---------- ADMIN MANAGEMENT (owner-only guard) ----------
     elif data == "manage_admins":
         if chat_id != OWNER_ID:
             answer_callback(call["id"], "🚫 Only OWNER can manage admins!", show_alert=True)
@@ -6353,7 +6736,6 @@ def handle_callback(call):
             edit_message(chat_id, msg_id, new_text, reply_markup=kb)
 
             if action == "APPROVE":
-                # Balance already held → just notify
                 approve_msg = (
                     f"{PEM['ok']} <b><i>Your Withdrawal Has Been Paid Successfully!</i></b>\n"
                     f"\n"
@@ -6362,7 +6744,6 @@ def handle_callback(call):
                 )
                 send_message(u_id, render_body_text(approve_msg))
             else:
-                # REFUND the held amount
                 refund_withdrawal_balance(u_id, amt)
                 reject_msg = (
                     f"{PEM['no']} <b><i>Your Withdrawal Request Was Rejected!</i></b>\n"
@@ -6380,7 +6761,7 @@ def handle_callback(call):
                                               ("approved" if action == "APPROVE" else "rejected", req_id))
             except Exception as e:
                 print(f"⚠️  withdrawal status update: {type(e).__name__}")
-            if db:
+            if db and current_db_mode == "firebase":
                 try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"}, timeout=5.0)
                 except Exception as e:
                     print(f"⚠️  withdrawal status Firestore: {type(e).__name__}")
@@ -6523,6 +6904,7 @@ def main():
     print(f"🤖 Bot is starting... @{BOT_USERNAME}")
     api_call("deleteWebhook", {"drop_pending_updates": True})
     print("🔗 Webhook cleared")
+    print(f"📊 Mode: {current_db_mode.upper()}")
     threading.Thread(target=panel_monitor_thread, daemon=True).start()
     threading.Thread(target=global_sms_listener, daemon=True).start()
     threading.Thread(target=voltx_sms_listener, daemon=True).start()
