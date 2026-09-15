@@ -35,14 +35,14 @@ OWNER_ID = 8744359777
 BOT_USERNAME = ""
 
 # ==========================================
-# 🔥 Firebase Credentials
+# 🔥 EMBEDDED FIREBASE CREDENTIALS
 # ==========================================
-FIREBASE_JSON = r"""
+FIREBASE_DATA_JSON = r"""
 {
   "type": "service_account",
   "project_id": "storm-3738seh",
-  "private_key_id": "5b9c4314372b8f20f75ce36455e61ff1245a104c",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD1apnau67QtMaM\nBj/qbreYDuo3mN//Z+6J7/dJ/z7KpPbfBCA3wxVEb+TNE/cp8r5/MBzvB0y7x8lG\n1lPvM33yvLCjUDulIoFqsH6M0iX0UA+kNRoEWaC6RYCCnB8DB5+6mHu/nxjYZUyS\no0AoVPFdNH0vypi+wAKb8q7Qhf0jnC+7C3b/nkBfXs03UJYHHBIVGInL+tj+A6SX\nSka9qad1XusP8oxckBB0o0roxnzgMTL366kk/UkWV+7oLhOPNGR88YSmy0LO5waG\nDqCu9CXm7/rcIIXZyVxv/KhdFE5XPocWKHcDK0vrHTa4zxP8LN3bchmv6PA5CqU8\nZ552DYlJAgMBAAECggEABcSM26FsFR8eiHVwJJ4YBgSZuBdJcmr6pfbEENLlIqWY\nYLrr1+unkQ1xKum0diGsnPggQfThtosWPao1XEqRQ/Zvz1LIKBQkxwFhZAVfW3vT\nNkiCNUZ2+tG92LP7HZrdA+loBSOj1Zgh4dNg42HFr2tXotsn1lnUZd5hAekYPzE1\nfMigfp+3VCKzcLEReGgnyfMnBKGsPVnpcLyfzCGlftU77CZEVG0XoL/14By6zsOF\nzo4C3rr6W9mp80/blJXUpL7KVzO1TZkc+cQq+R49jYJ2rvAUyDppRU+ffvGjIQdO\nubpUivnSkxPDlvkMba7x6mkW9BM1lQwN3rMvILGbxQKBgQD708YVzIrWHBewCUKj\nHQ1oovx/SsQan2PMhfktfWNWpQn+JT5yPqE9nRC8ZChkntnarL6xob4bkX2ylMM6\nSPAhe7oQ9UrRxVmC4axLNxvjwCKQBnAQ4GadmMDbWMPXEWKy+q8/bBxsQmLmUXO7\nStZ7SwBqAbB7t45HPEFeddEkzQKBgQD5e6ITqfY2TmiiNGkWHNql8BqiNE+81AY4\ncV+i0+rMOcsY+yBjoZ+IstN7LzYaqpQKScsKwKTXCXCvmCJb4YTA5M5lHCgkso60\n++jhSJtGDrMf5FAlJLvKetcck8UsKVK/sxYc55DsDuOBb9oYdPE7UmgRoc+itdF6\nlmQw0DRWbQKBgQDb5F3RZxvMPheJBW0ElTfCKJ+mXxjBznAMhOfCCv0VCWOiYc8X\nXwzYii+08Rg8VGESi0iwPvWLiQ1jRHb8i/fypOEiMa41Ycf5eylBPEvEIV+Mt7Jf\najLwZhPw9J99SpcOhctE7BgdiBJn3rPZ1U1Xt3QTHIqIXQ2Fsl26J9KJ+QKBgHyo\n3TysIX3TQg9C1vuYoVxnFDfWob09yHntlJb9AwbXHfe2i+GcweWBTZDw7zz13REi\n/FS8G+HjMq5a+1gj4Lyt17/ICPsFSa9/bEcdi5C/CZw27iERMNCk/tWltNEzOMjX\nCIaa4txBOEbWCAlObbdxntSooOKxrSFvAlMtxeklAoGBAO01jQxxMhNiqDvwSjl5\nPDrhUfR3LcuqX4huKHy5KUQUxnZ4+ZSIrtd+VOAwkEkU0YeRv213CAALStQuoaWR\nKiLvH4Zpq6d/L7ZT4vZYte6hjBBZri8HS8ofyGFOW/r/lD+uX5dnXK9RoQW7/U7J\nDPIRZtXQdRyx/R72c6xzbVcR\n-----END PRIVATE KEY-----\n",
+  "private_key_id": "1badec1ec67dea53d7a2c9a8b4e18f718f19cfa7",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC8XhasYUDbXDkE\n/xicJHXts0LhXdDKAVnDXw7df1VI2syMRRzDQWjY9p2c1cLZkGdMEzjDx1YoZM/M\nhrbIBeeSFjTotHuH+flImrRcLBa9Kq5vuFxb3n7FmfdzhK8L/22xCjDkNCtRNenG\nSQ/jVD0P+6QAojSijGOo7NWbCiIqYeW2emyfssD6Ea6PGzYeDZBR0J/BNcUEOU2A\n0BfRcwv4GkjPNBnMfOU+ytSsVJEqKIZqfvcTROt/r4h7gpLGukyWudPZqT/wrwKO\nAPf13shRsa3zNyCwn+KWVZ3vFm4ofC18sCEkV3hM8Pn8kgbft7o0DkccfhHE2Ijj\nPJuKuDlzAgMBAAECggEAEBLV9ncEtMiQKQf84/Nh3hsKMvbxcRC1Gyx1CpuUqHcw\niyupQlQbi/VctQcHQyTFBm3WzdtS/na+cKJyMxal5bEKv2y0jywv2cKHGh0SV6lZ\nDI7RJW8Spu6gz0pcMYw7TPx5+DnSFHJNn4OZMnnRYsLDV4vVLVBeKgpY8+DlJ3Pg\n2s8t0T6Cfyh4AJB1JF/CaPuHlzb1vRz+QL8bSzIn7dtyIDtEV1Q40Bvux4D7g7kc\nZEZPr4+bhtx4yITFo0hDAypigjqUXkRzL1NLqlo6kpy8lmZF9N76Px70ferptMjQ\nTgkEynl4vwmFpEgEJs4vpTPXhOnWFrmqWQbDS+RYyQKBgQDt8wOY4JsywEvM9Zbc\nGgupLdnoo9SIfG2T0EcYMBSXJ7KIRSKaK2eCFsowsubw9KXTJmbeAStuX3NNCb0G\nA7Ahpsqktv7gnV83/zU0/5IBfNIGRXuXf0vPP1w/4hHyYjrtu03ihm5HRNc56mur\nLgtgD5JlEwk38x0B2DobXrQ9twKBgQDKqDHfpPQi1TfEWMCH/6nC+SZXxefG7RT7\nc9Vt0R/P/GUg2oLQ6sYgK18B18ceceCB2uG7Yum5YKDV8SyOXJChtXlmUHgNKa2g\n6Tqt93L9FaJGMrDDFCQYjcZvc7EkEHs2vofhlzsPpvcBSBNTXuxvOlfO5erRZq/O\nJhL7GU8iJQKBgQCZE5o/0lblemIJVAEeTb8ssiuahzLmLy4LRpVGEUBd0ZMAKYHO\nLpgjT2f5lk4Nu0WmpfDNZ3E6SzuQ1u/8m4jGzVdWSceEVpl4G71t//A89sDiefa9\nio4JoNhG3Lfw95Kzd6juTs9JGBdh0dY8RJ3ayYnDblCi5srFcgZHr1BC1wKBgD4p\n37qRd83jh4q0CsLs2p8TG/7alyE/AiuruXFJL6/15PNx86SwD3w4sZj4Hn0pQ0ux\n34JCch1KFavqodc9b6Qa7ZVD479t5HOydyx79grKAw/zZqNAX14kxxTS8Sh14cXG\nJho98ID5n1UGTd9KA86On/a4MhJvpEfhB/t8JPj9AoGBAJEaabj8xp1qtD5gRNBn\nz1TKkK4tL4kkL3OhFPW+5/km9vbdfOeSFT/bFACjWPX82jMMbDEG7uIaPA21k1+s\nNcfzXK+kWw53zvWpuIQJbtd9POUwWSAFDNnqEum2hKIHcJOKoKROGZ4hu79+BWgV\nrbqfWwgmTPomtT6zd9aYZNUl\n-----END PRIVATE KEY-----\n",
   "client_email": "firebase-adminsdk-fbsvc@storm-3738seh.iam.gserviceaccount.com",
   "client_id": "103858492642850467623",
   "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -52,21 +52,6 @@ FIREBASE_JSON = r"""
   "universe_domain": "googleapis.com"
 }
 """
-
-# ==========================================
-# 🔥 Firebase Init — simple like main.py
-# ==========================================
-try:
-    cred_dict = json.loads(FIREBASE_JSON)
-    cred = credentials.Certificate(cred_dict)
-    if not firebase_admin._apps:
-        firebase_admin.initialize_app(cred)
-    db = firestore.client()
-    print("✅ Firebase Connected! (Full Sync Enabled)")
-except Exception as e:
-    print(f"❌ Firebase Error: {e}")
-    db = None
-
 
 # ==========================================
 # Premium Emoji Dictionary
@@ -200,7 +185,6 @@ LEADERBOARD_NUM_EMOJI = {
     9:  "5353060913463204207",
     10: "6309655288261644098",
 }
-LEADERBOARD_10_SECOND_EMOJI = "6307374961275180239"
 
 LANG_FULL_NAMES = {
     "EN":"English","AR":"Arabic","BN":"Bangla","HI":"Hindi","PA":"Punjabi",
@@ -222,20 +206,25 @@ def lang_full(lang_code):
     return LANG_FULL_NAMES.get(code, code.title() if code else "English")
 
 def fmt_payout(val):
+    """Show EXACTLY what admin set / what user earned. Kills float noise."""
     try:
         f = float(val)
     except Exception:
         return "0.00"
-    if f == 0: return "0.00"
+    if f == 0:
+        return "0.00"
     f = round(f, 12)
-    if f == 0: return "0.00"
+    if f == 0:
+        return "0.00"
     s = repr(f)
     if 'e' in s or 'E' in s:
         s = f"{f:.20f}".rstrip('0').rstrip('.')
     if '.' in s:
         s = s.rstrip('0').rstrip('.')
-    if not s: s = "0"
-    if '.' not in s: s += ".00"
+    if not s:
+        s = "0"
+    if '.' not in s:
+        s += ".00"
     return s
 
 def get_by_path(obj, path):
@@ -250,7 +239,8 @@ def get_by_path(obj, path):
         elif isinstance(cur, list):
             try: cur = cur[int(p)]
             except: return None
-        else: return None
+        else:
+            return None
     return cur
 
 def _extract_by_paths(data, p_config):
@@ -325,7 +315,6 @@ def parse_curl_command(curl_str):
             k, v = hm.split(": ", 1)
             result["headers"][k.strip()] = v.strip()
     return result
-
 
 # ==========================================
 # World Country Database
@@ -439,9 +428,8 @@ DEFAULT_CUSTOM_MESSAGES = {
     "support": {"text": f"{PEM['msg']} Contact us for any help:", "buttons": []}
 }
 
-
 # ==========================================
-# 💾 STROM_DATA — Local Storage
+# 💾 STROM_DATA — Centralized Persistent Storage
 # ==========================================
 STROM_DATA_DIR = "STROM_DATA"
 try:
@@ -465,6 +453,8 @@ for _legacy_name, _new_path in (("bot_data.json", DB_FILE),
             print(f"📦 Migrated {_legacy_name} → {_new_path}")
     except Exception as _e:
         print(f"⚠️  Migrate {_legacy_name}: {type(_e).__name__}")
+
+current_db_mode = "sqlite"
 
 _sqlite_lock = threading.RLock()
 _sqlite_conn = None
@@ -572,7 +562,7 @@ def sqlite_tx():
             _sqlite_conn.execute("COMMIT;")
         except Exception as e:
             try:
-                _sqlite_conn.execute("ROLLBACK;")
+                _sqlite_conn.rollback()
             except Exception:
                 pass
             print(f"⚠️  SQLite tx rolled back: {type(e).__name__}: {e}")
@@ -602,6 +592,68 @@ def sqlite_kv_set(key, value):
 
 
 # ==========================================
+# 🔥 Firebase Setup — PRIMARY DB (embedded creds)
+# ==========================================
+db = None
+_fb_result = {"db": None, "done": False, "mode": "sqlite"}
+
+
+def _try_firebase_init():
+    global current_db_mode
+    try:
+        raw = (FIREBASE_DATA_JSON or "").strip()
+        if not raw or raw in ("{}", ""):
+            print("⚠️  Firebase JSON empty — SQLite-only mode")
+            _fb_result["done"] = True
+            return
+        try:
+            creds_dict = json.loads(raw)
+        except Exception as je:
+            print(f"⚠️  Firebase JSON parse failed: {type(je).__name__}")
+            _fb_result["done"] = True
+            return
+
+        if creds_dict.get("type") != "service_account":
+            print("⚠️  Firebase creds not service_account type — SQLite-only mode")
+            _fb_result["done"] = True
+            return
+        if not creds_dict.get("private_key") or not creds_dict.get("client_email"):
+            print("⚠️  Firebase creds missing private_key/client_email — SQLite-only mode")
+            _fb_result["done"] = True
+            return
+
+        cred = credentials.Certificate(creds_dict)
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+        _db = firestore.client()
+        try:
+            _db.collection('_health_check_').document('x').get(timeout=10.0)
+        except Exception:
+            pass
+        _fb_result["db"] = _db
+        _fb_result["done"] = True
+        current_db_mode = "firebase"
+        print("✅ Firebase Connected — PRIMARY DB ACTIVE (SQLite as fallback)")
+    except Exception as e:
+        print(f"⚠️  Firebase unavailable: {type(e).__name__}")
+        print("✅ SQLite-only mode active")
+        current_db_mode = "sqlite"
+        _fb_result["done"] = True
+
+
+_fb_thread = threading.Thread(target=_try_firebase_init, daemon=True)
+_fb_thread.start()
+_fb_thread.join(timeout=20.0)
+
+if _fb_result["done"] and _fb_result["db"] is not None:
+    db = _fb_result["db"]
+    current_db_mode = "firebase"
+else:
+    if not _fb_result["done"]:
+        print("⏱️  Firebase timeout (20s) — SQLite-only mode")
+    db = None
+    current_db_mode = "sqlite"
+    # ==========================================
 # Bot Settings
 # ==========================================
 bot_settings = {
@@ -626,7 +678,8 @@ FS_KEYS = [
     "admins","panels","fw_groups","otp_link","main_channel_link","withdraw_on",
     "min_withdraw","otp_reward","refer_reward","cooldown","num_req","num_share",
     "support_link","w_methods","w_group","stex_keys","voltx_keys","search_countries",
-    "stex_services","voltx_services","fj_on","fj_channels","otp_pair_rates","maintenance"
+    "stex_services","voltx_services","fj_on","fj_channels","otp_pair_rates","maintenance",
+    "premium_flags","premium_apps"
 ]
 
 number_batches = {}
@@ -642,12 +695,8 @@ recent_traffic = []
 user_banned_cache = {}
 panel_sessions = {}
 user_active_sessions = {}
-all_known_users = set()
 
 
-# ==========================================
-# Flag/Service TXT Loaders
-# ==========================================
 def load_flag_txt():
     path = FLAG_TXT_FILE
     loaded = {}
@@ -736,6 +785,7 @@ def load_service_txt():
 
 
 def _rewrite_service_txt():
+    """Rewrite service.txt from current premium_apps so /setservice changes survive restart."""
     try:
         with open(SERVICE_TXT_FILE, "w", encoding='utf-8') as f:
             f.write("# service.txt\n# Format: ServiceName { \"emoji\": \"📱\", \"id\": \"5334807341109908955\" }\n")
@@ -757,259 +807,207 @@ try:
 except: pass
 
 
-def fetch_cpt_panel_cdrs(p, session, check_url):
-    res = session.get(check_url, timeout=15)
-    html_text = res.text
-    if "login" in html_text.lower() or "signin" in html_text.lower() or any(x in html_text for x in ["Sign in to your account", "Please sign in", "Welcome back!"]):
-        raise Exception("Session expired")
-    soup = BeautifulSoup(html_text, 'html.parser')
-    s_ajax_source = ""
-    for script in soup.find_all("script"):
-        script_text = script.string or ""
-        match = re.search(r'sAjaxSource":\s*"([^"]+)"', script_text)
-        if match:
-            s_ajax_source = match.group(1)
-            break
-    results = []
-    n_col_name = p.get("num_col_name", "number").lower()
-    m_col_name = p.get("msg_col_name", "message").lower()
-    s_col_name = p.get("service_col_name", "service").lower()
-    n_idx = int(p.get("num_col_idx", 1)) - 1 if p.get("num_col_idx") else 1
-    m_idx = int(p.get("msg_col_idx", 2)) - 1 if p.get("msg_col_idx") else 2
-    s_idx = int(p.get("service_col_idx", 3)) - 1 if p.get("service_col_idx") else 3
-
-    def _extract_row(row_val):
-        if not isinstance(row_val, list): return None
-        if len(row_val) < max(n_idx, m_idx) + 1: return None
-        num_val = row_val[n_idx] if (0 <= n_idx < len(row_val)) else row_val[2]
-        msg_val = row_val[m_idx] if (0 <= m_idx < len(row_val)) else row_val[4]
-        svc_val = row_val[s_idx] if (0 <= s_idx < len(row_val)) else ""
-        clean_num = re.sub(r'\D', '', str(num_val))
-        if not (clean_num and 5 <= len(clean_num) <= 18): return None
-        otp = extract_otp_code(msg_val)
-        if not otp: otp = "N/A"
-        if not (len(str(msg_val)) > 4): return None
-        return {"number": clean_num, "message": str(msg_val), "otp": otp, "service_name": str(svc_val).strip()}
-
-    if s_ajax_source:
-        baseUrl = p.get("login_url", "").split("/client")[0].split("/login")[0].strip()
-        if not baseUrl.startswith("http"): baseUrl = "http://" + baseUrl
-        if s_ajax_source.startswith("http"):
-            full_ajax_url = s_ajax_source
-        elif s_ajax_source.startswith("/"):
-            full_ajax_url = f"{baseUrl}{s_ajax_source}"
-        else:
-            current_dir = check_url[:check_url.rfind("/")]
-            full_ajax_url = f"{current_dir}/{s_ajax_source}"
-        if "iDisplayLength" not in full_ajax_url:
-            divider = "&" if "?" in full_ajax_url else "?"
-            full_ajax_url += f"{divider}sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=250&sSearch=&iSortingCols=1&iSortCol_0=0&sSortDir_0=desc"
-        ajax_headers = {"Referer": check_url, "X-Requested-With": "XMLHttpRequest"}
-        ajax_res = session.get(full_ajax_url, headers=ajax_headers, timeout=15)
-        rows = ajax_res.json().get("aaData", [])
-        for row_val in rows:
-            item = _extract_row(row_val)
-            if item: results.append(item)
-    else:
-        tables = soup.find_all('table')
-        for table in tables:
-            rows = table.find_all('tr')
-            if not rows: continue
-            final_n_idx, final_m_idx, final_s_idx = n_idx, m_idx, s_idx
-            header_cells = rows[0].find_all(['th', 'td'])
-            for i, cell in enumerate(header_cells):
-                c_text = cell.get_text(strip=True).lower()
-                if n_col_name in c_text: final_n_idx = i
-                if m_col_name in c_text: final_m_idx = i
-                if s_col_name in c_text: final_s_idx = i
-            for row in rows:
-                cols = row.find_all(['td', 'th'])
-                if all(c.name == 'th' for c in cols): continue
-                if len(cols) > max(final_n_idx, final_m_idx):
-                    num_text = cols[final_n_idx].get_text(separator=" ", strip=True)
-                    msg_text = cols[final_m_idx].get_text(separator=" ", strip=True)
-                    svc_text = cols[final_s_idx].get_text(separator=" ", strip=True) if len(cols) > final_s_idx else ""
-                    clean_num = re.sub(r'\D', '', num_text)
-                    if clean_num and 5 <= len(clean_num) <= 18:
-                        otp = extract_otp_code(msg_text)
-                        if not otp: otp = "N/A"
-                        if len(msg_text) > 4:
-                            results.append({"number": clean_num, "message": msg_text, "otp": otp, "service_name": svc_text.strip()})
-    return results, html_text
-    # ==========================================
-# 🔥 Firebase Primary DB — Save & Load EVERYTHING
+# ==========================================
+# 🗄️ Firebase-Primary Persistence Layer
 # ==========================================
 
-def _load_all_from_firestore():
-    """Load everything from Firestore at startup."""
+def _fb_set(doc_path_coll, doc_id, data, merge=True):
+    """Safe non-destructive Firestore write. Returns True/False."""
+    if not db:
+        return False
+    try:
+        db.collection(doc_path_coll).document(str(doc_id)).set(data, merge=merge, timeout=10.0)
+        return True
+    except Exception as e:
+        print(f"⚠️  Firestore set {doc_path_coll}/{doc_id}: {type(e).__name__}")
+        return False
+
+
+def _fb_get(doc_path_coll, doc_id):
+    """Safe Firestore read. Returns dict or None."""
+    if not db:
+        return None
+    try:
+        doc = db.collection(doc_path_coll).document(str(doc_id)).get(timeout=10.0)
+        if doc.exists:
+            return doc.to_dict() or {}
+    except Exception as e:
+        print(f"⚠️  Firestore get {doc_path_coll}/{doc_id}: {type(e).__name__}")
+    return None
+
+
+def _fb_delete_collection(coll_name):
+    if not db:
+        return
+    try:
+        for doc in db.collection(coll_name).stream():
+            try:
+                doc.reference.delete()
+            except Exception:
+                pass
+    except Exception as e:
+        print(f"⚠️  Firestore delete collection {coll_name}: {type(e).__name__}")
+
+
+# -------- Settings (Firestore-primary, SQLite-fallback) --------
+def _load_settings_from_sqlite():
+    try:
+        rows = sqlite_exec("SELECT key, value FROM settings", fetch="all")
+        if not rows:
+            return False
+        loaded_any = False
+        for row in rows:
+            k = row["key"]
+            if k in FS_KEYS:
+                try:
+                    bot_settings[k] = json.loads(row["value"])
+                    loaded_any = True
+                except Exception:
+                    continue
+        return loaded_any
+    except Exception as e:
+        print(f"⚠️  _load_settings_from_sqlite: {type(e).__name__}")
+        return False
+
+
+def _persist_all_settings_to_sqlite():
+    try:
+        with sqlite_tx() as conn:
+            if conn is None:
+                return False
+            now = time.time()
+            cur = conn.cursor()
+            for k in FS_KEYS:
+                if k not in bot_settings:
+                    continue
+                try:
+                    v = json.dumps(bot_settings[k], default=str)
+                except Exception:
+                    continue
+                cur.execute(
+                    "INSERT INTO settings(key,value,updated_at) VALUES(?,?,?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+                    (k, v, now),
+                )
+        return True
+    except Exception as e:
+        print(f"⚠️  _persist_all_settings_to_sqlite: {type(e).__name__}")
+        return False
+
+
+def _load_settings_from_firebase():
+    """Load bot_settings from Firestore (primary). Returns True if loaded."""
+    if not db:
+        return False
+    try:
+        doc = db.collection('settings').document('bot_config').get(timeout=10.0)
+        if doc.exists:
+            data = doc.to_dict() or {}
+            loaded_any = False
+            for k in FS_KEYS:
+                if k in data:
+                    bot_settings[k] = data[k]
+                    loaded_any = True
+            if loaded_any:
+                print("✅ Settings loaded from Firestore (primary)")
+                return True
+    except Exception as e:
+        print(f"⚠️  Firestore settings read: {type(e).__name__}")
+    return False
+
+
+# -------- Numbers (Firestore-primary) --------
+def _load_numbers_from_firebase():
+    """Load number_batches, used_numbers, assigned_numbers, stats from Firestore."""
     global number_batches, used_numbers_list, stex_assigned_numbers, voltx_assigned_numbers
     global total_uploaded_stats, total_assigned_stats, recent_traffic, assigned_number_meta
-    ok = 0
-
-    # 1. Settings
+    if not db:
+        return False
     try:
-        doc = db.collection('settings').document('bot_config').get(timeout=15.0)
-        if doc.exists:
-            fs_data = doc.to_dict() or {}
-            for k in FS_KEYS:
-                if k in fs_data:
-                    bot_settings[k] = fs_data[k]
-            ok += 1
-            print("✅ Settings loaded from Firestore")
-        else:
-            fs_data = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
-            db.collection('settings').document('bot_config').set(fs_data)
-            print("✅ Firestore Settings initialized")
-    except Exception as e:
-        print(f"⚠️  Settings load: {type(e).__name__}")
+        # Stats
+        stats_doc = _fb_get('bot_state', 'stats')
+        if stats_doc:
+            total_uploaded_stats = int(stats_doc.get('total_uploaded_stats', total_uploaded_stats))
+            total_assigned_stats = int(stats_doc.get('total_assigned_stats', total_assigned_stats))
 
-    # 2. Numbers
-    try:
-        doc = db.collection('numbers').document('all_batches').get(timeout=15.0)
-        if doc.exists:
-            batches = (doc.to_dict() or {}).get('batches', {})
-            if batches:
-                number_batches.clear()
-                number_batches.update(batches)
-                ok += 1
-                print(f"✅ Numbers loaded ({len(batches)} batches)")
-    except Exception as e:
-        print(f"⚠️  Numbers load: {type(e).__name__}")
+        # Number batches
+        nb_doc = _fb_get('bot_state', 'number_batches')
+        if nb_doc and isinstance(nb_doc.get('data'), dict):
+            number_batches = nb_doc['data']
 
-    # 3. Assigned numbers
-    try:
-        doc = db.collection('assigned_numbers').document('all').get(timeout=15.0)
-        if doc.exists:
-            d = doc.to_dict() or {}
-            stex_assigned_numbers.clear()
-            stex_assigned_numbers.update(d.get('stex', {}))
-            voltx_assigned_numbers.clear()
-            voltx_assigned_numbers.update(d.get('voltx', {}))
-            assigned_number_meta.clear()
-            assigned_number_meta.update(d.get('meta', {}))
-            ok += 1
-            print(f"✅ Assigned numbers loaded")
-    except Exception as e:
-        print(f"⚠️  Assigned load: {type(e).__name__}")
+        # Used numbers
+        un_doc = _fb_get('bot_state', 'used_numbers')
+        if un_doc and isinstance(un_doc.get('data'), list):
+            used_numbers_list = un_doc['data']
 
-    # 4. Used numbers
-    try:
-        doc = db.collection('used_numbers').document('all').get(timeout=15.0)
-        if doc.exists:
-            used_numbers_list.clear()
-            used_numbers_list.extend((doc.to_dict() or {}).get('list', []))
-            ok += 1
-            print(f"✅ Used numbers loaded")
-    except Exception as e:
-        print(f"⚠️  Used load: {type(e).__name__}")
+        # Stex assigned
+        sx_doc = _fb_get('bot_state', 'stex_assigned')
+        if sx_doc and isinstance(sx_doc.get('data'), dict):
+            stex_assigned_numbers = sx_doc['data']
 
-    # 5. Traffic
-    try:
-        doc = db.collection('traffic').document('recent').get(timeout=15.0)
-        if doc.exists:
+        # Voltx assigned
+        vx_doc = _fb_get('bot_state', 'voltx_assigned')
+        if vx_doc and isinstance(vx_doc.get('data'), dict):
+            voltx_assigned_numbers = vx_doc['data']
+
+        # Assigned meta
+        am_doc = _fb_get('bot_state', 'assigned_meta')
+        if am_doc and isinstance(am_doc.get('data'), dict):
+            assigned_number_meta.update(am_doc['data'])
+
+        # Recent traffic
+        rt_doc = _fb_get('bot_state', 'recent_traffic')
+        if rt_doc and isinstance(rt_doc.get('data'), list):
             recent_traffic.clear()
-            recent_traffic.extend((doc.to_dict() or {}).get('entries', []))
-            ok += 1
-            print(f"✅ Traffic loaded")
-    except Exception as e:
-        print(f"⚠️  Traffic load: {type(e).__name__}")
+            recent_traffic.extend(rt_doc['data'])
 
-    # 6. Stats
-    try:
-        doc = db.collection('stats').document('counters').get(timeout=15.0)
-        if doc.exists:
-            d = doc.to_dict() or {}
-            total_uploaded_stats = int(d.get('total_uploaded', 0) or 0)
-            total_assigned_stats = int(d.get('total_assigned', 0) or 0)
-            ok += 1
-            print(f"✅ Stats loaded")
+        print("✅ Numbers/state loaded from Firestore (primary)")
+        return True
     except Exception as e:
-        print(f"⚠️  Stats load: {type(e).__name__}")
-
-    # 7. Premium Flags
-    try:
-        doc = db.collection('settings').document('premium_flags').get(timeout=15.0)
-        if doc.exists:
-            d = doc.to_dict() or {}
-            if d:
-                bot_settings['premium_flags'].update(d)
-                print(f"✅ Flags loaded from Firestore ({len(d)})")
-    except Exception as e:
-        print(f"⚠️  Flags load: {type(e).__name__}")
-
-    # 8. Premium Services
-    try:
-        doc = db.collection('settings').document('premium_apps').get(timeout=15.0)
-        if doc.exists:
-            d = doc.to_dict() or {}
-            if d:
-                bot_settings['premium_apps'].update(d)
-                print(f"✅ Services loaded from Firestore ({len(d)})")
-    except Exception as e:
-        print(f"⚠️  Services load: {type(e).__name__}")
-
-    return ok
+        print(f"⚠️  Firestore numbers read: {type(e).__name__}")
+    return False
 
 
-def _save_all_to_firestore():
-    """Save EVERYTHING to Firestore in background."""
-    if not db: return
+def _save_numbers_to_firebase():
+    """Push numbers/state to Firestore in background-friendly way."""
+    if not db:
+        return
     try:
-        fs_data = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
-        db.collection('settings').document('bot_config').set(fs_data)
-    except Exception as e:
-        print(f"⚠️  Save settings: {type(e).__name__}")
-    try:
-        db.collection('numbers').document('all_batches').set({'batches': number_batches})
-    except Exception as e:
-        print(f"⚠️  Save numbers: {type(e).__name__}")
-    try:
-        db.collection('assigned_numbers').document('all').set({
-            'stex': stex_assigned_numbers,
-            'voltx': voltx_assigned_numbers,
-            'meta': assigned_number_meta
+        _fb_set('bot_state', 'stats', {
+            'total_uploaded_stats': total_uploaded_stats,
+            'total_assigned_stats': total_assigned_stats
         })
+        _fb_set('bot_state', 'number_batches', {'data': number_batches})
+        _fb_set('bot_state', 'used_numbers', {'data': used_numbers_list})
+        _fb_set('bot_state', 'stex_assigned', {'data': stex_assigned_numbers})
+        _fb_set('bot_state', 'voltx_assigned', {'data': voltx_assigned_numbers})
+        _fb_set('bot_state', 'assigned_meta', {'data': assigned_number_meta})
+        _fb_set('bot_state', 'recent_traffic', {'data': recent_traffic[-500:]})
     except Exception as e:
-        print(f"⚠️  Save assigned: {type(e).__name__}")
-    try:
-        db.collection('used_numbers').document('all').set({'list': used_numbers_list})
-    except Exception as e:
-        print(f"⚠️  Save used: {type(e).__name__}")
-    try:
-        db.collection('traffic').document('recent').set({'entries': recent_traffic[-500:]})
-    except Exception as e:
-        print(f"⚠️  Save traffic: {type(e).__name__}")
-    try:
-        db.collection('stats').document('counters').set({
-            'total_uploaded': total_uploaded_stats,
-            'total_assigned': total_assigned_stats
-        })
-    except Exception as e:
-        print(f"⚠️  Save stats: {type(e).__name__}")
-    try:
-        db.collection('settings').document('premium_flags').set(bot_settings.get('premium_flags', {}))
-    except Exception as e:
-        print(f"⚠️  Save flags: {type(e).__name__}")
-    try:
-        db.collection('settings').document('premium_apps').set(bot_settings.get('premium_apps', {}))
-    except Exception as e:
-        print(f"⚠️  Save services: {type(e).__name__}")
+        print(f"⚠️  Firestore numbers write: {type(e).__name__}")
 
 
+# -------- load_db --------
 def load_db():
     global bot_settings, number_batches, used_numbers_list, total_uploaded_stats, total_assigned_stats, recent_traffic
-    global stex_assigned_numbers, voltx_assigned_numbers
+    global stex_assigned_numbers, voltx_assigned_numbers, current_db_mode
     print("Loading DB...")
 
-    fs_ok = 0
+    # ⭐ 1. Firebase PRIMARY
+    fb_loaded_settings = False
     if db:
-        print("🔥 Loading from Firestore...")
-        try:
-            fs_ok = _load_all_from_firestore()
-        except Exception as e:
-            print(f"⚠️  Firestore load error: {type(e).__name__}")
+        fb_loaded_settings = _load_settings_from_firebase()
+        _load_numbers_from_firebase()
 
-    # Fallback: local JSON for anything Firestore didn't provide
+    # ⭐ 2. SQLite fallback (only fills missing keys)
+    if not fb_loaded_settings:
+        try:
+            _load_settings_from_sqlite()
+            print("✅ Settings loaded from SQLite (fallback)")
+        except Exception as e:
+            print(f"⚠️  SQLite settings load skipped: {type(e).__name__}")
+
+    # ⭐ 3. Local JSON state fallback (numbers/state if Firebase empty)
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding='utf-8') as f:
@@ -1025,61 +1023,62 @@ def load_db():
             for m_key, m_val in DEFAULT_CUSTOM_MESSAGES.items():
                 if m_key not in bot_settings["custom_messages"]:
                     bot_settings["custom_messages"][m_key] = m_val
-            if not number_batches:
-                number_batches.update(data.get("number_batches", {}) or {})
-            if not used_numbers_list:
-                used_numbers_list.extend(data.get("used_numbers_list", []) or [])
-            if not total_uploaded_stats:
-                total_uploaded_stats = data.get("total_uploaded_stats", 0)
-            if not total_assigned_stats:
-                total_assigned_stats = data.get("total_assigned_stats", 0)
-            if not recent_traffic:
-                recent_traffic.extend(data.get("recent_traffic", []) or [])
-            if not stex_assigned_numbers:
-                stex_assigned_numbers.update(data.get("stex_assigned_numbers", {}) or {})
-            if not voltx_assigned_numbers:
-                voltx_assigned_numbers.update(data.get("voltx_assigned_numbers", {}) or {})
-            if not assigned_number_meta:
-                assigned_number_meta.update(data.get("assigned_number_meta", {}) or {})
-            print("✅ Local JSON merged (fallback)")
-        except Exception as e:
-            print(f"⚠️  Local load: {type(e).__name__}")
 
-    # flag.txt & service.txt
+            # Only use local JSON numbers if Firebase didn't load them
+            if not db or not number_batches:
+                if not number_batches:
+                    number_batches = data.get("number_batches", {}) or {}
+                if not used_numbers_list:
+                    used_numbers_list = data.get("used_numbers_list", []) or []
+                if not stex_assigned_numbers:
+                    stex_assigned_numbers = data.get("stex_assigned_numbers", {}) or {}
+                if not voltx_assigned_numbers:
+                    voltx_assigned_numbers = data.get("voltx_assigned_numbers", {}) or {}
+                if not assigned_number_meta:
+                    assigned_number_meta.update(data.get("assigned_number_meta", {}) or {})
+                if not recent_traffic:
+                    recent_traffic = data.get("recent_traffic", []) or []
+            print("✅ Local JSON state loaded (fallback)")
+        except Exception as e:
+            print(f"⚠️  Local JSON load failed: {type(e).__name__}")
+
+    # ⭐ 4. all_known_users cache
+    try:
+        ul = sqlite_kv_get("all_known_users")
+        if isinstance(ul, list) and ul:
+            all_known_users.update(str(x) for x in ul)
+    except Exception as e:
+        print(f"⚠️  all_known_users cache load: {type(e).__name__}")
+
+    # ⭐ 5. flag.txt & service.txt — but Firebase premium_flags/apps take priority
     try:
         flag_data = load_flag_txt()
         if flag_data:
             for code, fd in flag_data.items():
-                if code not in bot_settings["premium_flags"]:
+                # Don't overwrite Firebase flags
+                if code not in bot_settings.get("premium_flags", {}):
                     bot_settings["premium_flags"][code] = fd
     except Exception as e:
-        print(f"⚠️  Flag load: {type(e).__name__}")
+        print(f"⚠️  Flag load error: {type(e).__name__}")
 
     try:
         service_data = load_service_txt()
         if service_data:
             for name, sd in service_data.items():
-                if name not in bot_settings["premium_apps"]:
+                if name not in bot_settings.get("premium_apps", {}):
                     bot_settings["premium_apps"][name] = sd
     except Exception as e:
-        print(f"⚠️  Service load: {type(e).__name__}")
+        print(f"⚠️  Service load error: {type(e).__name__}")
 
-    # users_list
+    # ⭐ 6. Persist merged settings back to SQLite as backup
     try:
-        if os.path.exists(USERS_LIST_FILE):
-            with open(USERS_LIST_FILE, "r") as f:
-                for x in json.load(f):
-                    all_known_users.add(str(x))
-    except Exception: pass
-
-    # If Firestore had nothing, push initial state
-    if db and fs_ok == 0:
-        threading.Thread(target=_save_all_to_firestore, daemon=True).start()
-
-    print("✅ Database Loaded")
+        _persist_all_settings_to_sqlite()
+    except Exception as e:
+        print(f"⚠️  SQLite settings persist: {type(e).__name__}")
 
 
 def save_local_db():
+    """Save runtime blobs to JSON mirror (SQLite + Firebase done separately)."""
     local_data = {
         "bot_settings": {k: v for k, v in bot_settings.items() if k not in FS_KEYS},
         "number_batches": number_batches,
@@ -1094,35 +1093,60 @@ def save_local_db():
     try:
         with open(DB_FILE, "w", encoding='utf-8') as f:
             json.dump(local_data, f, indent=4, default=str)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️  save_local_db (json): {type(e).__name__}")
+
+    try:
+        sqlite_kv_set("number_batches", number_batches)
+        sqlite_kv_set("used_numbers_list", used_numbers_list)
+        sqlite_kv_set("total_uploaded_stats", total_uploaded_stats)
+        sqlite_kv_set("total_assigned_stats", total_assigned_stats)
+        sqlite_kv_set("recent_traffic", recent_traffic)
+        sqlite_kv_set("stex_assigned_numbers", stex_assigned_numbers)
+        sqlite_kv_set("voltx_assigned_numbers", voltx_assigned_numbers)
+        sqlite_kv_set("assigned_number_meta", assigned_number_meta)
+    except Exception as e:
+        print(f"⚠️  save_local_db (sqlite): {type(e).__name__}")
 
 
-# Debounce Firestore saves
-_save_lock = threading.Lock()
-_last_save_time = 0
-
-def save_db():
-    """Save to local + push EVERYTHING to Firestore (debounced)."""
-    global _last_save_time
-    save_local_db()
+def _sync_fs():
+    """Push bot_settings to Firestore (merge — non-destructive)."""
     if not db:
         return
-    now = time.time()
-    with _save_lock:
-        should_push = (now - _last_save_time) >= 2.0
-        if should_push:
-            _last_save_time = now
-    if should_push:
-        threading.Thread(target=_save_all_to_firestore, daemon=True).start()
+    try:
+        payload = {k: bot_settings[k] for k in FS_KEYS if k in bot_settings}
+        db.collection('settings').document('bot_config').set(payload, merge=True, timeout=10.0)
+    except Exception as e:
+        print(f"⚠️  Firestore settings sync failed: {type(e).__name__}")
 
 
-# Load at startup
-try:
-    load_db()
-except Exception as e:
-    print(f"⚠️  Initial load_db error: {type(e).__name__}")
+def _bg_save_firebase():
+    """Background push of ALL bot state to Firestore."""
+    try:
+        _sync_fs()
+        _save_numbers_to_firebase()
+    except Exception as e:
+        print(f"⚠️  _bg_save_firebase: {type(e).__name__}")
 
+
+def save_db():
+    """Save DB — Firebase primary + SQLite + JSON backup."""
+    save_local_db()
+    _persist_all_settings_to_sqlite()
+    if db:
+        threading.Thread(target=_bg_save_firebase, daemon=True).start()
+
+
+def _bg_load_db():
+    try:
+        load_db()
+        print("✅ load_db() completed in background.")
+    except Exception as e:
+        print(f"⚠️  load_db() crashed: {type(e).__name__}: {e}")
+
+
+threading.Thread(target=_bg_load_db, daemon=True).start()
+print("🚀 load_db() started in background - bot starting now.")
 
 user_states = {}
 temp_data = {}
@@ -1133,9 +1157,6 @@ pending_search_prompts = {}
 tg_session = requests.Session()
 
 
-# ==========================================
-# Telegram API & Helpers
-# ==========================================
 def _strip_premium(text):
     return re.sub(r'<tg-emoji[^>]*>([^<]*)</tg-emoji>', r'\1', str(text))
 
@@ -1167,12 +1188,6 @@ def send_message(chat_id, text, reply_markup=None, parse_mode="HTML"):
                 payload.pop("parse_mode", None)
                 res = api_call("sendMessage", payload)
     return res
-
-
-def send_photo(chat_id, photo_url_or_file_id, caption="", reply_markup=None, parse_mode="HTML"):
-    payload = {"chat_id": chat_id, "photo": photo_url_or_file_id, "caption": caption, "parse_mode": parse_mode}
-    if reply_markup: payload["reply_markup"] = reply_markup
-    return api_call("sendPhoto", payload)
 
 
 def edit_message(chat_id, message_id, text, reply_markup=None, parse_mode="HTML"):
@@ -1215,11 +1230,56 @@ def send_document_bytes(chat_id, filename, bytes_content):
     except: return {}
 
 
+all_known_users = set()
+
+
+def sync_users_list():
+    global all_known_users
+    try:
+        ul = sqlite_kv_get("all_known_users")
+        if isinstance(ul, list) and ul:
+            all_known_users.update(str(x) for x in ul)
+        if os.path.exists(USERS_LIST_FILE):
+            try:
+                with open(USERS_LIST_FILE, "r") as f:
+                    all_known_users.update(str(x) for x in json.load(f))
+            except Exception as _fe:
+                print(f"⚠️  users_list.json read: {type(_fe).__name__}")
+        if not all_known_users and db:
+            try:
+                for doc in db.collection('users').select([]).stream():
+                    all_known_users.add(str(doc.id))
+            except Exception as _fse:
+                print(f"⚠️  Firestore user-list read: {type(_fse).__name__}")
+        if all_known_users:
+            try:
+                with open(USERS_LIST_FILE, "w") as f:
+                    json.dump(list(all_known_users), f)
+            except Exception: pass
+            sqlite_kv_set("all_known_users", list(all_known_users))
+    except Exception as e:
+        print(f"⚠️  sync_users_list: {type(e).__name__}")
+
+
+threading.Thread(target=sync_users_list, daemon=True).start()
+
+
 def _save_users_list():
     try:
         with open(USERS_LIST_FILE, "w") as f:
             json.dump(list(all_known_users), f)
     except Exception: pass
+    try:
+        sqlite_kv_set("all_known_users", list(all_known_users))
+    except Exception: pass
+    # Firestore mirror
+    if db:
+        try:
+            db.collection('bot_state').document('all_known_users').set(
+                {'data': list(all_known_users)}, merge=True, timeout=10.0
+            )
+        except Exception:
+            pass
 
 
 def register_user_local(uid):
@@ -1227,19 +1287,6 @@ def register_user_local(uid):
     if uid_str not in all_known_users:
         all_known_users.add(uid_str)
         threading.Thread(target=_save_users_list, daemon=True).start()
-
-
-def sync_users_list():
-    global all_known_users
-    try:
-        if os.path.exists(USERS_LIST_FILE):
-            with open(USERS_LIST_FILE, "r") as f:
-                for x in json.load(f):
-                    all_known_users.add(str(x))
-    except: pass
-
-
-threading.Thread(target=sync_users_list, daemon=True).start()
 
 
 def broadcast_copymessage(from_chat_id, msg_id):
@@ -1328,41 +1375,53 @@ def get_flag_and_code(num):
 def get_flag_info_html(num_or_iso):
     s = str(num_or_iso).strip()
     s_up = s.upper()
+
     if len(s) == 2:
         for code, data in bot_settings.get("premium_flags", {}).items():
             if data.get("iso", "").upper() == s_up:
-                eid = data.get("id"); char = data.get("char")
+                eid = data.get("id")
+                char = data.get("char")
                 if eid: return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
                 return char
         return "🌍"
+
     for code, data in bot_settings.get("premium_flags", {}).items():
         if data.get("name", "").upper() == s_up:
-            eid = data.get("id"); char = data.get("char")
+            eid = data.get("id")
+            char = data.get("char")
             if eid: return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
             return char
+
     resolved_iso = ""
     try:
         for b in number_batches.values():
             if b.get("country", "").upper() == s_up:
                 ri = b.get("country_iso", "")
                 if ri:
-                    resolved_iso = ri.upper(); break
+                    resolved_iso = ri.upper()
+                    break
     except: pass
+
     if not resolved_iso:
         for cname, cinfo in COUNTRIES_DATA.items():
             if cname.upper() == s_up:
-                resolved_iso = cinfo.get("iso", "").upper(); break
+                resolved_iso = cinfo.get("iso", "").upper()
+                break
     if not resolved_iso:
         for ccode, cinfo in COUNTRY_DB.items():
             if cinfo["name"].upper() == s_up:
-                resolved_iso = cinfo["iso"].upper(); break
+                resolved_iso = cinfo["iso"].upper()
+                break
+
     if resolved_iso:
         for code, data in bot_settings.get("premium_flags", {}).items():
             if data.get("iso", "").upper() == resolved_iso:
-                eid = data.get("id"); char = data.get("char")
+                eid = data.get("id")
+                char = data.get("char")
                 if eid: return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
                 return char
         return get_flag_emoji(resolved_iso)
+
     char, _, eid = get_flag_info_from_num(s)
     if eid:
         return f'<tg-emoji emoji-id="{eid}">{char}</tg-emoji>'
@@ -1393,29 +1452,17 @@ def get_country_from_num(num):
     dial_code, src = _find_dial_code(clean)
     if src == "premium":
         data = bot_settings["premium_flags"][dial_code]
-        flag_char = data["char"]; iso = data.get("iso", "XX"); eid = data.get("id")
+        flag_char = data["char"]
+        iso = data.get("iso", "XX")
+        eid = data.get("id")
         flag_html = f'<tg-emoji emoji-id="{eid}">{flag_char}</tg-emoji>' if eid else flag_char
         return flag_html, iso, dial_code
     if src == "db":
         info = COUNTRY_DB[dial_code]
-        iso = info["iso"]; flag_char = get_flag_emoji(iso)
+        iso = info["iso"]
+        flag_char = get_flag_emoji(iso)
         return flag_char, iso, dial_code
     return "🌍", "XX", ""
-
-
-def mask_smart(num):
-    clean = num.replace("+", "").replace(" ", "")
-    dial_code, _ = _find_dial_code(clean)
-    rest = clean[len(dial_code):]
-    if len(rest) > 4:
-        middle_len = len(rest) - 4
-        last4 = rest[-4:]
-        return f"{dial_code}{'x' * middle_len}{last4}"
-    return f"{dial_code}{rest}" if dial_code else clean
-
-
-def mask_number(num):
-    return mask_smart(num)
 
 
 def extract_otp_code(text):
@@ -1435,331 +1482,349 @@ def extract_otp_code(text):
     return None
 
 
-def parse_panel_response(response_text, p_config=None):
-    results = []
-    p_type = p_config.get("type", "API Panel") if p_config else "API Panel"
-
-    if p_type == "Auto Captcha Panel":
-        try:
-            soup = BeautifulSoup(response_text, 'html.parser')
-            tables = soup.find_all('table')
-            n_col_name = p_config.get("num_col_name", "number").lower() if p_config else "number"
-            m_col_name = p_config.get("msg_col_name", "message").lower() if p_config else "message"
-            s_col_name = p_config.get("service_col_name", "service").lower() if p_config else "service"
-            n_idx = int(p_config.get("num_col_idx", 1)) - 1 if p_config and p_config.get("num_col_idx") else 1
-            m_idx = int(p_config.get("msg_col_idx", 2)) - 1 if p_config and p_config.get("msg_col_idx") else 2
-            s_idx = int(p_config.get("service_col_idx", 3)) - 1 if p_config and p_config.get("service_col_idx") else 3
-            for table in tables:
-                rows = table.find_all('tr')
-                if not rows: continue
-                final_n_idx = n_idx; final_m_idx = m_idx; final_s_idx = s_idx
-                header_cells = rows[0].find_all(['th', 'td'])
-                for i, cell in enumerate(header_cells):
-                    c_text = cell.get_text(strip=True).lower()
-                    if n_col_name in c_text: final_n_idx = i
-                    if m_col_name in c_text: final_m_idx = i
-                    if s_col_name in c_text: final_s_idx = i
-                for row in rows:
-                    cols = row.find_all(['td', 'th'])
-                    if all(c.name == 'th' for c in cols): continue
-                    if len(cols) > max(final_n_idx, final_m_idx):
-                        num_text = cols[final_n_idx].get_text(separator=" ", strip=True)
-                        msg_text = cols[final_m_idx].get_text(separator=" ", strip=True)
-                        svc_text = cols[final_s_idx].get_text(separator=" ", strip=True) if len(cols) > final_s_idx else ""
-                        clean_num = re.sub(r'\D', '', num_text)
-                        if clean_num and 5 <= len(clean_num) <= 18:
-                            otp = extract_otp_code(msg_text)
-                            if not otp: otp = "N/A"
-                            if len(msg_text) > 4:
-                                results.append({"number": clean_num, "message": msg_text, "otp": otp, "service_name": svc_text.strip()})
-        except Exception: pass
-        return results
-
-    try:
-        data = json.loads(response_text)
-    except Exception:
-        return results
-
-    if p_config:
-        try:
-            path_results = _extract_by_paths(data, p_config)
-            if path_results:
-                return path_results
-        except Exception: pass
-
-    temp_results = []
-
-    def process_item(item):
-        pot_nums_list = []; pot_msg = None; pot_svc = ""
-        values = []
-        if isinstance(item, dict):
-            lower_keys = {str(k).lower(): v for k, v in item.items()}
-            for k in ["number", "num", "phone", "msisdn", "sender"]:
-                if k in lower_keys:
-                    clean_val = re.sub(r'\D', '', str(lower_keys[k]))
-                    if 5 <= len(clean_val) <= 18 and clean_val not in pot_nums_list:
-                        pot_nums_list.append(clean_val)
-            for k in ["service", "app", "application", "type", "site"]:
-                if k in lower_keys:
-                    pot_svc = str(lower_keys[k]).strip(); break
-            for k in ["message", "msg", "sms", "content", "text"]:
-                if k in lower_keys:
-                    val = str(lower_keys[k])
-                    if len(val) > 4:
-                        pot_msg = val; break
-            values = list(item.values())
-        elif isinstance(item, list):
-            values = item
-
-        for v in values:
-            if isinstance(v, (dict, list)) or v is None: continue
-            v_str = str(v).strip()
-            clean_v = re.sub(r'\D', '', v_str)
-            if 7 <= len(clean_v) <= 18 and not re.search(r'[a-zA-Z]', v_str):
-                if not re.search(r'\d{4}[-/]\d{2}[-/]\d{2}', v_str) and not re.search(r'\d{2}:\d{2}:\d{2}', v_str) and "." not in v_str:
-                    if clean_v not in pot_nums_list: pot_nums_list.append(clean_v)
-            if len(v_str) > 4 and not v_str.isdigit():
-                if extract_otp_code(v_str):
-                    if pot_msg is None or len(v_str) > len(pot_msg): pot_msg = v_str
-
-        pot_num = None
-        if pot_nums_list:
-            matched_user_num = None
-            for n in pot_nums_list:
-                if n in stex_assigned_numbers or any(n in str(key) for key in stex_assigned_numbers.keys()):
-                    matched_user_num = n; break
-            if matched_user_num: pot_num = matched_user_num
-            elif len(pot_nums_list) >= 2: pot_num = pot_nums_list[1]
-            else: pot_num = pot_nums_list[0]
-        if pot_num and pot_msg:
-            otp = extract_otp_code(pot_msg)
-            if not otp: otp = "N/A"
-            temp_results.append({"number": pot_num, "message": pot_msg, "otp": otp, "service_name": pot_svc})
-
-    def traverse_json(node):
-        if isinstance(node, list):
-            if len(node) > 0 and not isinstance(node[0], (dict, list)):
-                process_item(node)
-            for child in node:
-                if isinstance(child, (dict, list)): traverse_json(child)
-        elif isinstance(node, dict):
-            process_item(node)
-            for val in node.values():
-                if isinstance(val, (dict, list)): traverse_json(val)
-
-    traverse_json(data)
-    seen = set()
-    for r in temp_results:
-        uid = f"{r['number']}_{r['otp']}"
-        if uid not in seen:
-            seen.add(uid); results.append(r)
-    return results
-
-
-def attempt_auto_login(p, idx):
-    login_url = p.get("login_url", "").strip()
-    if not login_url.startswith("http"):
-        login_url = "http://" + login_url
-    if not login_url.lower().endswith('/login') and not login_url.lower().endswith('.php'):
-        login_url = f"{login_url.rstrip('/')}/login"
-    session = requests.Session()
-    session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-    })
-    try:
-        res = session.get(login_url, timeout=15)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        all_text = res.text
-        captcha_match = re.search(r'(\d+\s*[\+\-\*]\s*\d+)\s*[=\?:]', all_text)
-        if not captcha_match:
-            captcha_match = re.search(r'what is\s*(\d+\s*[\+\-\*]\s*\d+)', all_text, re.I)
-        if not captcha_match:
-            elements = soup.find_all(["label", "div", "span", "p", "strong"])
-            for el in elements:
-                txt = el.get_text(separator=" ", strip=True)
-                if any(op in txt for op in ["+", "-", "*"]):
-                    m = re.search(r'(\d+\s*[\+\-\*]\s*\d+)', txt)
-                    if m:
-                        captcha_match = m; break
-        captcha_text = captcha_match.group(1) if captcha_match else "0 + 0"
-        answer = "0"
-        m2 = re.search(r'(\d+)\s*([\+\-\*])\s*(\d+)', captcha_text)
-        if m2:
-            a, op, b = int(m2.group(1)), m2.group(2), int(m2.group(3))
-            if op == '+': answer = str(a + b)
-            elif op == '-': answer = str(a - b)
-            elif op == '*': answer = str(a * b)
-
-        form = soup.find("form")
-        if not form:
-            p["login_status"] = "❌ No login form found"
-            return False
-        action = form.get("action")
-        post_url = urljoin(login_url, action) if action else login_url
-
-        form_data = {}
-        for hidden in form.find_all("input", type="hidden"):
-            name = hidden.get("name")
-            if name: form_data[name] = hidden.get("value") or ""
-
-        user_input = form.find("input", {"name": re.compile(r"user|email|id", re.I)}) or \
-                     form.find("input", {"type": "text", "placeholder": re.compile(r"user|email", re.I)}) or \
-                     form.find("input", {"type": "text"})
-        pass_input = form.find("input", {"name": re.compile(r"pass", re.I)}) or \
-                     form.find("input", {"type": "password"})
-        captcha_input = form.find("input", {"placeholder": re.compile(r"answer|ans|code|verification|value|captcha", re.I)}) or \
-                        form.find("input", {"name": re.compile(r"ans|captcha|ver|code", re.I)})
-
-        user_field = user_input.get("name") if user_input else "username"
-        pass_field = pass_input.get("name") if pass_input else "password"
-        captcha_field = captcha_input.get("name") if captcha_input else "answer"
-
-        form_data[user_field] = p.get("username", "")
-        form_data[pass_field] = p.get("password", "")
-        if captcha_field:
-            form_data[captcha_field] = answer
-
-        login_req = session.post(post_url, data=form_data, allow_redirects=True, timeout=15)
-
-        msg_link = p.get("msg_link", "").strip()
-        if not msg_link.startswith("http") and msg_link != "":
-            msg_link = "http://" + msg_link
-        check_url = msg_link if msg_link else f"{login_url.split('/login')[0]}/client/SMSCDRStats"
-        check_res = session.get(check_url, timeout=10)
-
-        if 'logout' in login_req.text.lower() or 'logout' in check_res.text.lower() or 'sms reports' in check_res.text.lower() or 'dashboard' in check_res.text.lower() or 'cdrs' in check_res.text.lower():
-            panel_sessions[idx] = session
-            p["login_status"] = "✅ Active & Fetching"
-            return True
-        else:
-            p["login_status"] = f"❌ Login Failed (Math: {captcha_text} = {answer})"
-            return False
-    except Exception as e:
-        p["login_status"] = f"❌ Error: {str(e)[:20]}"
-    return False
-
-
 # ==========================================
-# User Cache / Balance / OTP Credit — Firebase PRIMARY
+# User Cache / Balance / OTP Credit (Firebase-primary)
 # ==========================================
 user_cache = {}
 
 
-def get_user(user_id):
-    if user_id in user_cache: return user_cache[user_id]
-    if not db:
-        nu = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
-        user_cache[user_id] = nu
-        return nu
+def _sqlite_ensure_user(user_id):
+    uid = int(user_id)
     try:
-        doc_ref = db.collection('users').document(str(user_id))
-        doc = doc_ref.get()
-        if doc.exists:
-            data = doc.to_dict()
-            if "total_otps" not in data: data["total_otps"] = 0
-            if "banned" not in data: data["banned"] = False
-            if "verified" not in data: data["verified"] = False
-            if "total_refers" not in data: data["total_refers"] = 0
-            if "balance" not in data: data["balance"] = 0.0
-            user_cache[user_id] = data
-            return data
-        else:
-            nu = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
-            doc_ref.set(nu)
-            user_cache[user_id] = nu
-            return nu
+        with sqlite_tx() as conn:
+            if conn is None:
+                return False
+            cur = conn.cursor()
+            now = time.time()
+            cur.execute(
+                "INSERT OR IGNORE INTO users(user_id, balance, total_refers, total_otps, banned, verified, created_at, updated_at) "
+                "VALUES(?, 0.0, 0, 0, 0, 0, ?, ?)",
+                (uid, now, now),
+            )
+        return True
     except Exception as e:
-        print(f"⚠️  get_user: {type(e).__name__}")
-        nu = {"user_id": user_id, "balance": 0.0, "total_refers": 0, "total_otps": 0, "banned": False, "verified": False}
-        user_cache[user_id] = nu
-        return nu
+        print(f"⚠️  _sqlite_ensure_user: {type(e).__name__}")
+        return False
+
+
+def get_user(user_id):
+    uid = int(user_id)
+    if uid in user_cache:
+        return user_cache[uid]
+
+    # ⭐ 1. Firebase PRIMARY
+    if db:
+        try:
+            doc = db.collection('users').document(str(uid)).get(timeout=10.0)
+            if doc.exists:
+                data = doc.to_dict() or {}
+                data.setdefault("user_id", uid)
+                data.setdefault("balance", 0.0)
+                data.setdefault("total_refers", 0)
+                data.setdefault("total_otps", 0)
+                data.setdefault("banned", False)
+                data.setdefault("verified", False)
+                user_cache[uid] = data
+                # Mirror to SQLite for fallback
+                _sqlite_ensure_user(uid)
+                try:
+                    with sqlite_tx() as conn:
+                        if conn:
+                            conn.cursor().execute(
+                                "UPDATE users SET balance=?, total_refers=?, total_otps=?, banned=?, verified=?, "
+                                "referred_by=?, ref_paid=?, updated_at=? WHERE user_id=?",
+                                (float(data.get("balance", 0.0)),
+                                 int(data.get("total_refers", 0)),
+                                 int(data.get("total_otps", 0)),
+                                 1 if data.get("banned") else 0,
+                                 1 if data.get("verified") else 0,
+                                 int(data["referred_by"]) if data.get("referred_by") else None,
+                                 1 if data.get("ref_paid") else 0,
+                                 time.time(), uid)
+                            )
+                except Exception:
+                    pass
+                return data
+        except Exception as e:
+            print(f"⚠️  get_user Firestore read ({uid}): {type(e).__name__}")
+
+    # ⭐ 2. SQLite fallback
+    row = sqlite_exec(
+        "SELECT user_id,balance,total_refers,total_otps,banned,verified,referred_by,ref_paid "
+        "FROM users WHERE user_id=?", (uid,), fetch="one"
+    )
+    if row:
+        data = {
+            "user_id": int(row["user_id"]),
+            "balance": float(row.get("balance") or 0.0),
+            "total_refers": int(row.get("total_refers") or 0),
+            "total_otps": int(row.get("total_otps") or 0),
+            "banned": bool(row.get("banned") or 0),
+            "verified": bool(row.get("verified") or 0),
+        }
+        if row.get("referred_by"):
+            data["referred_by"] = int(row["referred_by"])
+        user_cache[uid] = data
+        return data
+
+    # ⭐ 3. New user — create in BOTH Firebase and SQLite
+    new_user = {"user_id": uid, "balance": 0.0, "total_refers": 0,
+                "total_otps": 0, "banned": False, "verified": False,
+                "created_at": time.time(), "updated_at": time.time()}
+    user_cache[uid] = new_user
+    _sqlite_ensure_user(uid)
+    if db:
+        try:
+            db.collection('users').document(str(uid)).set(new_user, merge=True, timeout=10.0)
+        except Exception as e:
+            print(f"⚠️  get_user Firestore create ({uid}): {type(e).__name__}")
+    return new_user
 
 
 def update_balance(user_id, amount):
-    if user_id in user_cache:
-        user_cache[user_id]["balance"] = user_cache[user_id].get("balance", 0.0) + float(amount)
-    if not db: return
+    uid = int(user_id)
+    amt = float(amount)
+
+    # ⭐ Firebase PRIMARY
+    if db:
+        try:
+            db.collection('users').document(str(uid)).set(
+                {"user_id": uid, "balance": firestore.Increment(amt), "updated_at": time.time()},
+                merge=True, timeout=10.0
+            )
+        except Exception as e:
+            print(f"⚠️  update_balance Firestore ({uid}): {type(e).__name__}")
+
+    # SQLite fallback mirror
     try:
-        doc_ref = db.collection('users').document(str(user_id))
-        doc_ref.set({"user_id": user_id, "balance": firestore.Increment(float(amount))}, merge=True)
+        _sqlite_ensure_user(uid)
+        with sqlite_tx() as conn:
+            if conn:
+                conn.cursor().execute(
+                    "UPDATE users SET balance = COALESCE(balance,0) + ?, updated_at=? WHERE user_id=?",
+                    (amt, time.time(), uid)
+                )
     except Exception as e:
-        print(f"⚠️  update_balance: {type(e).__name__}")
+        print(f"⚠️  update_balance SQLite ({uid}): {type(e).__name__}")
+
+    # Cache
+    if uid not in user_cache:
+        get_user(uid)
+    if uid in user_cache:
+        user_cache[uid]["balance"] = float(user_cache[uid].get("balance", 0.0)) + amt
 
 
 def credit_otp_to_user(owner_id, reward, app_full_name=""):
-    try: reward = float(reward)
-    except: reward = 0.0
+    try:
+        reward = float(reward)
+    except Exception:
+        reward = 0.0
     uid = int(owner_id)
+
+    # ⭐ Firebase PRIMARY
+    if db:
+        try:
+            db.collection('users').document(str(uid)).set({
+                "user_id": uid,
+                "balance": firestore.Increment(reward),
+                "total_otps": firestore.Increment(1),
+                "updated_at": time.time()
+            }, merge=True, timeout=10.0)
+        except Exception as e:
+            print(f"⚠️  credit_otp_to_user Firestore ({uid}): {type(e).__name__}")
+
+    # SQLite mirror
+    try:
+        _sqlite_ensure_user(uid)
+        with sqlite_tx() as conn:
+            if conn:
+                conn.cursor().execute(
+                    "UPDATE users SET balance = COALESCE(balance,0) + ?, "
+                    "total_otps = COALESCE(total_otps,0) + 1, updated_at=? WHERE user_id=?",
+                    (reward, time.time(), uid)
+                )
+    except Exception as e:
+        print(f"⚠️  credit_otp_to_user SQLite ({uid}): {type(e).__name__}")
+
     if uid not in user_cache:
         get_user(uid)
     if uid in user_cache:
         user_cache[uid]["balance"] = float(user_cache[uid].get("balance", 0.0)) + reward
         user_cache[uid]["total_otps"] = int(user_cache[uid].get("total_otps", 0)) + 1
-    if not db: return reward
-    try:
-        db.collection('users').document(str(uid)).set({
-            "user_id": uid,
-            "balance": firestore.Increment(reward),
-            "total_otps": firestore.Increment(1)
-        }, merge=True)
-    except Exception as e:
-        print(f"⚠️  credit_otp: {type(e).__name__}")
+
     return reward
 
 
-def add_referral(inviter_id, new_user_id):
-    if not db: return
+# ==========================================
+# 🎁 REFERRAL SYSTEM (Firebase-primary)
+# ==========================================
+def process_referral_for_user(new_user_id, inviter_id):
     try:
-        if not db.collection('users').document(str(new_user_id)).get().exists:
-            get_user(new_user_id)
-            reward = bot_settings.get("refer_reward", 0.2)
-            update_balance(inviter_id, reward)
-            db.collection('users').document(str(inviter_id)).set({"total_refers": firestore.Increment(1)}, merge=True)
-            ref_msg = (
-                f"{PEM['gift']} <b>New Referral !</b>\n"
-                f"------------------\n"
-                f"🔥 <b>You Received {reward} TK</b>\n"
-                f"------------------\n"
-                f"{PEM['user']} <b>From User ID:</b> <code>{new_user_id}</code>"
-            )
-            send_message(inviter_id, render_body_text(ref_msg))
-    except Exception as e:
-        print(f"⚠️  add_referral: {type(e).__name__}")
+        nuid = int(new_user_id)
+        iid = int(inviter_id)
+        if nuid == iid:
+            return False
 
+        # Check Firebase
+        if db:
+            try:
+                paid_doc = db.collection('referral_paid_users').document(str(nuid)).get(timeout=8.0)
+                if paid_doc.exists:
+                    return False
+                pend_doc = db.collection('pending_referrals').document(str(nuid)).get(timeout=8.0)
+                if pend_doc.exists:
+                    return False
+                # Save pending to Firebase
+                db.collection('pending_referrals').document(str(nuid)).set({
+                    "new_user_id": nuid,
+                    "inviter_id": iid,
+                    "created_at": time.time()
+                }, timeout=8.0)
+                # Set referred_by
+                db.collection('users').document(str(nuid)).set(
+                    {"referred_by": iid, "ref_paid": False}, merge=True, timeout=8.0
+                )
+            except Exception as e:
+                print(f"⚠️  process_referral Firestore: {type(e).__name__}")
 
-def is_user_banned(user_id):
-    if is_admin(user_id): return False
-    if user_id in user_banned_cache and time.time() - user_banned_cache[user_id]['time'] < 60:
-        return user_banned_cache[user_id]['banned']
-    banned = False
-    if db:
+        # SQLite mirror
+        row = sqlite_exec("SELECT user_id FROM referral_paid_users WHERE user_id=?", (nuid,), fetch="one")
+        if row: return False
+        row2 = sqlite_exec("SELECT inviter_id FROM pending_referrals WHERE new_user_id=?", (nuid,), fetch="one")
+        if row2: return False
+        with sqlite_tx() as conn:
+            if conn:
+                conn.cursor().execute(
+                    "INSERT OR IGNORE INTO pending_referrals(new_user_id, inviter_id, created_at) VALUES(?,?,?)",
+                    (nuid, iid, time.time()),
+                )
         try:
-            doc = db.collection('users').document(str(user_id)).get()
-            banned = doc.exists and doc.to_dict().get("banned", False)
-        except: pass
-    user_banned_cache[user_id] = {'banned': banned, 'time': time.time()}
-    return banned
+            _sqlite_ensure_user(nuid)
+            with sqlite_tx() as conn:
+                if conn:
+                    conn.cursor().execute(
+                        "UPDATE users SET referred_by=? WHERE user_id=? AND (referred_by IS NULL OR referred_by=0)",
+                        (iid, nuid)
+                    )
+        except Exception:
+            pass
+        return True
+    except Exception as e:
+        print(f"⚠️  process_referral_for_user: {type(e).__name__}")
+        return False
+
+
+def check_and_pay_referral_for_user(new_user_id):
+    try:
+        nuid = int(new_user_id)
+        iid = None
+
+        # Check Firebase for pending
+        if db:
+            try:
+                paid_doc = db.collection('referral_paid_users').document(str(nuid)).get(timeout=8.0)
+                if paid_doc.exists:
+                    return False
+                pend_doc = db.collection('pending_referrals').document(str(nuid)).get(timeout=8.0)
+                if pend_doc.exists:
+                    iid = int((pend_doc.to_dict() or {}).get("inviter_id", 0)) or None
+            except Exception as e:
+                print(f"⚠️  check_and_pay Firestore read: {type(e).__name__}")
+
+        # SQLite fallback
+        if iid is None:
+            paid = sqlite_exec("SELECT user_id FROM referral_paid_users WHERE user_id=?", (nuid,), fetch="one")
+            if paid:
+                return False
+            pend = sqlite_exec("SELECT inviter_id FROM pending_referrals WHERE new_user_id=?", (nuid,), fetch="one")
+            if not pend:
+                return False
+            iid = int(pend["inviter_id"])
+
+        reward = float(bot_settings.get("refer_reward", 0.2))
+
+        # Credit inviter (Firebase + SQLite)
+        update_balance(iid, reward)
+        # Increment total_refers
+        if db:
+            try:
+                db.collection('users').document(str(iid)).set(
+                    {"total_refers": firestore.Increment(1)}, merge=True, timeout=8.0
+                )
+                db.collection('users').document(str(nuid)).set(
+                    {"ref_paid": True}, merge=True, timeout=8.0
+                )
+                db.collection('referral_paid_users').document(str(nuid)).set(
+                    {"user_id": nuid, "paid_at": time.time()}, timeout=8.0
+                )
+                try:
+                    db.collection('pending_referrals').document(str(nuid)).delete()
+                except Exception:
+                    pass
+            except Exception as e:
+                print(f"⚠️  check_and_pay Firestore write: {type(e).__name__}")
+
+        # SQLite mirror
+        try:
+            _sqlite_ensure_user(iid)
+            with sqlite_tx() as conn:
+                if conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "INSERT OR IGNORE INTO referral_paid_users(user_id, paid_at) VALUES(?,?)",
+                        (nuid, time.time())
+                    )
+                    cur.execute(
+                        "UPDATE users SET total_refers = COALESCE(total_refers,0) + 1, updated_at=? WHERE user_id=?",
+                        (time.time(), iid)
+                    )
+                    cur.execute("UPDATE users SET ref_paid=1 WHERE user_id=?", (nuid,))
+                    cur.execute("DELETE FROM pending_referrals WHERE new_user_id=?", (nuid,))
+        except Exception as e:
+            print(f"⚠️  check_and_pay SQLite mirror: {type(e).__name__}")
+
+        if iid not in user_cache:
+            get_user(iid)
+        if iid in user_cache:
+            user_cache[iid]["total_refers"] = int(user_cache[iid].get("total_refers", 0)) + 1
+
+        ref_msg = (
+            f"{PEM['gift']} <b>New Referral !</b>\n"
+            f"━━━━━━━━━━━━━━━\n"
+            f"🔥 <b>You Received ${fmt_payout(reward)}</b>\n"
+            f"━━━━━━━━━━━━━━━\n"
+            f"{PEM['user']} <b>From User ID:</b> <code>{nuid}</code>"
+        )
+        send_message(iid, render_body_text(ref_msg))
+        return True
+    except Exception as e:
+        print(f"⚠️  check_and_pay_referral_for_user: {type(e).__name__}")
+        return False
 
 
 # ==========================================
-# Payout Lookup
+# Payout Lookup — 9 Layer Fallback
 # ==========================================
 def get_payout_for_number(clean_api_num, service_hint=""):
     reward = float(bot_settings.get("otp_reward", 0.0))
     meta = assigned_number_meta.get(clean_api_num, {})
+
     if "payout" in meta:
-        try: return float(meta["payout"])
+        try:
+            return float(meta["payout"])
         except: pass
+
     oc = str(meta.get("country", "") or "").strip()
     osvc = str(meta.get("service", "") or service_hint or "").strip()
     meta_iso = str(meta.get("iso", "") or "").strip().upper()
     pr = bot_settings.get("otp_pair_rates", {})
+
     if oc and osvc:
         key = f"{oc.upper()}|{osvc.upper()}"
         if key in pr:
             try: return float(pr[key])
             except: pass
+
     if meta_iso:
         for k, v in pr.items():
             try:
@@ -1768,12 +1833,14 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                     if osvc and ks.upper() != osvc.upper(): continue
                     return float(v)
             except: continue
+
     if meta_iso:
         for k, v in pr.items():
             try:
                 kc, ks = k.split("|", 1)
                 if kc.upper() == meta_iso: return float(v)
             except: continue
+
     if oc:
         for k, v in pr.items():
             try:
@@ -1782,11 +1849,13 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                     if osvc and ks.upper() != osvc.upper(): continue
                     return float(v)
             except: continue
+
     if oc:
         for k, v in pr.items():
             try:
                 if k.split("|")[0].upper() == oc.upper(): return float(v)
             except: continue
+
     try:
         _, iso_det, _ = get_country_from_num(clean_api_num)
         if iso_det and iso_det != "XX":
@@ -1799,6 +1868,7 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                 for _c, cinfo in COUNTRY_DB.items():
                     if cinfo["iso"].upper() == iso_det:
                         detected_name = cinfo["name"]; break
+
             for k, v in pr.items():
                 try:
                     kc, ks = k.split("|", 1)
@@ -1806,6 +1876,7 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                         if osvc and ks.upper() != osvc.upper(): continue
                         return float(v)
                 except: continue
+
             if detected_name:
                 for k, v in pr.items():
                     try:
@@ -1819,6 +1890,7 @@ def get_payout_for_number(clean_api_num, service_hint=""):
                         if k.split("|")[0].upper() == detected_name.upper(): return float(v)
                     except: continue
     except: pass
+
     return reward
 
 
@@ -1859,10 +1931,34 @@ def get_wmethod_display_list():
 # Group OTP Display Formatter
 # ==========================================
 def format_otp_display(num, app_full_name, lang, masked=True):
+    clean = str(num).lstrip('+').replace(" ", "")
     flag_html, iso, dial_code = get_country_from_num(num)
-    number_str = mask_smart(num) if masked else num.replace("+", "").replace(" ", "")
-    line = f"{flag_html} {iso} {app_full_name} {number_str} {lang}"
-    return f"━━━━━━━━━━━━━━━━━━\n{line}\n━━━━━━━━━━━━━━━━━━"
+
+    svc_app = get_premium_app(app_full_name)
+    svc_id = svc_app.get("id", "")
+    svc_char = svc_app.get("emoji", "📱")
+    if re.match(r'^[A-Za-z0-9#]{1,4}$', str(svc_char)):
+        svc_char = "📱"
+    if svc_id and str(svc_id).isdigit() and len(str(svc_id)) >= 10:
+        svc_html = f'<tg-emoji emoji-id="{svc_id}">{svc_char}</tg-emoji>'
+    else:
+        svc_html = svc_char
+
+    if masked:
+        first4 = clean[:4] if len(clean) >= 4 else clean
+        last3 = clean[-3:] if len(clean) >= 3 else clean
+        num_part = f'+<b>{first4}</b><tg-emoji emoji-id="{HIDDEN_EMOJI}">🔹</tg-emoji><b>{last3}</b>'
+    else:
+        num_part = f'+<b>{clean}</b>'
+
+    lang_display = lang_full(lang)
+
+    return (
+        f"{flag_html}<b>{iso}</b> | "
+        f"{svc_html} | "
+        f"{num_part} | "
+        f'<tg-emoji emoji-id="{MESSAGE_EMOJI}">✉️</tg-emoji> <b>{lang_display}</b>'
+    )
 
 
 def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balance, reward, lang):
@@ -1881,7 +1977,8 @@ def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balanc
     reward_str = fmt_payout(reward)
     amount_display = f"${reward_str}"
     otp = extract_otp_code(msg_text)
-    if not otp: otp = "N/A"
+    if not otp:
+        otp = "N/A"
     dollar_tag = ""
     if TAKA_EMOJI and str(TAKA_EMOJI).isdigit() and len(str(TAKA_EMOJI)) >= 10:
         dollar_tag = f'<tg-emoji emoji-id="{TAKA_EMOJI}">💵</tg-emoji>'
@@ -1895,15 +1992,21 @@ def deliver_to_inbox(user_id, service_name, raw_number, msg_text, current_balanc
     return text, {"inline_keyboard": [[btn]]}
 
 
-def build_stock_broadcast_new(country_display, service_name, count, per_otp, flag_html=None, app_emoji_html=None):
-    if not flag_html: flag_html = get_flag_info_html(country_display)
-    if not app_emoji_html: _, app_emoji_html = get_service_info_html(service_name)
+def build_stock_broadcast_new(country_display, service_name, count, per_otp,
+                               flag_html=None, app_emoji_html=None):
+    if not flag_html:
+        flag_html = get_flag_info_html(country_display)
+    if not app_emoji_html:
+        _, app_emoji_html = get_service_info_html(service_name)
+
     HP = f'<tg-emoji emoji-id="{BROADCAST_HEADER_PRE}">📢</tg-emoji>'
     HS = f'<tg-emoji emoji-id="{BROADCAST_HEADER_SUF}">✨</tg-emoji>'
     TE = f'<tg-emoji emoji-id="{BROADCAST_TOTAL_EMOJI}">📊</tg-emoji>'
     MP = f'<tg-emoji emoji-id="{BROADCAST_MONEY_PRE}">💰</tg-emoji>'
     MS = f'<tg-emoji emoji-id="{BROADCAST_MONEY_SUF}">💰</tg-emoji>'
+
     payout_str = f"${fmt_payout(per_otp)}"
+
     text = (
         f"{HP} <b>New Stock Added</b> {HS}\n\n"
         f"{flag_html} <b>{country_display.upper()} | {service_name.upper()}</b> {app_emoji_html}\n"
@@ -1926,7 +2029,9 @@ def build_numbers_header(country, service=None):
     PHONE_END_ICON = "5197474438970363734"
     MONEY_ICON     = "5190576863226933563"
     ROCK_ICON      = "6267152480878990865"
+
     flag_html = get_flag_info_html(country)
+
     payout_val = float(bot_settings.get("otp_reward", 0.0))
     pr = bot_settings.get("otp_pair_rates", {})
     if service:
@@ -1940,14 +2045,19 @@ def build_numbers_header(country, service=None):
                     if k.split("|")[0] == str(country).upper():
                         payout_val = float(v); break
                 except: pass
+
     payout_str = fmt_payout(payout_val)
+
     money_icon = f'<tg-emoji emoji-id="{MONEY_ICON}">💷</tg-emoji>'
     rock_icon  = f'<tg-emoji emoji-id="{ROCK_ICON}">🪨</tg-emoji>'
     gear_icon  = f'<tg-emoji emoji-id="{HEADER_EMOJI_1}">⚙️</tg-emoji>'
     phone_icon_2 = f'<tg-emoji emoji-id="{HEADER_EMOJI_2}">📱</tg-emoji>'
     phone_icon_end = f'<tg-emoji emoji-id="{PHONE_END_ICON}">☎️</tg-emoji>'
+
     country_display = html.escape(str(country).upper())
+
     indent = "⠀⠀⠀⠀⠀"
+
     header = (
         f"{indent}{money_icon}<b>{payout_str}$/OTP</b>{rock_icon}\n"
         f"\n"
@@ -1958,27 +2068,27 @@ def build_numbers_header(country, service=None):
 
 
 # ==========================================
-# Service Keyword Database (FULL)
+# Service Keyword Database
 # ==========================================
 SERVICE_SMS_KEYWORDS = {
-    "whatsapp": ["whatsapp", "wa", "wap", "w/a", "whatsapp business", "wa.me", "wa code", "wh", "واتساب", "واتساپ", "واٹس ایپ", "व्हाट्सएप", "वाट्सएप", "वॉट्सऐप", "व्हाट्सप्प", "হোয়াটসঅ্যাপ", "হোটসঅ্যাপ", "ватсап", "уотсап", "вотсап", "ватс апп", "వాట్సాప్", "വാട്‌സ്ആപ്പ്", "வாட்ஸ்அப்", "ವಾಟ್ಸಾಪ್", "વોટ્સએપ", "ਵਟਸਐਪ", "ହ୍ଵାଟସ୍ ଆପ୍", "වට්ස්ඇප්", "วอตส์แอปป์", "วอทส์แอพ", "ဝက်စ်အက်ပ်", "វ៉តសាប់", "ວອດແອັບ", "ワッツアップ", "왓츠앱", "whatsapp的", "whatsapp验证码", "וואטסאפ", "γουάτσαπ", "ዋትስአፕ", "ვოთსאფი", "վոթսափ"],
-    "facebook": ["facebook", "fb", "meta", "fbook", "fb code", "facebook code", "فيسبوك", "فيس بوك"],
-    "instagram": ["instagram", "insta", "ig", "ig code", "instagram code", "انستغرام", "انستقرام"],
-    "telegram": ["telegram", "tg", "tele", "telegram code", "tg code", "t.me", "تيليجرام", "تليجرام"],
-    "tiktok": ["tiktok", "tik tok", "tikvideo", "tiktok code", "tik code", "تيك توك"],
-    "snapchat": ["snapchat", "snap", "snap code", "سناب شات"],
-    "twitter": ["twitter", "x.com", "x code", "twitter code", "تويتر"],
-    "discord": ["discord", "discord code", "ديسكورد"],
-    "viber": ["viber", "viber code", "فايبر"],
-    "line": ["line", "line code", "line verification", "لاين"],
-    "wechat": ["wechat", "we chat", "wechat code", "وي تشات"],
-    "signal": ["signal", "signal code", "سيجنال"],
-    "linkedin": ["linkedin", "linked in", "لينكد إن"],
-    "imo": ["imo", "imo code", "imo verification", "ايمو"],
-    "kakaotalk": ["kakao", "kakaotalk", "كاكاو"],
+    "whatsapp": ["whatsapp", "wa", "wap", "w/a", "whatsapp business", "wa.me", "wa code", "wh"],
+    "facebook": ["facebook", "fb", "meta", "fbook", "fb code", "facebook code"],
+    "instagram": ["instagram", "insta", "ig", "ig code", "instagram code"],
+    "telegram": ["telegram", "tg", "tele", "telegram code", "tg code", "t.me"],
+    "tiktok": ["tiktok", "tik tok", "tikvideo", "tiktok code", "tik code"],
+    "snapchat": ["snapchat", "snap", "snap code"],
+    "twitter": ["twitter", "x.com", "x code", "twitter code"],
+    "discord": ["discord", "discord code"],
+    "viber": ["viber", "viber code"],
+    "line": ["line", "line code", "line verification"],
+    "wechat": ["wechat", "we chat", "wechat code"],
+    "signal": ["signal", "signal code"],
+    "linkedin": ["linkedin", "linked in"],
+    "imo": ["imo", "imo code", "imo verification"],
+    "kakaotalk": ["kakao", "kakaotalk"],
     "qq": ["qq", "tencent qq"],
     "vk": ["vk", "vkontakte"],
-    "google": ["google", "gmail", "youtube", "g-", "google voice", "جوجل", "غوغل"],
+    "google": ["google", "gmail", "youtube", "g-", "google voice"],
     "microsoft": ["microsoft", "ms", "outlook", "live.com", "hotmail"],
     "apple": ["apple", "icloud", "itunes", "apple id"],
     "yahoo": ["yahoo", "yahoo code", "ymail"],
@@ -2124,7 +2234,8 @@ def parse_chat_id(text):
         parts = text.split("/")
         username = parts[-1]
         if username: return "@" + username if not username.startswith("@") else username
-    if text.startswith("@"): return text
+    if text.startswith("@"):
+        return text
     return "@" + text
 
 
@@ -2151,12 +2262,37 @@ def send_force_join_msg(chat_id):
     send_message(chat_id, render_body_text(f"{PEM['warn']} <b>Please join our channels to use the bot!</b>"), reply_markup={"inline_keyboard": kb})
 
 
+def is_user_banned(user_id):
+    if is_admin(user_id): return False
+    if user_id in user_banned_cache and time.time() - user_banned_cache[user_id]['time'] < 60:
+        return user_banned_cache[user_id]['banned']
+    banned = False
+    # Firebase primary
+    if db:
+        try:
+            doc = db.collection('users').document(str(user_id)).get(timeout=8.0)
+            if doc.exists:
+                banned = (doc.to_dict() or {}).get("banned", False)
+        except Exception:
+            pass
+    # SQLite fallback
+    if not banned:
+        row = sqlite_exec("SELECT banned FROM users WHERE user_id=?", (int(user_id),), fetch="one")
+        if row is not None:
+            banned = bool(row.get("banned") or 0)
+    user_banned_cache[user_id] = {'banned': banned, 'time': time.time()}
+    return banned
+
+
 def build_group_kb(otp_value, fw=None):
-    kb = [[{"text": f"{otp_value}", "icon_custom_emoji_id": COPY_EMOJI, "copy_text": {"text": otp_value}, "style": "success"}]]
-    row2 = [{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI, "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}]
+    kb = [[{"text": f"{otp_value}", "icon_custom_emoji_id": COPY_EMOJI,
+            "copy_text": {"text": otp_value}, "style": "success"}]]
+    row2 = [{"text": "𝐍𝐔𝐌𝐁𝐄𝐑", "icon_custom_emoji_id": NUMBER_BTN_EMOJI,
+             "url": f"https://t.me/{BOT_USERNAME}?start=start", "style": "primary"}]
     ch_link = bot_settings.get("main_channel_link", "")
     if ch_link:
-        row2.append({"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI, "url": ch_link, "style": "primary"})
+        row2.append({"text": "𝐂𝐇𝐀𝐍𝐍𝐄𝐋", "icon_custom_emoji_id": CHANNEL_EMOJI,
+                     "url": ch_link, "style": "primary"})
     kb.append(row2)
     if fw:
         for btn in fw.get("buttons", []):
@@ -2176,13 +2312,16 @@ def build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_i
     method_icon = f'<tg-emoji emoji-id="{WITHDRAW_METHOD_ICON}">🥂</tg-emoji>'
     method_emoji = get_wmethod_emoji_html(method)
     amount_display = fmt_payout(amount)
+
     txt = (
-        f"<blockquote>🎙 <b>NEW WITHDRAW REUQUEST</b>{web_emoji}</blockquote>\n\n"
+        f"<blockquote>🎙 <b>NEW WITHDRAW REUQUEST</b>{web_emoji}</blockquote>\n"
+        f"\n"
         f"{frog_emoji} <b>USER ID :</b> <code>{chat_id}</code>\n"
         f"{user_emoji} <b>User :</b> <a href='tg://user?id={chat_id}'>{full_name}</a>\n"
         f"{balance_icon} <b>BALANCE:</b> <code>${amount_display}</code>\n"
         f"{phone_emoji} <b>NUMBER :</b> <code>{number}</code>\n"
-        f"{method_icon} <b>METHOD :</b> {method_emoji} <b>{method}</b>\n\n"
+        f"{method_icon} <b>METHOD :</b> {method_emoji} <b>{method}</b>\n"
+        f"\n"
         f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>"
     )
     return render_body_text(txt)
@@ -2193,8 +2332,11 @@ def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method,
         masked_num = f"{number[:4]}❖STR❖{number[-3:]}"
     else:
         masked_num = number
+
     status_word = "APPROVED" if action == "APPROVE" else "REJECTED"
-    trailing_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>' if action == "APPROVE" else '<tg-emoji emoji-id="5420130255174145507">❌</tg-emoji>'
+    trailing_emoji = '<tg-emoji emoji-id="6206245785877616415">🕸️</tg-emoji>' if action == "APPROVE" \
+                     else '<tg-emoji emoji-id="5420130255174145507">❌</tg-emoji>'
+
     frog_emoji = '<tg-emoji emoji-id="6307777408300753473">🐸</tg-emoji>'
     user_emoji = '<tg-emoji emoji-id="5352861489541714456">👤</tg-emoji>'
     balance_icon = f'<tg-emoji emoji-id="{WITHDRAW_BALANCE_EMOJI}">🔘</tg-emoji>'
@@ -2202,13 +2344,16 @@ def build_withdrawal_status_msg(action, u_id, full_name, amount, number, method,
     method_icon = f'<tg-emoji emoji-id="{WITHDRAW_METHOD_ICON}">🥂</tg-emoji>'
     method_emoji = get_wmethod_emoji_html(method)
     amount_display = fmt_payout(amount)
+
     txt = (
-        f"<blockquote>🎙 <b>WITHDRAW {status_word}</b> {trailing_emoji}</blockquote>\n\n"
+        f"<blockquote>🎙 <b>WITHDRAW {status_word}</b> {trailing_emoji}</blockquote>\n"
+        f"\n"
         f"{frog_emoji} <b>USER ID :</b> <code>{u_id}</code>\n"
         f"{user_emoji} <b>User :</b> <a href='tg://user?id={u_id}'>{full_name}</a>\n"
         f"{balance_icon} <b>BALANCE:</b> <code>${amount_display}</code>\n"
         f"{phone_emoji} <b>NUMBER :</b> <code>{masked_num}</code>\n"
-        f"{method_icon} <b>METHOD :</b> {method_emoji} <b>{method}</b>\n\n"
+        f"{method_icon} <b>METHOD :</b> {method_emoji} <b>{method}</b>\n"
+        f"\n"
         f"🧾 <b>WITHDRAW ID :</b> <code>{req_id}</code>"
     )
     return render_body_text(txt)
@@ -2235,6 +2380,171 @@ def refund_withdrawal_balance(user_id, amount):
 # ==========================================
 # Panel Monitor
 # ==========================================
+def fetch_cpt_panel_cdrs(p, session, check_url):
+    res = session.get(check_url, timeout=15)
+    html_text = res.text
+    if "login" in html_text.lower() or "signin" in html_text.lower() or any(x in html_text for x in ["Sign in to your account", "Please sign in", "Welcome back!"]):
+        raise Exception("Session expired")
+    soup = BeautifulSoup(html_text, 'html.parser')
+    s_ajax_source = ""
+    for script in soup.find_all("script"):
+        script_text = script.string or ""
+        match = re.search(r'sAjaxSource":\s*"([^"]+)"', script_text)
+        if match:
+            s_ajax_source = match.group(1)
+            break
+    results = []
+    n_col_name = p.get("num_col_name", "number").lower()
+    m_col_name = p.get("msg_col_name", "message").lower()
+    s_col_name = p.get("service_col_name", "service").lower()
+    n_idx = int(p.get("num_col_idx", 1)) - 1 if p.get("num_col_idx") else 1
+    m_idx = int(p.get("msg_col_idx", 2)) - 1 if p.get("msg_col_idx") else 2
+    s_idx = int(p.get("service_col_idx", 3)) - 1 if p.get("service_col_idx") else 3
+
+    def _extract_row(row_val):
+        if not isinstance(row_val, list): return None
+        if len(row_val) < max(n_idx, m_idx) + 1: return None
+        num_val = row_val[n_idx] if (0 <= n_idx < len(row_val)) else row_val[2]
+        msg_val = row_val[m_idx] if (0 <= m_idx < len(row_val)) else row_val[4]
+        svc_val = row_val[s_idx] if (0 <= s_idx < len(row_val)) else ""
+        clean_num = re.sub(r'\D', '', str(num_val))
+        if not (clean_num and 5 <= len(clean_num) <= 18): return None
+        otp = extract_otp_code(msg_val)
+        if not otp: otp = "N/A"
+        if not (len(str(msg_val)) > 4): return None
+        return {"number": clean_num, "message": str(msg_val), "otp": otp, "service_name": str(svc_val).strip()}
+
+    if s_ajax_source:
+        baseUrl = p.get("login_url", "").split("/client")[0].split("/login")[0].strip()
+        if not baseUrl.startswith("http"): baseUrl = "http://" + baseUrl
+        if s_ajax_source.startswith("http"):
+            full_ajax_url = s_ajax_source
+        elif s_ajax_source.startswith("/"):
+            full_ajax_url = f"{baseUrl}{s_ajax_source}"
+        else:
+            current_dir = check_url[:check_url.rfind("/")]
+            full_ajax_url = f"{current_dir}/{s_ajax_source}"
+        if "iDisplayLength" not in full_ajax_url:
+            divider = "&" if "?" in full_ajax_url else "?"
+            full_ajax_url += f"{divider}sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=250&sSearch=&iSortingCols=1&iSortCol_0=0&sSortDir_0=desc"
+        ajax_headers = {"Referer": check_url, "X-Requested-With": "XMLHttpRequest"}
+        ajax_res = session.get(full_ajax_url, headers=ajax_headers, timeout=15)
+        rows = ajax_res.json().get("aaData", [])
+        for row_val in rows:
+            item = _extract_row(row_val)
+            if item: results.append(item)
+    else:
+        tables = soup.find_all('table')
+        for table in tables:
+            rows = table.find_all('tr')
+            if not rows: continue
+            final_n_idx, final_m_idx, final_s_idx = n_idx, m_idx, s_idx
+            header_cells = rows[0].find_all(['th', 'td'])
+            for i, cell in enumerate(header_cells):
+                c_text = cell.get_text(strip=True).lower()
+                if n_col_name in c_text: final_n_idx = i
+                if m_col_name in c_text: final_m_idx = i
+                if s_col_name in c_text: final_s_idx = i
+            for row in rows:
+                cols = row.find_all(['td', 'th'])
+                if all(c.name == 'th' for c in cols): continue
+                if len(cols) > max(final_n_idx, final_m_idx):
+                    num_text = cols[final_n_idx].get_text(separator=" ", strip=True)
+                    msg_text = cols[final_m_idx].get_text(separator=" ", strip=True)
+                    svc_text = cols[final_s_idx].get_text(separator=" ", strip=True) if len(cols) > final_s_idx else ""
+                    clean_num = re.sub(r'\D', '', num_text)
+                    if clean_num and 5 <= len(clean_num) <= 18:
+                        otp = extract_otp_code(msg_text)
+                        if not otp: otp = "N/A"
+                        if len(msg_text) > 4:
+                            results.append({"number": clean_num, "message": msg_text, "otp": otp, "service_name": svc_text.strip()})
+    return results, html_text
+
+
+def attempt_auto_login(p, idx):
+    login_url = p.get("login_url", "").strip()
+    if not login_url.startswith("http"):
+        login_url = "http://" + login_url
+    if not login_url.lower().endswith('/login') and not login_url.lower().endswith('.php'):
+        login_url = f"{login_url.rstrip('/')}/login"
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    })
+    try:
+        res = session.get(login_url, timeout=15)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        all_text = res.text
+        captcha_match = re.search(r'(\d+\s*[\+\-\*]\s*\d+)\s*[=\?:]', all_text)
+        if not captcha_match:
+            captcha_match = re.search(r'what is\s*(\d+\s*[\+\-\*]\s*\d+)', all_text, re.I)
+        if not captcha_match:
+            elements = soup.find_all(["label", "div", "span", "p", "strong"])
+            for el in elements:
+                txt = el.get_text(separator=" ", strip=True)
+                if any(op in txt for op in ["+", "-", "*"]):
+                    m = re.search(r'(\d+\s*[\+\-\*]\s*\d+)', txt)
+                    if m:
+                        captcha_match = m; break
+        captcha_text = captcha_match.group(1) if captcha_match else "0 + 0"
+        answer = "0"
+        m2 = re.search(r'(\d+)\s*([\+\-\*])\s*(\d+)', captcha_text)
+        if m2:
+            a, op, b = int(m2.group(1)), m2.group(2), int(m2.group(3))
+            if op == '+': answer = str(a + b)
+            elif op == '-': answer = str(a - b)
+            elif op == '*': answer = str(a * b)
+
+        form = soup.find("form")
+        if not form:
+            p["login_status"] = "❌ No login form found"
+            return False
+        action = form.get("action")
+        post_url = urljoin(login_url, action) if action else login_url
+
+        form_data = {}
+        for hidden in form.find_all("input", type="hidden"):
+            name = hidden.get("name")
+            if name: form_data[name] = hidden.get("value") or ""
+
+        user_input = form.find("input", {"name": re.compile(r"user|email|id", re.I)}) or \
+                     form.find("input", {"type": "text", "placeholder": re.compile(r"user|email", re.I)}) or \
+                     form.find("input", {"type": "text"})
+        pass_input = form.find("input", {"name": re.compile(r"pass", re.I)}) or \
+                     form.find("input", {"type": "password"})
+        captcha_input = form.find("input", {"placeholder": re.compile(r"answer|ans|code|verification|value|captcha", re.I)}) or \
+                        form.find("input", {"name": re.compile(r"ans|captcha|ver|code", re.I)})
+
+        user_field = user_input.get("name") if user_input else "username"
+        pass_field = pass_input.get("name") if pass_input else "password"
+        captcha_field = captcha_input.get("name") if captcha_input else "answer"
+
+        form_data[user_field] = p.get("username", "")
+        form_data[pass_field] = p.get("password", "")
+        if captcha_field:
+            form_data[captcha_field] = answer
+
+        login_req = session.post(post_url, data=form_data, allow_redirects=True, timeout=15)
+
+        msg_link = p.get("msg_link", "").strip()
+        if not msg_link.startswith("http") and msg_link != "":
+            msg_link = "http://" + msg_link
+        check_url = msg_link if msg_link else f"{login_url.split('/login')[0]}/client/SMSCDRStats"
+        check_res = session.get(check_url, timeout=10)
+
+        if 'logout' in login_req.text.lower() or 'logout' in check_res.text.lower() or 'sms reports' in check_res.text.lower() or 'dashboard' in check_res.text.lower() or 'cdrs' in check_res.text.lower():
+            panel_sessions[idx] = session
+            p["login_status"] = "✅ Active & Fetching"
+            return True
+        else:
+            p["login_status"] = f"❌ Login Failed (Math: {captcha_text} = {answer})"
+            return False
+    except Exception as e:
+        p["login_status"] = f"❌ Error: {str(e)[:20]}"
+    return False
+
+
 def panel_monitor_thread():
     global processed_otps, recent_traffic, panel_sessions
     while True:
@@ -2245,26 +2555,30 @@ def panel_monitor_thread():
                         sess = panel_sessions.get(idx)
                         if not sess:
                             now = time.time()
-                            if now - p.get("last_login_attempt", 0) < 30: continue
+                            if now - p.get("last_login_attempt", 0) < 30:
+                                continue
                             p["last_login_attempt"] = now
                             success = attempt_auto_login(p, idx)
                             save_db()
-                            if not success: continue
+                            if not success:
+                                continue
                             sess = panel_sessions.get(idx)
                         try:
                             parsed_data, res_text = fetch_cpt_panel_cdrs(p, sess, p["msg_link"])
                             p["login_status"] = "Active & Fetching"
-                        except Exception:
+                        except Exception as e:
                             p["login_status"] = "Session Expired (Retrying...)"
                             del panel_sessions[idx]
                             save_db()
                             continue
+
                     elif p.get("api_url") or p.get("curl_command"):
                         url = p.get("api_url", "").strip()
                         token = p.get("token", "").strip()
                         curl_cmd = p.get("curl_command", "").strip()
                         parsed_data = []
                         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+
                         if curl_cmd:
                             try:
                                 parsed_curl = parse_curl_command(curl_cmd)
@@ -2278,7 +2592,9 @@ def panel_monitor_thread():
                                     else:
                                         res = requests.get(curl_url, headers=curl_headers, timeout=15)
                                     parsed_data = parse_panel_response(res.text, p)
-                            except Exception: pass
+                            except Exception as _ce:
+                                print(f"CURL fetch error (panel {idx}): {_ce}")
+
                         if not parsed_data and url:
                             urls_to_try = []
                             if "{token}" in url or "{key}" in url:
@@ -2300,42 +2616,60 @@ def panel_monitor_thread():
                                             save_db()
                                         break
                                 except: continue
+
                         if not parsed_data: continue
-                    else: continue
+                    else:
+                        continue
+
                     if p.get("type") != "Auto Captcha Panel":
                         limit = p.get("records", 0)
                         if limit > 0: parsed_data = parsed_data[:limit]
+
                     for item in parsed_data:
-                        num = item["number"]; otp = item["otp"]; msg_text = item["message"]
+                        num = item["number"]
+                        otp = item["otp"]
+                        msg_text = item["message"]
                         panel_svc_name = item.get("service_name", "").strip()
                         unique_id = f"{num}_{otp}"
+
                         if unique_id not in processed_otps:
                             processed_otps.add(unique_id)
                             if len(processed_otps) > 5000: processed_otps.clear()
+
                             char, iso = get_flag_and_code(num)
                             app_full_name, prem_app_html = get_service_info_html(panel_svc_name or p.get("name", "Panel"), msg_text)
                             current_time = time.time()
+
                             recent_traffic = [t for t in recent_traffic if current_time - t.get("time", 0) <= 3600]
-                            recent_traffic.append({"service": app_full_name, "iso": iso, "flag": char, "number": num, "time": current_time})
+                            recent_traffic.append({
+                                "service": app_full_name, "iso": iso, "flag": char,
+                                "number": num, "time": current_time
+                            })
                             save_local_db()
+
                             display_num = f"+{num}" if not str(num).startswith("+") else str(num)
                             lang = detect_language(msg_text)
+
                             display_msg = render_body_text(format_otp_display(display_num, app_full_name, lang, masked=True))
+
                             for fw in bot_settings["fw_groups"]:
                                 kb = build_group_kb(otp, fw)
                                 send_message(fw["chat_id"], display_msg, reply_markup=kb)
+
                             owners = []
                             clean_api_num = str(num).replace("+", "").replace(" ", "").replace("-", "").strip()
                             for uid, session_data in user_active_sessions.items():
                                 for act_num in session_data.get("nums", []):
                                     act_clean = str(act_num).replace("+", "").replace(" ", "").replace("-", "").strip()
                                     if act_clean == clean_api_num or (len(act_clean) >= 8 and act_clean.endswith(clean_api_num[-8:])) or (len(clean_api_num) >= 8 and clean_api_num.endswith(act_clean[-8:])):
-                                        owners.append(uid); break
+                                        owners.append(uid)
+                                        break
                             if not owners:
                                 for stex_n, n_owner in stex_assigned_numbers.items():
                                     clean_stex = str(stex_n).replace("+", "").replace(" ", "").replace("-", "").strip()
                                     if clean_stex == clean_api_num or (len(clean_stex) >= 8 and clean_stex.endswith(clean_api_num[-8:])) or (len(clean_api_num) >= 8 and clean_api_num.endswith(clean_stex[-8:])):
                                         owners.append(n_owner)
+
                             owners = list(set(owners))
                             for owner_id in owners:
                                 reward = get_payout_for_number(clean_api_num, app_full_name)
@@ -2347,7 +2681,128 @@ def panel_monitor_thread():
         except Exception:
             pass
         time.sleep(5)
-        # ==========================================
+
+
+def parse_panel_response(response_text, p_config=None):
+    results = []
+    p_type = p_config.get("type", "API Panel") if p_config else "API Panel"
+
+    if p_type == "Auto Captcha Panel":
+        try:
+            soup = BeautifulSoup(response_text, 'html.parser')
+            tables = soup.find_all('table')
+            n_col_name = p_config.get("num_col_name", "number").lower() if p_config else "number"
+            m_col_name = p_config.get("msg_col_name", "message").lower() if p_config else "message"
+            s_col_name = p_config.get("service_col_name", "service").lower() if p_config else "service"
+            n_idx = int(p_config.get("num_col_idx", 1)) - 1 if p_config and p_config.get("num_col_idx") else 1
+            m_idx = int(p_config.get("msg_col_idx", 2)) - 1 if p_config and p_config.get("msg_col_idx") else 2
+            s_idx = int(p_config.get("service_col_idx", 3)) - 1 if p_config and p_config.get("service_col_idx") else 3
+            for table in tables:
+                rows = table.find_all('tr')
+                if not rows: continue
+                final_n_idx = n_idx; final_m_idx = m_idx; final_s_idx = s_idx
+                header_cells = rows[0].find_all(['th', 'td'])
+                for i, cell in enumerate(header_cells):
+                    c_text = cell.get_text(strip=True).lower()
+                    if n_col_name in c_text: final_n_idx = i
+                    if m_col_name in c_text: final_m_idx = i
+                    if s_col_name in c_text: final_s_idx = i
+                for row in rows:
+                    cols = row.find_all(['td', 'th'])
+                    if all(c.name == 'th' for c in cols): continue
+                    if len(cols) > max(final_n_idx, final_m_idx):
+                        num_text = cols[final_n_idx].get_text(separator=" ", strip=True)
+                        msg_text = cols[final_m_idx].get_text(separator=" ", strip=True)
+                        svc_text = cols[final_s_idx].get_text(separator=" ", strip=True) if len(cols) > final_s_idx else ""
+                        clean_num = re.sub(r'\D', '', num_text)
+                        if clean_num and 5 <= len(clean_num) <= 18:
+                            otp = extract_otp_code(msg_text)
+                            if not otp: otp = "N/A"
+                            if len(msg_text) > 4:
+                                results.append({"number": clean_num, "message": msg_text, "otp": otp, "service_name": svc_text.strip()})
+        except Exception: pass
+        return results
+
+    try:
+        data = json.loads(response_text)
+    except Exception:
+        return results
+
+    if p_config:
+        try:
+            path_results = _extract_by_paths(data, p_config)
+            if path_results:
+                return path_results
+        except Exception: pass
+
+    temp_results = []
+
+    def process_item(item):
+        pot_nums_list = []; pot_msg = None; pot_svc = ""
+        values = []
+        if isinstance(item, dict):
+            lower_keys = {str(k).lower(): v for k, v in item.items()}
+            for k in ["number", "num", "phone", "msisdn", "sender"]:
+                if k in lower_keys:
+                    clean_val = re.sub(r'\D', '', str(lower_keys[k]))
+                    if 5 <= len(clean_val) <= 18 and clean_val not in pot_nums_list:
+                        pot_nums_list.append(clean_val)
+            for k in ["service", "app", "application", "type", "site"]:
+                if k in lower_keys:
+                    pot_svc = str(lower_keys[k]).strip(); break
+            for k in ["message", "msg", "sms", "content", "text"]:
+                if k in lower_keys:
+                    val = str(lower_keys[k])
+                    if len(val) > 4:
+                        pot_msg = val; break
+            values = list(item.values())
+        elif isinstance(item, list):
+            values = item
+
+        for v in values:
+            if isinstance(v, (dict, list)) or v is None: continue
+            v_str = str(v).strip()
+            clean_v = re.sub(r'\D', '', v_str)
+            if 7 <= len(clean_v) <= 18 and not re.search(r'[a-zA-Z]', v_str):
+                if not re.search(r'\d{4}[-/]\d{2}[-/]\d{2}', v_str) and not re.search(r'\d{2}:\d{2}:\d{2}', v_str) and "." not in v_str:
+                    if clean_v not in pot_nums_list: pot_nums_list.append(clean_v)
+            if len(v_str) > 4 and not v_str.isdigit():
+                if extract_otp_code(v_str):
+                    if pot_msg is None or len(v_str) > len(pot_msg): pot_msg = v_str
+
+        pot_num = None
+        if pot_nums_list:
+            matched_user_num = None
+            for n in pot_nums_list:
+                if n in stex_assigned_numbers or any(n in str(key) for key in stex_assigned_numbers.keys()):
+                    matched_user_num = n; break
+            if matched_user_num: pot_num = matched_user_num
+            elif len(pot_nums_list) >= 2: pot_num = pot_nums_list[1]
+            else: pot_num = pot_nums_list[0]
+        if pot_num and pot_msg:
+            otp = extract_otp_code(pot_msg)
+            if not otp: otp = "N/A"
+            temp_results.append({"number": pot_num, "message": pot_msg, "otp": otp, "service_name": pot_svc})
+
+    def traverse_json(node):
+        if isinstance(node, list):
+            if len(node) > 0 and not isinstance(node[0], (dict, list)):
+                process_item(node)
+            for child in node:
+                if isinstance(child, (dict, list)): traverse_json(child)
+        elif isinstance(node, dict):
+            process_item(node)
+            for val in node.values():
+                if isinstance(val, (dict, list)): traverse_json(val)
+
+    traverse_json(data)
+    seen = set()
+    for r in temp_results:
+        uid = f"{r['number']}_{r['otp']}"
+        if uid not in seen:
+            seen.add(uid); results.append(r)
+    return results
+    # ==========================================
 # UI Keyboards
 # ==========================================
 def get_cancel_kb():
@@ -2387,11 +2842,11 @@ def get_admin_text():
 
     yellow_icon = '<tg-emoji emoji-id="5339082633160703625">🟡</tg-emoji>'
     green_icon = '<tg-emoji emoji-id="5352694861990501856">✅</tg-emoji>'
-    if db:
-        db_status = f"{green_icon} <b>FIREBASE ACTIVE (MAIN)</b>"
-        db_line2 = f"{green_icon} <b>SQLITE MIRROR</b>"
+    if db and current_db_mode == "firebase":
+        db_status = f"{green_icon} <b>FIREBASE ACTIVE</b>"
+        db_line2 = f"{green_icon} <b>SQLITE ACTIVE</b>"
     else:
-        db_status = f"{green_icon} <b>SQLITE ACTIVE (MAIN)</b>"
+        db_status = f"{green_icon} <b>SQLITE ACTIVE</b>"
         db_line2 = f"{yellow_icon} <b>FIREBASE OFF</b>"
 
     txt = f"""
@@ -2430,7 +2885,7 @@ def admin_panel_keyboard():
          {"text": "Delete files", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "delete_files", "style": "danger"}],
         [{"text": "Broadcast", "icon_custom_emoji_id": "5789428375261023681", "callback_data": "broadcast_msg", "style": "success"},
          {"text": "System", "icon_custom_emoji_id": "5420155432272438703", "callback_data": "system_settings", "style": "primary"}],
-        [{"text": "📁DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
+        [{"text": "DATABASE", "icon_custom_emoji_id": "5352721946054268944", "callback_data": "database_menu", "style": "danger"}],
         [maint_btn],
         [{"text": "Used number", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "show_used", "style": "success"},
          {"text": "Unused number", "icon_custom_emoji_id": "5352597830089347330", "callback_data": "show_unused", "style": "success"}],
@@ -2529,44 +2984,6 @@ def menu_buttons_list_keyboard(menu_key):
     kb.append([{"text": "Add Inline Button", "icon_custom_emoji_id": "5420323438508155202", "callback_data": f"md_addbtn_{menu_key}", "style": "success"}])
     kb.append([{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": f"md_edit_{menu_key}", "style": "primary"}])
     return {"inline_keyboard": kb}
-
-
-def emoji_settings_keyboard():
-    return {"inline_keyboard": [
-        [{"text": "Upload Flags (TXT)", "icon_custom_emoji_id": "5353001161878182134", "callback_data": "up_flags_txt", "style": "primary"},
-         {"text": "Download Flags", "icon_custom_emoji_id": "5257969839313526622", "callback_data": "dl_flags_txt", "style": "success"}],
-        [{"text": "Upload Services (TXT)", "icon_custom_emoji_id": "5353001161878182134", "callback_data": "up_apps_txt", "style": "primary"},
-         {"text": "Download Services", "icon_custom_emoji_id": "5257969839313526622", "callback_data": "dl_apps_txt", "style": "success"}],
-        [{"text": "Delete All Flags", "icon_custom_emoji_id": "5422557736330106570", "callback_data": "del_all_flags", "style": "danger"},
-         {"text": "Add Single Emoji", "icon_custom_emoji_id": "5420323438508155202", "callback_data": "add_single_emoji", "style": "success"}],
-        [{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "danger"}]
-    ]}
-
-
-def generate_emoji_txt(mode="flags"):
-    try:
-        lines = []
-        if mode == "flags":
-            lines.append("# Flag Emojis")
-            lines.append("# Format: CountryName (calling_code) (ISO) { \"emoji\": \"🇧🇩\", \"id\": \"5911365056594973179\" }")
-            lines.append("")
-            for code, data in bot_settings.get("premium_flags", {}).items():
-                char = data.get("char", "🌍")
-                iso = data.get("iso", "XX")
-                name = data.get("name", "Unknown")
-                eid = data.get("id", "")
-                lines.append(f'{name} ({code}) ({iso}) {{ "emoji": "{char}", "id": "{eid}" }}')
-        else:
-            lines.append("# Service Apps")
-            lines.append("# Format: ServiceName { \"emoji\": \"📱\", \"id\": \"5334807341109908955\" }")
-            lines.append("")
-            for name, data in bot_settings.get("premium_apps", {}).items():
-                char = data.get("char", "📱")
-                eid = data.get("id", "")
-                lines.append(f'{name} {{ "emoji": "{char}", "id": "{eid}" }}')
-        return "\n".join(lines).encode('utf-8') if lines else None
-    except Exception:
-        return None
 
 
 def fj_settings_keyboard():
@@ -2880,22 +3297,13 @@ def handle_message(msg):
             send_message(chat_id, render_body_text(maint_msg))
             return
 
-    # --- REFERRAL: Save inviter in background (non-blocking) ---
     if text.startswith("/start"):
         parts = text.split()
         if len(parts) > 1 and parts[1].isdigit():
             inviter = int(parts[1])
-            if inviter != chat_id and db:
-                def _bg_save_ref():
-                    try:
-                        doc_ref = db.collection('users').document(str(chat_id))
-                        doc = doc_ref.get(timeout=8.0)
-                        if not doc.exists:
-                            get_user(chat_id)
-                            doc_ref.update({"referred_by": inviter, "ref_paid": False})
-                    except Exception as e:
-                        print(f"⚠️  Ref bg save: {type(e).__name__}")
-                threading.Thread(target=_bg_save_ref, daemon=True).start()
+            if inviter != chat_id:
+                _sqlite_ensure_user(chat_id)
+                process_referral_for_user(chat_id, inviter)
 
     if not check_force_join(chat_id):
         send_force_join_msg(chat_id)
@@ -3010,10 +3418,19 @@ def handle_message(msg):
             if not target_uid_str.isdigit():
                 send_message(chat_id, render_body_text("❌ <b>Invalid ID!</b>"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
-            u = get_user(target_uid)
-            if not u:
+            row = None
+            if db:
+                try:
+                    doc = db.collection('users').document(str(target_uid)).get(timeout=8.0)
+                    if doc.exists:
+                        row = {"balance": (doc.to_dict() or {}).get('balance', 0.0)}
+                except Exception:
+                    pass
+            if row is None:
+                row = sqlite_exec("SELECT balance FROM users WHERE user_id=?", (target_uid,), fetch="one")
+            if row is None:
                 send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
-            current_bal = u.get('balance', 0.0)
+            current_bal = row.get('balance', 0.0)
             temp_data[chat_id]["target_uid"] = target_uid
             user_states[chat_id] = "wait_for_um_bal_amt"
             send_message(chat_id, render_body_text(
@@ -3037,16 +3454,32 @@ def handle_message(msg):
             if not target_uid_str.isdigit():
                 send_message(chat_id, render_body_text("❌ <b>Invalid ID!</b>"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
-            u = get_user(target_uid)
-            if not u:
+            row = None
+            if db:
+                try:
+                    doc = db.collection('users').document(str(target_uid)).get(timeout=8.0)
+                    if doc.exists:
+                        row = {"banned": (doc.to_dict() or {}).get('banned', False)}
+                except Exception:
+                    pass
+            if row is None:
+                row = sqlite_exec("SELECT banned FROM users WHERE user_id=?", (target_uid,), fetch="one")
+            if row is None:
                 send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
-            current_status = bool(u.get("banned") or False)
+            current_status = bool(row.get("banned") or 0)
             new_status = not current_status
             if db:
                 try:
-                    db.collection('users').document(str(target_uid)).set({"banned": new_status}, merge=True)
-                except Exception as e:
-                    print(f"⚠️  ban: {type(e).__name__}")
+                    db.collection('users').document(str(target_uid)).set({"banned": new_status}, merge=True, timeout=8.0)
+                except Exception:
+                    pass
+            try:
+                with sqlite_tx() as conn:
+                    if conn:
+                        conn.cursor().execute("UPDATE users SET banned=?, updated_at=? WHERE user_id=?",
+                                              (1 if new_status else 0, time.time(), target_uid))
+            except Exception:
+                pass
             user_banned_cache[target_uid] = {'banned': new_status, 'time': time.time()}
             if target_uid in user_cache:
                 user_cache[target_uid]["banned"] = new_status
@@ -3059,7 +3492,26 @@ def handle_message(msg):
             if not target_uid_str.isdigit():
                 send_message(chat_id, render_body_text("❌ <b>Invalid ID!</b>"), reply_markup=get_cancel_kb()); return
             target_uid = int(target_uid_str)
-            data = get_user(target_uid)
+            data = None
+            if db:
+                try:
+                    doc = db.collection('users').document(str(target_uid)).get(timeout=8.0)
+                    if doc.exists:
+                        data = doc.to_dict() or {}
+                except Exception:
+                    pass
+            if not data:
+                row = sqlite_exec(
+                    "SELECT user_id,balance,total_refers,total_otps,banned FROM users WHERE user_id=?",
+                    (target_uid,), fetch="one"
+                )
+                if row:
+                    data = {
+                        "balance": float(row.get("balance") or 0.0),
+                        "total_refers": int(row.get("total_refers") or 0),
+                        "total_otps": int(row.get("total_otps") or 0),
+                        "banned": bool(row.get("banned") or 0),
+                    }
             if not data:
                 send_message(chat_id, render_body_text("❌ <b>User not found!</b>"), reply_markup=get_cancel_kb()); return
             prof_text = f"""➖➖➖➖➖➖➖➖
@@ -3120,98 +3572,6 @@ def handle_message(msg):
             finally:
                 if chat_id in user_states: del user_states[chat_id]
                 if chat_id in temp_data: del temp_data[chat_id]
-            return
-
-        # ========== EMOJI EXTRACT (SINGLE) ==========
-        elif state == "wait_for_emoji_extract":
-            entities = msg.get("entities", [])
-            custom_emoji_id = None
-            emoji_text = ""
-            for ent in entities:
-                if ent.get("type") == "custom_emoji":
-                    custom_emoji_id = ent.get("custom_emoji_id")
-                    offset = ent.get("offset", 0)
-                    length = ent.get("length", 0)
-                    b_text = msg.get("text", "").encode('utf-16-le')
-                    emoji_text = b_text[offset*2:(offset+length)*2].decode('utf-16-le')
-                    break
-            if custom_emoji_id:
-                temp_data[chat_id] = {"id": custom_emoji_id, "char": emoji_text}
-                user_states[chat_id] = "wait_for_emoji_details"
-                send_message(chat_id, render_body_text(f"{PEM['ok']} Emoji ID পাওয়া গেছে: <code>{custom_emoji_id}</code>\n\n📌 এখন এটি সেভ করার জন্য টাইপ এবং নাম লিখুন।\n\n<b>ফরমেট:</b>\n`FLAG | 880 | BD | Bangladesh`\nঅথবা\n`APP | WhatsApp`"), reply_markup=get_cancel_kb())
-            else:
-                send_message(chat_id, render_body_text(f"{PEM['no']} কোনো Premium Emoji পাওয়া যায়নি! দয়া করে Custom Emoji সেন্ড করুন।"), reply_markup=get_cancel_kb())
-            return
-
-        # ========== EMOJI DETAILS (SINGLE) ==========
-        elif state == "wait_for_emoji_details" and text:
-            parts = [p.strip() for p in text.split("|")]
-            mode = parts[0].upper()
-            eid = temp_data[chat_id]["id"]
-            char = temp_data[chat_id]["char"]
-            if mode == "FLAG" and len(parts) == 4:
-                code, iso, name = parts[1], parts[2], parts[3]
-                bot_settings["premium_flags"][code] = {"char": char, "iso": iso.upper(), "name": name, "id": eid}
-                save_db()
-                send_message(chat_id, render_body_text(f"{PEM['ok']} Flag Emoji সেভ হয়েছে!\nCode: {code} | Name: {name}"), reply_markup=emoji_settings_keyboard())
-            elif mode == "APP" and len(parts) == 2:
-                name = parts[1]
-                bot_settings["premium_apps"][name.upper()] = {"char": char, "id": eid, "name": name.title()}
-                save_db()
-                send_message(chat_id, render_body_text(f"{PEM['ok']} App Emoji সেভ হয়েছে!\nName: {name}"), reply_markup=emoji_settings_keyboard())
-            else:
-                send_message(chat_id, render_body_text(f"{PEM['no']} ফরম্যাট ভুল!\n\nসঠিক ফরম্যাট:\n`FLAG | 880 | BD | Bangladesh`\n`APP | WhatsApp`"))
-            del user_states[chat_id]
-            del temp_data[chat_id]
-            return
-
-        # ========== BULK EMOJI TXT UPLOAD (FLAGS/APPS) ==========
-        elif state in ["wait_for_flag_txt", "wait_for_app_txt"] and "document" in msg:
-            doc = msg["document"]
-            if not doc["file_name"].endswith(".txt"):
-                send_message(chat_id, render_body_text(f"{PEM['no']} Please upload a .txt file only."))
-                return
-            file_id = doc["file_id"]
-            file_info = requests.get(f"{BASE_URL}/getFile?file_id={file_id}").json()
-            file_path = file_info["result"]["file_path"]
-            content = requests.get(f"{FILE_URL}{file_path}").text
-            mode = "flags" if state == "wait_for_flag_txt" else "apps"
-            count = 0
-            if mode == "flags":
-                for line in content.splitlines():
-                    json_match = re.search(r'(\{.*\})', line)
-                    if json_match:
-                        try:
-                            data = json.loads(json_match.group(1))
-                            char = data.get("emoji")
-                            eid = data.get("id")
-                            prefix_str = line[:json_match.start()].strip()
-                            code_match = re.search(r'\((\d+)\)', prefix_str)
-                            iso_match = re.search(r'\(([A-Za-z]+)\)', prefix_str)
-                            if code_match and iso_match and char and eid:
-                                code = code_match.group(1)
-                                iso = iso_match.group(1).upper()
-                                name = prefix_str.replace(f"({code})", "").replace(f"({iso_match.group(1)})", "").replace(char, "").strip()
-                                bot_settings["premium_flags"][code] = {"char": char, "iso": iso, "name": name, "id": eid}
-                                count += 1
-                        except: pass
-            else:
-                for line in content.splitlines():
-                    json_match = re.search(r'(\{.*\})', line)
-                    if json_match:
-                        try:
-                            data = json.loads(json_match.group(1))
-                            char = data.get("emoji")
-                            eid = data.get("id")
-                            name_part = line[:json_match.start()].strip()
-                            name = name_part.replace(char, '').strip() if char else name_part
-                            if char and eid and name:
-                                bot_settings["premium_apps"][name.upper()] = {"char": char, "id": eid, "name": name}
-                                count += 1
-                        except: pass
-            save_db()
-            send_message(chat_id, render_body_text(f"{PEM['ok']} Successfully loaded {count} Emojis!"), reply_markup=emoji_settings_keyboard())
-            del user_states[chat_id]
             return
 
         # ========== TEST MESSAGE ==========
@@ -3649,8 +4009,10 @@ def handle_message(msg):
             msg_id_to_edit = temp_data[chat_id].get("msg_id")
             service = temp_data[chat_id].get("service", "?")
             country = temp_data[chat_id].get("country", "?")
+
             try: delete_message(chat_id, msg.get("message_id"))
             except: pass
+
             try:
                 new_val = float(text.strip())
                 if new_val < 0: raise ValueError("negative")
@@ -3672,13 +4034,16 @@ def handle_message(msg):
                 else:
                     send_message(chat_id, render_body_text(fail_txt), reply_markup=get_cancel_kb())
                 return
+
             try:
                 if "otp_pair_rates" not in bot_settings: bot_settings["otp_pair_rates"] = {}
                 key = f"{str(country).upper()}|{str(service).upper()}"
                 old_val = bot_settings["otp_pair_rates"].get(key, "None")
                 bot_settings["otp_pair_rates"][key] = new_val
                 save_db()
+
                 country_flag = get_flag_info_html(country)
+
                 ok_txt = (
                     f"━━━━━━━━━━━━━━━\n"
                     f"✅ <b>PAYOUT UPDATED SUCCESSFULLY</b>\n"
@@ -3690,6 +4055,7 @@ def handle_message(msg):
                     f"💷 <b>New Payout:</b> <code>${fmt_payout(new_val)}</code>\n"
                     f"━━━━━━━━━━━━━━━"
                 )
+
                 if msg_id_to_edit:
                     try:
                         edit_message(
@@ -3720,6 +4086,7 @@ def handle_message(msg):
                 else:
                     send_message(chat_id, render_body_text(fail_txt), reply_markup=get_cancel_kb())
                 return
+
             del user_states[chat_id]
             del temp_data[chat_id]
             return
@@ -3764,6 +4131,7 @@ def handle_message(msg):
                 ), reply_markup=main_menu(chat_id))
                 del user_states[chat_id]
                 return
+
             _, iso_det, dial_code = get_country_from_num(query)
             country_name_det = ""
             country_flag_html = "🌍"
@@ -3783,7 +4151,9 @@ def handle_message(msg):
                             country_name_det = cinfo["name"]
                             country_flag_html = get_flag_emoji(iso_det)
                             break
+
             services_found = {}
+
             for b_id, b_data in number_batches.items():
                 b_nums = b_data.get("numbers", [])
                 if not b_nums: continue
@@ -3800,6 +4170,7 @@ def handle_message(msg):
                             matched = True; break
                 if matched:
                     services_found.setdefault(b_service, []).append(("local", b_id))
+
             for srv_name, c_dict in bot_settings.get("stex_services", {}).items():
                 srv_up = srv_name.upper()
                 for c_name, r_list in c_dict.items():
@@ -3811,6 +4182,7 @@ def handle_message(msg):
                             if query.startswith(r): matched = True; break
                     if matched:
                         services_found.setdefault(srv_up, []).append(("stex", c_name))
+
             for srv_name, c_dict in bot_settings.get("voltx_services", {}).items():
                 srv_up = srv_name.upper()
                 for c_name, r_list in c_dict.items():
@@ -3822,6 +4194,7 @@ def handle_message(msg):
                             if query.startswith(r): matched = True; break
                     if matched:
                         services_found.setdefault(srv_up, []).append(("voltx", c_name))
+
             if not services_found:
                 send_message(chat_id, render_body_text(
                     f"━━━━━━━━━━━━━━━\n"
@@ -3834,6 +4207,7 @@ def handle_message(msg):
                 ), reply_markup=main_menu(chat_id))
                 del user_states[chat_id]
                 return
+
             apps_db = bot_settings.get("premium_apps", {})
             kb = []
             for srv_name in sorted(services_found.keys()):
@@ -3849,7 +4223,7 @@ def handle_message(msg):
                 for ak, ad in apps_db.items():
                     if srv_name.upper() == ak or srv_name.upper() in ak or ak in srv_name.upper():
                         if "id" in ad: svc_emoji_id = ad["id"]
-                        svc_display = ad.get("name", ak.title())
+                        svc_display = srv_name
                         break
                 kb.append([{
                     "text": f"{svc_display} | {total_cnt}",
@@ -3858,8 +4232,10 @@ def handle_message(msg):
                     "style": "success"
                 }])
             kb.append([{"text": "Cancel", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
+
             prev_prompt_id = temp_data.get(chat_id, {}).get("prompt_msg_id")
             prefix_msg_id = msg.get("message_id")
+
             temp_data[chat_id] = {
                 "search_query": query,
                 "search_country": country_name_det,
@@ -3868,6 +4244,7 @@ def handle_message(msg):
                 "prefix_msg_id": prefix_msg_id,
             }
             del user_states[chat_id]
+
             tiger_icon = f'<tg-emoji emoji-id="{SEARCH_TIGER_EMOJI}">🐯</tg-emoji>'
             world_icon = f'<tg-emoji emoji-id="{SEARCH_WORLD_EMOJI}">🌍</tg-emoji>'
             target_icon = f'<tg-emoji emoji-id="{SEARCH_TARGET_EMOJI}">🎯</tg-emoji>'
@@ -3876,6 +4253,7 @@ def handle_message(msg):
                 flag_for_country = country_flag_html
             else:
                 flag_for_country = "🌍"
+
             txt = (
                 f"━━━━━━━━━━━━━━━\n"
                 f"🔍 <b>SEARCH RESULT</b>\n"
@@ -3886,17 +4264,20 @@ def handle_message(msg):
                 f"{target_icon} <b>Available Services:</b>\n"
             )
             sent_res = send_message(chat_id, render_body_text(txt), reply_markup={"inline_keyboard": kb})
+
             search_result_msg_id = None
             try:
                 if sent_res and sent_res.get("ok"):
                     search_result_msg_id = sent_res["result"]["message_id"]
             except Exception:
                 search_result_msg_id = None
+
             ids_to_track = []
             if prev_prompt_id:        ids_to_track.append(prev_prompt_id)
             if prefix_msg_id:         ids_to_track.append(prefix_msg_id)
             if search_result_msg_id:  ids_to_track.append(search_result_msg_id)
             pending_search_prompts[chat_id] = ids_to_track
+
             if search_result_msg_id:
                 temp_data[chat_id]["search_result_msg_id"] = search_result_msg_id
             return
@@ -3955,21 +4336,34 @@ def handle_message(msg):
             first_name = msg.get("from", {}).get("first_name", "User")
             last_name = msg.get("from", {}).get("last_name", "")
             full_name = f"{first_name} {last_name}".strip()
+
             hold_withdrawal_balance(chat_id, amount)
+
             pending_withdrawals[req_id] = {"user_id": chat_id, "amount": amount, "method": method, "number": number, "full_name": full_name}
+            try:
+                with sqlite_tx() as conn:
+                    if conn:
+                        conn.cursor().execute(
+                            "INSERT INTO withdrawals(req_id,user_id,amount,method,number,full_name,status,timestamp) "
+                            "VALUES(?,?,?,?,?,?,?,?)",
+                            (req_id, int(chat_id), float(amount), method, number, full_name, "pending", time.time())
+                        )
+            except Exception as e:
+                print(f"⚠️  withdrawal SQLite insert: {type(e).__name__}")
             if db:
                 try:
                     db.collection('withdrawals').document(req_id).set({
-                        "user_id": str(chat_id), "amount": amount, "method": method,
+                        "req_id": req_id, "user_id": chat_id, "amount": amount, "method": method,
                         "number": number, "full_name": full_name,
                         "status": "pending", "timestamp": time.time()
-                    })
+                    }, timeout=8.0)
                 except Exception as e:
-                    print(f"⚠️  withdrawal FS save: {type(e).__name__}")
+                    print(f"⚠️  withdrawal Firestore set: {type(e).__name__}")
             if bot_settings["w_group"]:
                 admin_msg = build_withdrawal_group_msg(chat_id, full_name, amount, number, method, req_id)
                 kb = {"inline_keyboard": [[{"text": "APPROVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": f"wapp_{req_id}", "style": "success"}, {"text": "REJECT", "icon_custom_emoji_id": "5420130255174145507", "callback_data": f"wrej_{req_id}", "style": "danger"}]]}
                 send_message(bot_settings["w_group"], admin_msg, reply_markup=kb)
+
             balance_icon = f'<tg-emoji emoji-id="{WITHDRAW_BALANCE_EMOJI}">🔘</tg-emoji>'
             method_icon = f'<tg-emoji emoji-id="{WITHDRAW_METHOD_ICON}">🥂</tg-emoji>'
             method_emoji = get_wmethod_emoji_html(method)
@@ -3991,31 +4385,7 @@ def handle_message(msg):
     # ========== MAIN MENU COMMANDS ==========
     if text.startswith("/start"):
         get_user(chat_id)
-        # Process pending referral in background (non-blocking)
-        if db:
-            def _bg_ref_process():
-                try:
-                    doc = db.collection('users').document(str(chat_id)).get(timeout=8.0)
-                    if doc.exists:
-                        u_data = doc.to_dict()
-                        if u_data.get("referred_by") and not u_data.get("ref_paid"):
-                            inviter = u_data["referred_by"]
-                            db.collection('users').document(str(chat_id)).update({"ref_paid": True})
-                            reward = bot_settings.get("refer_reward", 0.2)
-                            update_balance(inviter, reward)
-                            db.collection('users').document(str(inviter)).set({"total_refers": firestore.Increment(1)}, merge=True)
-                            ref_msg = (
-                                f"{PEM['gift']} <b>New Referral !</b>\n"
-                                f"------------------\n"
-                                f"🔥 <b>You Received {reward} TK</b>\n"
-                                f"------------------\n"
-                                f"{PEM['user']} <b>From User ID:</b> <code>{chat_id}</code>"
-                            )
-                            send_message(inviter, render_body_text(ref_msg))
-                except Exception as e:
-                    print(f"⚠️  Ref process bg: {type(e).__name__}")
-            threading.Thread(target=_bg_ref_process, daemon=True).start()
-
+        check_and_pay_referral_for_user(chat_id)
         c_msg = bot_settings["custom_messages"].get("start", {})
         start_text = c_msg.get("text", "").strip()
         if not start_text or "WELCOME" not in start_text.upper():
@@ -4112,7 +4482,9 @@ def handle_message(msg):
         if sup_link: kb.insert(0, [{"text": "Contact Support", "icon_custom_emoji_id": "5337302974806922068", "url": sup_link, "style": "success"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
         send_message(chat_id, txt, reply_markup={"inline_keyboard": kb} if kb else None)
-        # ==========================================
+
+
+# ==========================================
 # 📦 Database ZIP — FOLDER-STRUCTURED
 # ==========================================
 def build_data_zip():
@@ -4127,6 +4499,12 @@ def build_data_zip():
                 print(f"⚠️  ZIP users dump: {type(_e).__name__}")
             for uid, udata in user_cache.items():
                 user_details[str(uid)] = udata
+            if db:
+                try:
+                    for doc in db.collection('users').stream():
+                        user_details[doc.id] = doc.to_dict()
+                except Exception as _e:
+                    print(f"⚠️  ZIP fs users: {type(_e).__name__}")
             zf.writestr("USER DETAILS/users.json", json.dumps(user_details, default=str, indent=4))
             zf.writestr("USER DETAILS/user_cache.json", json.dumps({str(k): v for k, v in user_cache.items()}, default=str, indent=4))
             zf.writestr("USER DETAILS/all_known_users.json", json.dumps(list(all_known_users), default=str, indent=4))
@@ -4174,6 +4552,8 @@ def build_data_zip():
 
             fb_status = {
                 "firebase_connected": db is not None,
+                "firebase_status": "FIREBASE_ACTIVE" if (db and current_db_mode == "firebase") else "SQLITE_ONLY",
+                "current_db_mode": current_db_mode,
                 "exported_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "bot_username": BOT_USERNAME,
                 "owner_id": OWNER_ID
@@ -4227,9 +4607,6 @@ def build_data_zip():
         return None
 
 
-# ==========================================
-# 📥 Restore from ZIP
-# ==========================================
 def restore_data_from_zip(raw_bytes):
     global number_batches, used_numbers_list, stex_assigned_numbers, voltx_assigned_numbers
     global total_uploaded_stats, total_assigned_stats, recent_traffic, assigned_number_meta
@@ -4245,8 +4622,8 @@ def restore_data_from_zip(raw_bytes):
         try:
             if path in names:
                 return json.loads(zf.read(path).decode('utf-8'))
-        except Exception as e:
-            print(f"⚠️  restore read {path}: {type(e).__name__}")
+        except Exception:
+            pass
         return default
 
     def read_text(path):
@@ -4265,8 +4642,8 @@ def restore_data_from_zip(raw_bytes):
             for k, v in new_bs.items():
                 bot_settings[k] = v
             restored.append("bot_settings")
-    except Exception as e:
-        print(f"⚠️  restore bot_settings: {type(e).__name__}")
+    except Exception:
+        pass
 
     cm = read_json("SETTINGS/custom_messages.json")
     if isinstance(cm, dict) and cm:
@@ -4282,19 +4659,54 @@ def restore_data_from_zip(raw_bytes):
             users_map.setdefault(k, v)
 
     users_applied = 0
+    try:
+        with sqlite_tx() as conn:
+            if conn:
+                cur = conn.cursor()
+                for uid_s, udata in users_map.items():
+                    if not isinstance(udata, dict):
+                        continue
+                    try:
+                        uid = int(uid_s)
+                    except Exception:
+                        continue
+                    bal = float(udata.get("balance", 0.0) or 0.0)
+                    refs = int(udata.get("total_refers", 0) or 0)
+                    otps = int(udata.get("total_otps", 0) or 0)
+                    banned = 1 if udata.get("banned") else 0
+                    verified = 1 if udata.get("verified") else 0
+                    rby = udata.get("referred_by")
+                    try:
+                        rby = int(rby) if rby else None
+                    except Exception:
+                        rby = None
+                    paid = 1 if udata.get("ref_paid") else 0
+                    cur.execute(
+                        "INSERT INTO users(user_id, balance, total_refers, total_otps, banned, verified, referred_by, ref_paid, created_at, updated_at) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?) "
+                        "ON CONFLICT(user_id) DO UPDATE SET "
+                        "balance=excluded.balance, total_refers=excluded.total_refers, "
+                        "total_otps=excluded.total_otps, banned=excluded.banned, "
+                        "verified=excluded.verified, referred_by=excluded.referred_by, "
+                        "ref_paid=excluded.ref_paid, updated_at=excluded.updated_at",
+                        (uid, bal, refs, otps, banned, verified, rby, paid, time.time(), time.time())
+                    )
+                    user_cache[uid] = {
+                        "user_id": uid, "balance": bal, "total_refers": refs,
+                        "total_otps": otps, "banned": bool(banned), "verified": bool(verified),
+                    }
+                    users_applied += 1
+        restored.append(f"users({users_applied})")
+    except Exception:
+        pass
+
+    # Push restored users to Firebase
     if db:
         try:
-            for uid_s, udata in users_map.items():
-                if not isinstance(udata, dict): continue
-                try: uid = int(uid_s)
-                except: continue
-                try:
-                    db.collection('users').document(str(uid)).set(udata, merge=True)
-                    users_applied += 1
-                except: continue
-            restored.append(f"users({users_applied})")
-        except Exception as e:
-            print(f"⚠️  restore users: {type(e).__name__}")
+            for uid, udata in user_cache.items():
+                db.collection('users').document(str(uid)).set(udata, merge=True, timeout=8.0)
+        except Exception:
+            pass
 
     aku = read_json("USER DETAILS/all_known_users.json")
     if isinstance(aku, list):
@@ -4303,18 +4715,68 @@ def restore_data_from_zip(raw_bytes):
         try:
             with open(USERS_LIST_FILE, "w") as f:
                 json.dump(list(all_known_users), f)
+            sqlite_kv_set("all_known_users", list(all_known_users))
         except Exception:
             pass
         restored.append(f"all_known_users({len(aku)})")
 
-    wds = read_json("USER DETAILS/withdrawals.json", []) or []
-    if isinstance(wds, list) and wds and db:
+    pend = read_json("USER DETAILS/pending_referrals.json", []) or []
+    if isinstance(pend, list) and pend:
         try:
-            for row in wds:
-                if not isinstance(row, dict): continue
-                try:
-                    db.collection('withdrawals').document(str(row.get("req_id"))).set(row, merge=True)
-                except: continue
+            with sqlite_tx() as conn:
+                if conn:
+                    for row in pend:
+                        if not isinstance(row, dict): continue
+                        try:
+                            conn.cursor().execute(
+                                "INSERT OR IGNORE INTO pending_referrals(new_user_id, inviter_id, created_at) VALUES(?,?,?)",
+                                (int(row.get("new_user_id")), int(row.get("inviter_id")), float(row.get("created_at") or time.time()))
+                            )
+                        except Exception: continue
+            restored.append(f"pending_referrals({len(pend)})")
+        except Exception:
+            pass
+
+    paid_list = read_json("USER DETAILS/referral_paid_users.json", []) or []
+    if isinstance(paid_list, list) and paid_list:
+        try:
+            with sqlite_tx() as conn:
+                if conn:
+                    for row in paid_list:
+                        if not isinstance(row, dict): continue
+                        try:
+                            conn.cursor().execute(
+                                "INSERT OR IGNORE INTO referral_paid_users(user_id, paid_at) VALUES(?,?)",
+                                (int(row.get("user_id")), float(row.get("paid_at") or time.time()))
+                            )
+                        except Exception: continue
+            restored.append(f"referral_paid_users({len(paid_list)})")
+        except Exception:
+            pass
+
+    wds = read_json("USER DETAILS/withdrawals.json", []) or []
+    if isinstance(wds, list) and wds:
+        try:
+            with sqlite_tx() as conn:
+                if conn:
+                    for row in wds:
+                        if not isinstance(row, dict): continue
+                        try:
+                            conn.cursor().execute(
+                                "INSERT OR REPLACE INTO withdrawals(req_id, user_id, amount, method, number, full_name, status, timestamp) "
+                                "VALUES(?,?,?,?,?,?,?,?)",
+                                (
+                                    str(row.get("req_id")),
+                                    int(row.get("user_id") or 0),
+                                    float(row.get("amount") or 0),
+                                    str(row.get("method") or ""),
+                                    str(row.get("number") or ""),
+                                    str(row.get("full_name") or ""),
+                                    str(row.get("status") or "pending"),
+                                    float(row.get("timestamp") or time.time()),
+                                )
+                            )
+                        except Exception: continue
             restored.append(f"withdrawals({len(wds)})")
         except Exception:
             pass
@@ -4367,6 +4829,8 @@ def restore_data_from_zip(raw_bytes):
     if isinstance(pa, dict) and pa:
         bot_settings["premium_apps"] = pa
         restored.append(f"premium_apps({len(pa)})")
+        try: _rewrite_service_txt()
+        except Exception: pass
 
     ft = read_text("COUNTRY AND SERVICE/flag.txt")
     if ft:
@@ -4390,10 +4854,50 @@ def restore_data_from_zip(raw_bytes):
         restored.append(f"recent_traffic({len(rt)})")
 
     try:
+        sql_settings = read_json("SETTINGS/sqlite_settings.json", []) or []
+        if isinstance(sql_settings, list) and sql_settings:
+            with sqlite_tx() as conn:
+                if conn:
+                    for row in sql_settings:
+                        if not isinstance(row, dict): continue
+                        k = str(row.get("key") or "")
+                        if not k: continue
+                        try:
+                            conn.cursor().execute(
+                                "INSERT INTO settings(key,value,updated_at) VALUES(?,?,?) "
+                                "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+                                (k, row.get("value"), float(row.get("updated_at") or time.time()))
+                            )
+                        except Exception: continue
+            restored.append("sqlite_settings")
+    except Exception:
+        pass
+
+    try:
+        kv = read_json("SETTINGS/kv_store.json", []) or []
+        if isinstance(kv, list) and kv:
+            with sqlite_tx() as conn:
+                if conn:
+                    for row in kv:
+                        if not isinstance(row, dict): continue
+                        k = str(row.get("k") or "")
+                        if not k: continue
+                        try:
+                            conn.cursor().execute(
+                                "INSERT INTO kv_store(k,v,updated_at) VALUES(?,?,?) "
+                                "ON CONFLICT(k) DO UPDATE SET v=excluded.v, updated_at=excluded.updated_at",
+                                (k, row.get("v"), float(row.get("updated_at") or time.time()))
+                            )
+                        except Exception: continue
+            restored.append("kv_store")
+    except Exception:
+        pass
+
+    try:
         save_db()
         restored.append("persisted")
-    except Exception as e:
-        print(f"⚠️  restore save_db: {type(e).__name__}")
+    except Exception:
+        pass
 
     zf.close()
     return True, ", ".join(restored)
@@ -4404,17 +4908,21 @@ def delete_all_data():
     global total_uploaded_stats, total_assigned_stats, recent_traffic, assigned_number_meta
     global all_known_users
     if db:
+        _fb_delete_collection('users')
+        _fb_delete_collection('withdrawals')
+        _fb_delete_collection('pending_referrals')
+        _fb_delete_collection('referral_paid_users')
         try:
-            for doc in db.collection('users').stream():
-                try: doc.reference.delete()
-                except: pass
-        except Exception as _e:
-            print(f"⚠️  delete fs users: {type(_e).__name__}")
-        try:
-            for doc in db.collection('withdrawals').stream():
-                try: doc.reference.delete()
-                except: pass
-        except Exception: pass
+            db.collection('bot_state').document('number_batches').delete()
+            db.collection('bot_state').document('used_numbers').delete()
+            db.collection('bot_state').document('stex_assigned').delete()
+            db.collection('bot_state').document('voltx_assigned').delete()
+            db.collection('bot_state').document('assigned_meta').delete()
+            db.collection('bot_state').document('recent_traffic').delete()
+            db.collection('bot_state').document('stats').delete()
+            db.collection('bot_state').document('all_known_users').delete()
+        except Exception:
+            pass
     try:
         with sqlite_tx() as conn:
             if conn:
@@ -4423,7 +4931,8 @@ def delete_all_data():
                 cur.execute("DELETE FROM pending_referrals")
                 cur.execute("DELETE FROM referral_paid_users")
                 cur.execute("DELETE FROM withdrawals")
-    except Exception: pass
+    except Exception:
+        pass
     number_batches = {}
     used_numbers_list = []
     stex_assigned_numbers = {}
@@ -4439,9 +4948,7 @@ def delete_all_data():
         if os.path.exists(USERS_LIST_FILE): os.remove(USERS_LIST_FILE)
     except Exception: pass
     save_local_db()
-
-
-# ==========================================
+    # ==========================================
 # Callback Query Handler
 # ==========================================
 def handle_callback(call):
@@ -4483,29 +4990,8 @@ def handle_callback(call):
         if check_force_join(chat_id):
             delete_message(chat_id, msg_id)
             send_message(chat_id, render_body_text(f"{PEM['ok']} <b>Thanks for joining!</b>"), reply_markup=main_menu(chat_id))
-            if db:
-                def _bg_check_fj_ref():
-                    try:
-                        doc = db.collection('users').document(str(chat_id)).get(timeout=8.0)
-                        if doc.exists:
-                            u_data = doc.to_dict()
-                            if u_data.get("referred_by") and not u_data.get("ref_paid"):
-                                inviter = u_data["referred_by"]
-                                db.collection('users').document(str(chat_id)).update({"ref_paid": True})
-                                reward = bot_settings.get("refer_reward", 0.2)
-                                update_balance(inviter, reward)
-                                db.collection('users').document(str(inviter)).set({"total_refers": firestore.Increment(1)}, merge=True)
-                                ref_msg = (
-                                    f"{PEM['gift']} <b>New Referral !</b>\n"
-                                    f"------------------\n"
-                                    f"🔥 <b>You Received {reward} TK</b>\n"
-                                    f"------------------\n"
-                                    f"{PEM['user']} <b>From User ID:</b> <code>{chat_id}</code>"
-                                )
-                                send_message(inviter, render_body_text(ref_msg))
-                    except Exception as e:
-                        print(f"⚠️  check_fj bg: {type(e).__name__}")
-                threading.Thread(target=_bg_check_fj_ref, daemon=True).start()
+            get_user(chat_id)
+            check_and_pay_referral_for_user(chat_id)
         else:
             answer_callback(call["id"], "❌ Join all channels first!", show_alert=True)
         return
@@ -4563,18 +5049,23 @@ def handle_callback(call):
         parts = data.split("|", 2)
         query = parts[1] if len(parts) > 1 else ""
         service = parts[2] if len(parts) > 2 else ""
+
         now = time.time()
         if now - user_cooldowns.get(chat_id, 0) < bot_settings["cooldown"]:
             answer_callback(call["id"], f"⌛ Wait {int(bot_settings['cooldown'] - (now - user_cooldowns.get(chat_id, 0)))}s", show_alert=True)
             return
         user_cooldowns[chat_id] = now
         expire_previous_number(chat_id)
+
         search_iso = temp_data.get(chat_id, {}).get("search_iso", "")
         search_country = temp_data.get(chat_id, {}).get("search_country", "")
+
         edit_message(chat_id, msg_id, render_body_text("⌛ <i>Processing...</i>"))
         wait_msg_id = msg_id
+
         fetched_nums = []
         req_count = bot_settings.get("num_req", 1)
+
         for b_id, b_data in number_batches.items():
             if b_data.get("service", "").upper() != service.upper(): continue
             b_country = b_data.get("country", "").upper()
@@ -4588,15 +5079,18 @@ def handle_callback(call):
                         matched_country = True
                         break
             if not matched_country: continue
+
             for idx, n_obj in enumerate(b_data["numbers"]):
                 if len(fetched_nums) >= req_count: break
                 if chat_id in n_obj.get("used_by", []): continue
                 if not n_obj["num"].replace("+", "").startswith(query): continue
+
                 num_str = n_obj["num"]
                 fetched_nums.append(num_str)
                 n_obj["shares"] += 1
                 n_obj["used_by"].append(chat_id)
                 total_assigned_stats += 1
+
                 cn = num_str.replace("+", "").strip()
                 _pv = float(bot_settings.get("otp_reward", 0.0))
                 _pr = bot_settings.get("otp_pair_rates", {})
@@ -4616,9 +5110,12 @@ def handle_callback(call):
                 if n_obj["shares"] >= bot_settings.get("num_share", 1):
                     n_obj["to_remove"] = True
                     used_numbers_list.append(num_str)
+
             if len(fetched_nums) >= req_count: break
+
         for b_id in list(number_batches.keys()):
             number_batches[b_id]["numbers"] = [n for n in number_batches[b_id]["numbers"] if not n.get("to_remove")]
+
         if len(fetched_nums) < req_count:
             stex_srv_data = bot_settings.get("stex_services", {}).get(service, {})
             stex_range = None
@@ -4632,6 +5129,7 @@ def handle_callback(call):
                     for r in r_list:
                         if query.startswith(r): stex_range = r; break
                     if stex_range: break
+
             if stex_range:
                 for _ in range(req_count - len(fetched_nums)):
                     for api_key in bot_settings.get("stex_keys", []):
@@ -4646,6 +5144,7 @@ def handle_callback(call):
                                 total_assigned_stats += 1
                                 break
                         except Exception: continue
+
         if len(fetched_nums) < req_count:
             voltx_srv_data = bot_settings.get("voltx_services", {}).get(service, {})
             voltx_range = None
@@ -4659,6 +5158,7 @@ def handle_callback(call):
                     for r in r_list:
                         if query.startswith(r): voltx_range = r; break
                     if voltx_range: break
+
             if voltx_range:
                 for _ in range(req_count - len(fetched_nums)):
                     for api_key in bot_settings.get("voltx_keys", []):
@@ -4673,12 +5173,16 @@ def handle_callback(call):
                                 total_assigned_stats += 1
                                 break
                         except Exception: continue
+
         save_db()
+
         purge_pending_search_prompts(chat_id, keep_msg_id=msg_id)
+
         if not fetched_nums:
             answer_callback(call["id"], "❌ Out of stock!", show_alert=True)
             delete_message(chat_id, wait_msg_id)
             return
+
         kb = []
         app_full_name, _ = get_service_info_html(service)
         emoji_id_srv = "5337302974806922068"
@@ -4686,6 +5190,7 @@ def handle_callback(call):
             if service.upper() == app_key or service.upper() in app_key or app_key in service.upper():
                 if "id" in app_data: emoji_id_srv = app_data["id"]; break
         kb.append([{"text": f"{app_full_name}", "icon_custom_emoji_id": emoji_id_srv, "callback_data": "ignore", "style": "success"}])
+
         flags_db = bot_settings.get("premium_flags", {})
         for num in fetched_nums:
             _, iso = get_flag_and_code(num)
@@ -4696,9 +5201,11 @@ def handle_callback(call):
                     if "id" in flag_data: emoji_id = flag_data["id"]
                     break
             kb.append([{"text": f"{display_num}", "icon_custom_emoji_id": emoji_id, "copy_text": {"text": display_num}, "style": "primary"}])
+
         kb.append([{"text": "Change Number", "icon_custom_emoji_id": "5465368548702446780", "callback_data": f"s_srv|{query}|{service}", "style": "danger"},
                    {"text": "OTP Group", "icon_custom_emoji_id": "5190447043545438788", "url": bot_settings["otp_link"], "style": "primary"}])
         kb.append([{"text": "Close", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "close_msg", "style": "danger"}])
+
         hdr_country = search_country or query
         text_numbers = build_numbers_header(hdr_country, service)
         edit_message(chat_id, wait_msg_id, text_numbers, reply_markup={"inline_keyboard": kb})
@@ -4936,42 +5443,6 @@ def handle_callback(call):
         temp_data[chat_id] = {}
         edit_message(chat_id, msg_id, render_body_text("🧪 <b>Send Service:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "system_settings", "style": "danger"}]]})
 
-    elif data == "manage_emojis":
-        edit_message(chat_id, msg_id, render_body_text(f"{PEM['star']} <b>Premium Emoji Management</b>\n\nUpload your TXT files or manually add them below:"), reply_markup=emoji_settings_keyboard())
-
-    elif data == "up_flags_txt":
-        user_states[chat_id] = "wait_for_flag_txt"
-        edit_message(chat_id, msg_id, render_body_text("📂 Please upload the <b>Flag Emojis</b> <code>.txt</code> file."), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_emojis", "style": "danger"}]]})
-
-    elif data == "up_apps_txt":
-        user_states[chat_id] = "wait_for_app_txt"
-        edit_message(chat_id, msg_id, render_body_text("📂 Please upload the <b>Service Apps</b> <code>.txt</code> file."), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_emojis", "style": "danger"}]]})
-
-    elif data == "add_single_emoji":
-        user_states[chat_id] = "wait_for_emoji_extract"
-        edit_message(chat_id, msg_id, render_body_text("📝 যেকোনো একটি Premium Emoji সেন্ড করুন (যেমন: 🇧🇩 বা 🚫):"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_emojis", "style": "danger"}]]})
-
-    elif data == "dl_flags_txt":
-        content = generate_emoji_txt("flags")
-        if content:
-            send_document(chat_id, "Flag_Emojis.txt", content)
-            answer_callback(call["id"], "✅ Downloaded!")
-        else:
-            answer_callback(call["id"], "❌ No Flag Emojis found!", show_alert=True)
-
-    elif data == "dl_apps_txt":
-        content = generate_emoji_txt("apps")
-        if content:
-            send_document(chat_id, "Service_Apps.txt", content)
-            answer_callback(call["id"], "✅ Downloaded!")
-        else:
-            answer_callback(call["id"], "❌ No App Emojis found!", show_alert=True)
-
-    elif data == "del_all_flags":
-        bot_settings["premium_flags"] = {}
-        save_db()
-        answer_callback(call["id"], "✅ All Premium Flags Deleted Successfully!", show_alert=True)
-
     elif data == "broadcast_msg":
         user_states[chat_id] = "wait_for_broadcast"
         edit_message(chat_id, msg_id, render_body_text("📢 <b>Send message to broadcast:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "back_to_admin", "style": "danger"}]]})
@@ -5012,6 +5483,7 @@ def handle_callback(call):
         send_document(chat_id, "unused_numbers.txt", "\n".join(unused_list).encode('utf-8'))
         answer_callback(call["id"])
 
+    # ---------- Leaderboard ----------
     elif data == "lb_main":
         txt = "━━━━━━━━━━━━━━━\n《 📊 <b>LEADER BOARD</b> 》\n━━━━━━━━━━━━━━━"
         kb = [
@@ -5026,8 +5498,61 @@ def handle_callback(call):
         edit_message(chat_id, msg_id, render_body_text("⌛ <i>Fetching...</i>"))
         try:
             if not db:
-                edit_message(chat_id, msg_id, render_body_text("❌ Firebase disabled"), reply_markup={"inline_keyboard": [[{"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]})
+                all_users = []
+                for uid, udata in user_cache.items():
+                    u_copy = dict(udata)
+                    u_copy["user_id"] = uid
+                    all_users.append(u_copy)
+                if not all_users:
+                    try:
+                        rows = sqlite_exec("SELECT * FROM users", fetch="all") or []
+                        for r in rows:
+                            all_users.append(r)
+                    except Exception: pass
+
+                if sub == "top_refs":
+                    title = "TOP 10 REFERRERS (LOCAL)"
+                    sorted_users = sorted(all_users, key=lambda u: u.get('total_refers', 0), reverse=True)[:10]
+                    res_txt = ""; count = 1
+                    for u in sorted_users:
+                        if u.get('total_refers', 0) > 0:
+                            pos_icon = leaderboard_pos_emoji(count)
+                            res_txt += f"| {pos_icon} <a href='tg://user?id={u['user_id']}'>{u['user_id']}</a> → <b>{u.get('total_refers',0)}</b>\n"
+                            count += 1
+                    if not res_txt: res_txt = "No data available (local cache).\n"
+                elif sub == "top_otps":
+                    title = "TOP 10 OTP RECEIVERS (LOCAL)"
+                    sorted_users = sorted(all_users, key=lambda u: u.get('total_otps', 0), reverse=True)[:10]
+                    res_txt = ""; count = 1
+                    for u in sorted_users:
+                        if u.get('total_otps', 0) > 0:
+                            pos_icon = leaderboard_pos_emoji(count)
+                            res_txt += f"| {pos_icon} <a href='tg://user?id={u['user_id']}'>{u['user_id']}</a> → <b>{u.get('total_otps',0)}</b>\n"
+                            count += 1
+                    if not res_txt: res_txt = "No data available (local cache).\n"
+                elif sub == "w_history":
+                    title = "LAST 10 WITHDRAWALS (LOCAL)"
+                    res_txt = ""
+                    count = 1
+                    try:
+                        wrows = sqlite_exec("SELECT * FROM withdrawals ORDER BY timestamp DESC LIMIT 10", fetch="all") or []
+                    except Exception:
+                        wrows = []
+                    for wd in wrows:
+                        uid = wd.get('user_id', 'User')
+                        amt = wd.get('amount', 0)
+                        st = str(wd.get('status', 'pending')).lower()
+                        stat_icon = "✅" if st == "approved" else "❌" if st == "rejected" else "⏳"
+                        pos_icon = leaderboard_pos_emoji(count)
+                        res_txt += f"| {pos_icon} <a href='tg://user?id={uid}'>{uid}</a> → <b>${fmt_payout(amt)}</b> {stat_icon}\n"
+                        count += 1
+                    if not res_txt: res_txt = "No local withdrawal data.\n"
+
+                final_msg = f"━━━━━━━━━━━━━━━\n📊 <b>{title}</b>\n━━━━━━━━━━━━━━━\n{res_txt}━━━━━━━━━━━━━━━\n<i>⚠️ Firebase disabled — showing SQLite data</i>"
+                kb = [[{"text": "Refresh", "icon_custom_emoji_id": "5420155432272438703", "callback_data": data, "style": "success"}, {"text": "Back", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "lb_main", "style": "danger"}]]
+                edit_message(chat_id, msg_id, render_body_text(final_msg), reply_markup={"inline_keyboard": kb})
                 return
+
             if sub == "top_refs":
                 title, field, limit = "TOP 10 REFERRERS", "total_refers", 10
                 users = db.collection('users').order_by(field, direction="DESCENDING").limit(limit).stream()
@@ -5121,8 +5646,8 @@ def handle_callback(call):
     elif data == "db_delete_confirm":
         txt = f'<tg-emoji emoji-id="6203773684306418660">❓</tg-emoji> <b>DO YOU REALLY WANT TO REMOVE ALL DATA?</b>'
         kb = {"inline_keyboard": [
-            [{"text": "✅YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
-            [{"text": "❌NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
+            [{"text": "YES REMOVE", "icon_custom_emoji_id": "5352694861990501856", "callback_data": "db_delete_yes", "style": "success"}],
+            [{"text": "NO DON'T REMOVE", "icon_custom_emoji_id": "5420130255174145507", "callback_data": "db_delete_no", "style": "danger"}]
         ]}
         edit_message(chat_id, msg_id, render_body_text(txt), reply_markup=kb)
     elif data == "db_delete_yes":
@@ -5434,21 +5959,22 @@ def handle_callback(call):
             answer_callback(call["id"], "✅ Deleted!", show_alert=True)
             edit_message(chat_id, msg_id, render_body_text(f"{PEM['link']} <b>FORCE JOIN</b>"), reply_markup=fj_settings_keyboard())
 
+    # ---------- ADMIN MANAGEMENT (owner-only guard) ----------
     elif data == "manage_admins":
         if chat_id != OWNER_ID:
-            answer_callback(call["id"], "🚫 Only OWNER!", show_alert=True)
+            answer_callback(call["id"], "🚫 Only OWNER can manage admins!", show_alert=True)
             return
         edit_message(chat_id, msg_id, render_body_text(f"{PEM['user']} <b>ADMIN MANAGEMENT</b>"), reply_markup=admin_settings_keyboard())
     elif data == "add_adm":
         if chat_id != OWNER_ID:
-            answer_callback(call["id"], "🚫 Only OWNER!", show_alert=True)
+            answer_callback(call["id"], "🚫 Only OWNER can add admins!", show_alert=True)
             return
         user_states[chat_id] = "wait_for_add_adm"
         temp_data[chat_id] = {"msg_id": msg_id}
         edit_message(chat_id, msg_id, render_body_text("📝 <b>User ID:</b>"), reply_markup={"inline_keyboard": [[{"text": "Cancel", "icon_custom_emoji_id": "5267490665117275176", "callback_data": "manage_admins", "style": "danger"}]]})
     elif data.startswith("del_adm_"):
         if chat_id != OWNER_ID:
-            answer_callback(call["id"], "🚫 Only OWNER!", show_alert=True)
+            answer_callback(call["id"], "🚫 Only OWNER can delete admins!", show_alert=True)
             return
         idx = int(data.split("_")[2])
         if 0 <= idx < len(bot_settings["admins"]):
@@ -6005,11 +6531,13 @@ def handle_callback(call):
             req_data = pending_withdrawals[req_id]
             u_id, amt = req_data["user_id"], req_data["amount"]
             num = req_data["number"]; full_name = req_data.get("full_name", u_id)
+
             new_text = build_withdrawal_status_msg(action, u_id, full_name, amt, num, req_data['method'], req_id)
             status_text = "APPROVED" if action == "APPROVE" else "REJECTED"
             emoji_icon_id = "5352694861990501856" if action == "APPROVE" else "5420130255174145507"
             kb = {"inline_keyboard": [[{"text": status_text, "icon_custom_emoji_id": emoji_icon_id, "callback_data": "ignore", "style": "success" if action == "APPROVE" else "danger"}]]}
             edit_message(chat_id, msg_id, new_text, reply_markup=kb)
+
             if action == "APPROVE":
                 approve_msg = (
                     f"{PEM['ok']} <b><i>Your Withdrawal Has Been Paid Successfully!</i></b>\n"
@@ -6028,10 +6556,17 @@ def handle_callback(call):
                     f"🧾 <b>Withdraw ID:</b> <code>{req_id}</code>"
                 )
                 send_message(u_id, render_body_text(reject_msg))
+
+            new_status = "approved" if action == "APPROVE" else "rejected"
+            try:
+                with sqlite_tx() as conn:
+                    if conn:
+                        conn.cursor().execute("UPDATE withdrawals SET status=? WHERE req_id=?", (new_status, req_id))
+            except Exception: pass
             if db:
-                try: db.collection('withdrawals').document(req_id).update({"status": "approved" if action == "APPROVE" else "rejected"})
-                except Exception as e:
-                    print(f"⚠️  withdrawal status: {type(e).__name__}")
+                try:
+                    db.collection('withdrawals').document(req_id).set({"status": new_status}, merge=True, timeout=8.0)
+                except Exception: pass
             del pending_withdrawals[req_id]
         else:
             answer_callback(call["id"], "❌ Already processed!", show_alert=True)
@@ -6169,7 +6704,7 @@ def main():
     res = api_call("getMe")
     if res.get("ok"): BOT_USERNAME = res["result"]["username"]
     print(f"🤖 Bot is starting... @{BOT_USERNAME}")
-    print(f"📊 Database Mode: {'FIREBASE' if db else 'SQLITE'}")
+    print(f"💾 Database Mode: {current_db_mode.upper()}")
     api_call("deleteWebhook", {"drop_pending_updates": True})
     print("🔗 Webhook cleared")
     threading.Thread(target=panel_monitor_thread, daemon=True).start()
